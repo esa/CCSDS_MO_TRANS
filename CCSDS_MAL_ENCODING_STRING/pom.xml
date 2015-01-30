@@ -25,9 +25,9 @@
   
   <artifactId>ENCODING_STRING</artifactId>
   <packaging>jar</packaging>
-  <version>1.0.1</version>
+  <version>1.0.1-FC</version>
 
-  <name>ESA MAL String Java encoder</name>
+  <name>ESA MAL String Java encoder (FC)</name>
   <description>A simple Java String based encoder for the CCSDS MAL</description>
   <url>http://www.esa.int</url>
   
@@ -104,6 +104,7 @@
         <dependency>
           <groupId>int.esa.ccsds.mo</groupId>
           <artifactId>API_MAL</artifactId>
+          <version>1.0.1-FC</version>
         </dependency>
       </dependencies>
     </profile>

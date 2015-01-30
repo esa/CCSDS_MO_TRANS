@@ -323,7 +323,7 @@ public class StringEncoder implements MALListEncoder
   @Override
   public void encodeDuration(final Duration value) throws MALException
   {
-    add(Integer.toString(value.getValue()));
+    add(value.toString());
   }
 
   @Override
@@ -332,7 +332,7 @@ public class StringEncoder implements MALListEncoder
     String strVal = STR_NULL;
     if (null != value)
     {
-      strVal = Integer.toString(value.getValue());
+      strVal = value.toString();
     }
     add(strVal);
   }

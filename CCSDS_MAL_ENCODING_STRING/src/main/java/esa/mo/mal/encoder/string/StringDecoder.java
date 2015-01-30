@@ -293,7 +293,7 @@ public class StringDecoder implements MALDecoder
   {
     try
     {
-      return new Duration(Integer.parseInt(strVal));
+      return new Duration(internalDecodeDouble(strVal));
     }
     catch (NumberFormatException ex)
     {

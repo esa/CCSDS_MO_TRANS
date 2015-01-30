@@ -619,14 +619,7 @@ public class BinaryEncoder implements MALListEncoder
   @Override
   public void encodeDuration(final Duration value) throws MALException
   {
-    try
-    {
-      outputStream.addSignedInt(value.getValue());
-    }
-    catch (IOException ex)
-    {
-      throw new MALException(ENCODING_EXCEPTION_STR, ex);
-    }
+    encodeDouble(value.getValue());
   }
 
   @Override

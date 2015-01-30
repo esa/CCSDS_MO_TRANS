@@ -225,7 +225,7 @@ public class BinaryDecoder implements MALDecoder
   @Override
   public Duration decodeDuration() throws MALException
   {
-    return new Duration(sourceBuffer.getSignedInt());
+    return new Duration(Double.longBitsToDouble(sourceBuffer.getSignedLong()));
   }
 
   @Override
@@ -233,7 +233,7 @@ public class BinaryDecoder implements MALDecoder
   {
     if (sourceBuffer.getBool())
     {
-      return new Duration(sourceBuffer.getSignedInt());
+      return new Duration(Double.longBitsToDouble(sourceBuffer.getSignedLong()));
     }
 
     return null;

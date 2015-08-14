@@ -19,13 +19,13 @@
   <parent>
     <groupId>int.esa.ccsds.mo</groupId>
     <artifactId>POM</artifactId>
-    <version>2</version>
+    <version>3</version>
     <relativePath/>
   </parent>
   
   <artifactId>TRANSPORT_GEN</artifactId>
   <packaging>jar</packaging>
-  <version>1.0.1</version>
+  <version>1.1.1-SNAPSHOT</version>
 
   <name>ESA MAL Generic Java transport</name>
   <description>A base Java framework for CCSDS MAL transports</description>
@@ -68,6 +68,7 @@
     <dependency>
       <groupId>int.esa.ccsds.mo</groupId>
       <artifactId>ENCODING_GEN</artifactId>
+      <version>1.0.2-FC-SNAPSHOT</version>
     </dependency>
   </dependencies>
 

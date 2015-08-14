@@ -215,7 +215,7 @@ public class GENMessageBody implements MALMessageBody, java.io.Serializable
     {
       final int count = getElementCount();
 
-      GENTransport.LOGGER.log(Level.INFO, "GEN Message encoding body ... pc ({0})", count);
+      GENTransport.LOGGER.log(Level.FINE, "GEN Message encoding body ... pc ({0})", count);
 
       // if we only have a single body part then encode that directly
       if (count == 1)
@@ -286,25 +286,8 @@ public class GENMessageBody implements MALMessageBody, java.io.Serializable
         lenc = streamFactory.createOutputStream(lbaos);
       }
 
-      // encode the short form if it is not fixed in the operation
-      final Element e = (Element) o;
-      if (null == sf)
-      {
-        if (null != e)
-        {
-          lenc.writeElement(new Union(e.getShortForm()), ctx);
-        }
-        else
-        {
-          lenc.writeElement(null, ctx);
-        }
-      }
-
-      if ((null != sf) || (null != e))
-      {
-        // now encode the element
-        lenc.writeElement(e, ctx);
-      }
+      // now encode the element
+      lenc.writeElement((Element) o, ctx);
 
       if (wrapBodyParts)
       {
@@ -332,7 +315,7 @@ public class GENMessageBody implements MALMessageBody, java.io.Serializable
         // encode the XML into a string
         final StringWriter ow = new StringWriter();
         marshaller.marshal(new JAXBElement(new QName(schemaURN, schemaEle), o.getClass(), null, o), ow);
-        GENTransport.LOGGER.log(Level.INFO, "GEN Message encoding XML body part : {0}", ow.toString());
+        GENTransport.LOGGER.log(Level.FINE, "GEN Message encoding XML body part : {0}", ow.toString());
 
         MALElementOutputStream lenc = enc;
         ByteArrayOutputStream lbaos = null;
@@ -434,12 +417,11 @@ public class GENMessageBody implements MALMessageBody, java.io.Serializable
           }
         }
 
-        GENTransport.LOGGER.info("GEN Message decoded body");
+        GENTransport.LOGGER.fine("GEN Message decoded body");
       }
       catch (MALException ex)
       {
         GENTransport.LOGGER.log(Level.WARNING, "GEN Message body ERROR on decode : {0}", ex);
-        ex.printStackTrace();
       }
     }
   }
@@ -448,6 +430,8 @@ public class GENMessageBody implements MALMessageBody, java.io.Serializable
    * Decodes a single part of the message body.
    *
    * @param decoder The decoder to use.
+   * @param ctx The encoding context to use.
+   * @param sf The type short form.
    * @return The decoded chunk.
    * @throws MALException if any error detected.
    */
@@ -466,40 +450,24 @@ public class GENMessageBody implements MALMessageBody, java.io.Serializable
     // work out whether it is a MAL element or JAXB element we have received
     if (!(sf instanceof String))
     {
-      Long shortForm;
+      Object element = null;
       if (null != sf)
       {
-        shortForm = (Long) sf;
-      }
-      else
-      {
-        Union u = (Union) lenc.readElement(new Union(0L), null);
-
-        if (null != u)
-        {
-          shortForm = u.getLongValue();
-        }
-        else
-        {
-          shortForm = null;
-        }
-      }
-
-      if (null != shortForm)
-      {
+        Long shortForm = (Long) sf;
         GENTransport.LOGGER.log(Level.FINER, "GEN Message decoding body part : Type = {0}", shortForm);
         final MALElementFactory ef
                 = MALContextFactory.getElementFactoryRegistry().lookupElementFactory(shortForm);
-
         if (null != ef)
         {
-          rv = lenc.readElement(ef.createElement(), ctx);
+          element = (Element) ef.createElement();
         }
         else
         {
           throw new MALException("GEN transport unable to find element factory for short type: " + shortForm);
         }
       }
+
+      rv = lenc.readElement(element, ctx);
     }
     else
     {

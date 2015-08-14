@@ -20,14 +20,14 @@
  */
 package esa.mo.mal.transport.rmi;
 
+import esa.mo.mal.transport.gen.GENMessage;
 import esa.mo.mal.transport.gen.GENTransport;
-import java.io.ByteArrayOutputStream;
+import esa.mo.mal.transport.gen.sending.GENMessageSender;
+import java.io.IOException;
 import java.net.Inet4Address;
 import java.net.Inet6Address;
 import java.net.InetAddress;
-import java.net.MalformedURLException;
 import java.net.UnknownHostException;
-import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.Registry;
@@ -36,13 +36,15 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.ccsds.moims.mo.mal.MALException;
+import org.ccsds.moims.mo.mal.MALHelper;
+import org.ccsds.moims.mo.mal.MALStandardError;
 import org.ccsds.moims.mo.mal.broker.MALBrokerBinding;
-import org.ccsds.moims.mo.mal.encoding.MALElementOutputStream;
 import org.ccsds.moims.mo.mal.structures.Blob;
 import org.ccsds.moims.mo.mal.structures.InteractionType;
 import org.ccsds.moims.mo.mal.structures.QoSLevel;
 import org.ccsds.moims.mo.mal.structures.UInteger;
 import org.ccsds.moims.mo.mal.transport.MALEndpoint;
+import org.ccsds.moims.mo.mal.transport.MALTransmitErrorException;
 import org.ccsds.moims.mo.mal.transport.MALTransportFactory;
 
 /**
@@ -54,7 +56,12 @@ public class RMITransport extends GENTransport
    * Logger
    */
   public static final java.util.logging.Logger RLOGGER = Logger.getLogger("org.ccsds.moims.mo.mal.transport.rmi");
+  /**
+   * System property to set the host name used locally.
+   */
+  public static final String RMI_HOSTNAME_PROPERTY = "org.ccsds.moims.mo.mal.transport.rmi.host";
   private static final char RMI_PORT_DELIM = ':';
+  private final String serverHost;
   private Registry registry;
   private int portNumber;
   private UnicastRemoteObject ourRMIinterface;
@@ -72,6 +79,15 @@ public class RMITransport extends GENTransport
           final java.util.Map properties) throws MALException
   {
     super(protocol, '-', true, true, factory, properties);
+
+    String lhost = null;
+
+    if ((properties != null) && (properties.containsKey(RMI_HOSTNAME_PROPERTY)))
+    {
+      lhost = (String) properties.get(RMI_HOSTNAME_PROPERTY);
+    }
+
+    this.serverHost = lhost;
   }
 
   @Override
@@ -114,34 +130,15 @@ public class RMITransport extends GENTransport
   @Override
   protected String createTransportAddress() throws MALException
   {
-    try
-    {
-      // Build RMI url string
-      final InetAddress addr = Inet4Address.getLocalHost();
-      final StringBuilder hostAddress = new StringBuilder();
-      if (addr instanceof Inet6Address)
-      {
-        RLOGGER.fine("RMI Address class is IPv6");
-        hostAddress.append('[');
-        hostAddress.append(addr.getHostAddress());
-        hostAddress.append(']');
-      }
-      else
-      {
-        hostAddress.append(addr.getHostAddress());
-      }
+    final StringBuilder transportAddress = new StringBuilder();
 
-      hostAddress.append(RMI_PORT_DELIM);
-      hostAddress.append(portNumber);
-      hostAddress.append('/');
-      hostAddress.append(portNumber);
+    transportAddress.append(getHostName(serverHost));
+    transportAddress.append(RMI_PORT_DELIM);
+    transportAddress.append(portNumber);
+    transportAddress.append('/');
+    transportAddress.append(portNumber);
 
-      return hostAddress.toString();
-    }
-    catch (UnknownHostException ex)
-    {
-      throw new MALException("Could not determine local host address", ex);
-    }
+    return transportAddress.toString();
   }
 
   @Override
@@ -170,7 +167,7 @@ public class RMITransport extends GENTransport
   public boolean isSupportedInteractionType(final InteractionType type)
   {
     // Supports all IPs except Pub Sub
-    return (InteractionType.PUBSUB.getOrdinal() != type.getOrdinal());
+    return InteractionType.PUBSUB.getOrdinal() != type.getOrdinal();
   }
 
   @Override
@@ -183,6 +180,8 @@ public class RMITransport extends GENTransport
   @Override
   public void close() throws MALException
   {
+    super.close();
+
     try
     {
       registry.unbind(String.valueOf(portNumber));
@@ -203,29 +202,64 @@ public class RMITransport extends GENTransport
   }
 
   @Override
-  protected void internalSendMessage(final GENTransport.MsgPair tmsg)
-          throws MalformedURLException, NotBoundException, RemoteException
+  protected GENMessageSender createMessageSender(GENMessage msg, String remoteRootURI) throws MALException, MALTransmitErrorException
   {
-    byte[] buf = null;
+    RLOGGER.log(Level.INFO, "RMI received request to create connections to URI:{0}", remoteRootURI);
 
-    // encode the message
     try
     {
-      final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-      final MALElementOutputStream enc = getStreamFactory().createOutputStream(baos);
-      tmsg.msg.encodeMessage(getStreamFactory(), enc, baos);
-      buf = baos.toByteArray();
+      // create new sender for this URI
+      return new RMIMessageSender(remoteRootURI);
     }
-    catch (MALException ex)
+    catch (NotBoundException e)
     {
-      ex.printStackTrace();
+      RLOGGER.log(Level.WARNING, "RMI could not connect to :" + remoteRootURI, e);
+      throw new MALTransmitErrorException(msg.getHeader(), new MALStandardError(MALHelper.DESTINATION_UNKNOWN_ERROR_NUMBER, null), null);
+
+    }
+    catch (IOException e)
+    {
+      RLOGGER.log(Level.WARNING, "RMI could not connect to :" + remoteRootURI, e);
+      throw new MALTransmitErrorException(msg.getHeader(), new MALStandardError(MALHelper.DELIVERY_FAILED_ERROR_NUMBER, null), null);
+    }
+  }
+
+  /**
+   * Provide an IP address for this host
+   *
+   * @param preferredHostname The preferred host name, may be NULL in which case the name will be calculated.
+   * @return The transport specific address part.
+   * @throws MALException On error
+   */
+  private static String getHostName(String preferredHostname) throws MALException
+  {
+    if (null == preferredHostname)
+    {
+      try
+      {
+        // Build RMI url string
+        final InetAddress addr = Inet4Address.getLocalHost();
+        final StringBuilder hostAddress = new StringBuilder();
+        if (addr instanceof Inet6Address)
+        {
+          RLOGGER.fine("RMI Address class is IPv6");
+          hostAddress.append('[');
+          hostAddress.append(addr.getHostAddress());
+          hostAddress.append(']');
+        }
+        else
+        {
+          hostAddress.append(addr.getHostAddress());
+        }
+
+        return hostAddress.toString();
+      }
+      catch (UnknownHostException ex)
+      {
+        throw new MALException("Could not determine local host address", ex);
+      }
     }
 
-    RLOGGER.log(Level.INFO, "RMI Sending data to {0} : {1}", new Object[]
-            {
-              tmsg.addr, packetToString(buf)
-            });
-    final RMIReceiveInterface destinationRMI = (RMIReceiveInterface) Naming.lookup(tmsg.addr);
-    destinationRMI.receive(buf);
+    return preferredHostname;
   }
 }

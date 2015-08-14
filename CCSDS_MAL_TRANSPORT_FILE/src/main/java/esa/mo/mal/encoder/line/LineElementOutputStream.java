@@ -1,11 +1,21 @@
 /* ----------------------------------------------------------------------------
- * (C) 2011      European Space Agency
- *               European Space Operations Centre
- *               Darmstadt Germany
+ * Copyright (C) 2014      European Space Agency
+ *                         European Space Operations Centre
+ *                         Darmstadt
+ *                         Germany
  * ----------------------------------------------------------------------------
- * System       : CCSDS MO Line encoder
- * Author       : Sam Cooper
+ * System                : CCSDS MO Line encoder framework
+ * ----------------------------------------------------------------------------
+ * Licensed under the European Space Agency Public License, Version 2.0
+ * You may not use this file except in compliance with the License.
  *
+ * Except as expressly set forth in this License, the Software is provided to
+ * You on an "as is" basis and without warranties of any kind, including without
+ * limitation merchantability, fitness for a particular purpose, absence of
+ * defects or errors, accuracy or non-infringement of intellectual property rights.
+ * 
+ * See the License for the specific language governing permissions and
+ * limitations under the License. 
  * ----------------------------------------------------------------------------
  */
 package esa.mo.mal.encoder.line;
@@ -16,9 +26,10 @@ import org.ccsds.moims.mo.mal.MALException;
 import org.ccsds.moims.mo.mal.encoding.MALElementOutputStream;
 import org.ccsds.moims.mo.mal.encoding.MALEncodingContext;
 import org.ccsds.moims.mo.mal.structures.Element;
+import org.ccsds.moims.mo.mal.transport.MALMessageHeader;
 
 /**
- * Implements the MALElementOutputStream interface for String encodings.
+ * Implements the MALElementOutputStream interface for the line encodings.
  */
 public class LineElementOutputStream implements MALElementOutputStream
 {
@@ -38,7 +49,15 @@ public class LineElementOutputStream implements MALElementOutputStream
   public void writeElement(final Object element, final MALEncodingContext ctx) throws MALException
   {
     final LineEncoder enc = new LineEncoder();
-    enc.encodeTopLevelElement("Body", (Element) element);
+
+    if (element instanceof MALMessageHeader)
+    {
+      enc.encodeTopLevelElement("Header", (Element) element);
+    }
+    else
+    {
+      enc.encodeTopLevelElement("Body", (Element) element);
+    }
 
     try
     {

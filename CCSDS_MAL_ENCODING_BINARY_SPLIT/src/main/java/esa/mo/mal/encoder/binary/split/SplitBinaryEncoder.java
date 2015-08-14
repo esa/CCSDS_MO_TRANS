@@ -69,12 +69,12 @@ public class SplitBinaryEncoder extends esa.mo.mal.encoder.binary.BinaryEncoder
     {
       if (null != value)
       {
-        outputStream.addBoolTrue();
+        outputStream.addNotNull();
         outputStream.addBool(value);
       }
       else
       {
-        outputStream.addBoolFalse();
+        outputStream.addIsNull();
       }
     }
     catch (IOException ex)
@@ -104,7 +104,7 @@ public class SplitBinaryEncoder extends esa.mo.mal.encoder.binary.BinaryEncoder
   /**
    * Extends the StreamHolder class for handling splitting out the Boolean values.
    */
-  protected static class SplitStreamHolder extends StreamHolder
+  public static class SplitStreamHolder extends BinaryStreamHolder
   {
     private static final int BIT_BYTES_BLOCK_SIZE = 1024;
     private final java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
@@ -122,16 +122,12 @@ public class SplitBinaryEncoder extends esa.mo.mal.encoder.binary.BinaryEncoder
       super(outputStream);
     }
 
-    /**
-     * Writes the actual encoded data to the output stream.
-     *
-     * @throws IOException in case of an IO error.
-     */
+    @Override
     public void close() throws IOException
     {
-      _addUnsignedInt(outputStream, bitBytesInUse);
+      streamAddUnsignedInt(outputStream, bitBytesInUse);
       outputStream.write(bitBytes, 0, bitBytesInUse);
-      outputStream.write(baos.toByteArray());
+      baos.writeTo(outputStream);
     }
 
     @Override
@@ -146,13 +142,13 @@ public class SplitBinaryEncoder extends esa.mo.mal.encoder.binary.BinaryEncoder
     }
 
     @Override
-    public void addBoolFalse() throws IOException
+    public void addIsNull() throws IOException
     {
       ++bitIndex;
     }
 
     @Override
-    public void addBoolTrue() throws IOException
+    public void addNotNull() throws IOException
     {
       setBit(bitIndex);
       ++bitIndex;
@@ -170,7 +166,7 @@ public class SplitBinaryEncoder extends esa.mo.mal.encoder.binary.BinaryEncoder
       baos.write(val);
     }
 
-    private static void _addUnsignedInt(java.io.OutputStream os, int value) throws IOException
+    private static void streamAddUnsignedInt(java.io.OutputStream os, int value) throws IOException
     {
       while ((value & 0xFFFFFF80) != 0L)
       {

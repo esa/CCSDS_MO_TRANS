@@ -37,8 +37,9 @@ import org.ccsds.moims.mo.mal.transport.*;
  */
 public class GENEndpoint implements MALEndpoint
 {
-  private final GENSender transport;
+  private final GENTransport transport;
   private final String localName;
+  private final String routingName;
   private final String localURI;
   private final boolean wrapBodyParts;
   private boolean active = false;
@@ -48,14 +49,16 @@ public class GENEndpoint implements MALEndpoint
    * Constructor.
    *
    * @param transport Parent transport.
-   * @param localName Endpoint local name.
+   * @param localName Endpoint local MAL name.
+   * @param routingName Endpoint local routing name.
    * @param uri The URI string for this end point.
    * @param wrapBodyParts True if the encoded body parts should be wrapped in BLOBs.
    */
-  public GENEndpoint(final GENSender transport, final String localName, final String uri, final boolean wrapBodyParts)
+  public GENEndpoint(final GENTransport transport, final String localName, final String routingName, final String uri, final boolean wrapBodyParts)
   {
     this.transport = transport;
     this.localName = localName;
+    this.routingName = routingName;
     this.localURI = uri;
     this.wrapBodyParts = wrapBodyParts;
   }
@@ -63,14 +66,14 @@ public class GENEndpoint implements MALEndpoint
   @Override
   public void startMessageDelivery() throws MALException
   {
-    GENTransport.LOGGER.log(Level.INFO, "GENEndpoint ({0}) Activating message delivery", localName);
+    GENTransport.LOGGER.log(Level.FINE, "GENEndpoint ({0}) Activating message delivery", localName);
     active = true;
   }
 
   @Override
   public void stopMessageDelivery() throws MALException
   {
-    GENTransport.LOGGER.log(Level.INFO, "GENEndpoint ({0}) Deactivating message delivery", localName);
+    GENTransport.LOGGER.log(Level.FINE, "GENEndpoint ({0}) Deactivating message delivery", localName);
     active = false;
   }
 
@@ -78,6 +81,11 @@ public class GENEndpoint implements MALEndpoint
   public String getLocalName()
   {
     return localName;
+  }
+
+  public String getRoutingName()
+  {
+    return routingName;
   }
 
   @Override
@@ -291,13 +299,13 @@ public class GENEndpoint implements MALEndpoint
 
     try
     {
-      final Object handle = internalCreateMultiSendContext(msgList);
+      final Object multiSendHandle = internalCreateMultiSendHandle(msgList);
 
       for (int idx = 0; idx < msgList.length; idx++)
       {
         try
         {
-          internalSendMessage(handle, idx == (msgList.length - 1), (GENMessage) msgList[idx]);
+          internalSendMessage(multiSendHandle, idx == (msgList.length - 1), (GENMessage) msgList[idx]);
         }
         catch (MALTransmitErrorException ex)
         {
@@ -305,7 +313,7 @@ public class GENEndpoint implements MALEndpoint
         }
       }
 
-      internalCloseMultiSendContext(handle, msgList);
+      internalCloseMultiSendHandle(multiSendHandle, msgList);
     }
     catch (Exception ex)
     {
@@ -319,6 +327,11 @@ public class GENEndpoint implements MALEndpoint
     }
   }
 
+  /**
+   * Returns the current message listener.
+   *
+   * @return the current message listener.
+   */
   public MALMessageListener getMessageListener()
   {
     return messageListener;
@@ -385,38 +398,40 @@ public class GENEndpoint implements MALEndpoint
   /**
    * Used to send a message from this end point.
    *
-   * @param handle Context object that is passed to the transport.
+   * @param multiSendHandle Multi send context handle object that is passed to the transport.
    * @param lastForHandle Is this the last message in a multi message send?
    * @param msg the message to send.
    * @throws MALTransmitErrorException On a transmit error.
    */
-  protected void internalSendMessage(final Object handle,
+  protected void internalSendMessage(final Object multiSendHandle,
           final boolean lastForHandle,
           final GENMessage msg) throws MALTransmitErrorException
   {
-    transport.sendMessage(this, handle, lastForHandle, msg);
+    transport.sendMessage(multiSendHandle, lastForHandle, msg);
   }
 
   /**
-   * Create a send context for a multi message send.
+   * Create a send context handle for a multi message send.
    *
    * @param msgList The list of messages being sent.
-   * @return The send context or null be default.
+   * @return The send context handle or null by default.
    * @throws Exception On error.
    */
-  protected Object internalCreateMultiSendContext(final MALMessage[] msgList) throws Exception
+  protected Object internalCreateMultiSendHandle(final MALMessage[] msgList) throws Exception
   {
+    // implemented in derived transport if it uses multi-send handles. 
     return null;
   }
 
   /**
-   * Closes a send context.
+   * Closes a multi send context handle.
    *
-   * @param handle The send context.
+   * @param multiSendHandle The multi send context handle.
    * @param msgList The sent message list.
    * @throws Exception On error.
    */
-  protected void internalCloseMultiSendContext(final Object handle, final MALMessage[] msgList) throws Exception
+  protected void internalCloseMultiSendHandle(final Object multiSendHandle, final MALMessage[] msgList) throws Exception
   {
+    // implemented in derived transport if it uses multi-send handles. 
   }
 }

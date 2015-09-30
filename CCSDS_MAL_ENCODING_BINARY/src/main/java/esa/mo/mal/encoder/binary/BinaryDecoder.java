@@ -99,6 +99,12 @@ public class BinaryDecoder extends GENDecoder
   }
 
   @Override
+  public String decodeNullableString() throws MALException
+  {
+    return sourceBuffer.getString();
+  }
+
+  @Override
   public Identifier decodeNullableIdentifier() throws MALException
   {
     final String s = sourceBuffer.getString();
@@ -147,7 +153,7 @@ public class BinaryDecoder extends GENDecoder
   }
 
   @Override
-  protected byte[] getRemainingEncodedData() throws MALException
+  public byte[] getRemainingEncodedData() throws MALException
   {
     BinaryBufferHolder dSourceBuffer = (BinaryBufferHolder)sourceBuffer;
     return Arrays.copyOfRange(dSourceBuffer.buf, dSourceBuffer.offset, dSourceBuffer.contentLength);

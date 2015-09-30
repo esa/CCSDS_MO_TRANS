@@ -19,7 +19,7 @@
   <parent>
     <groupId>int.esa.ccsds.mo</groupId>
     <artifactId>POM</artifactId>
-    <version>3</version>
+    <version>4</version>
     <relativePath/>
   </parent>
   
@@ -65,11 +65,14 @@
     <module>CCSDS_MAL_ENCODING_GEN</module>
     <module>CCSDS_MAL_ENCODING_STRING</module>
     <module>CCSDS_MAL_ENCODING_BINARY</module>
+    <module>CCSDS_MAL_ENCODING_BINARY_SPLIT</module>
+    <module>CCSDS_MAL_ENCODING_BINARY_FIXED</module>
     <module>CCSDS_MAL_TRANSPORT_GEN</module>
     <module>CCSDS_MAL_TRANSPORT_RMI</module>
     <module>CCSDS_MAL_TRANSPORT_TCPIP</module>
     <module>CCSDS_MAL_TRANSPORT_JMS</module>
     <module>CCSDS_MAL_TRANSPORT_ACTIVEMQ</module>
+    <module>CCSDS_MAL_TRANSPORT_SPP</module>
   </modules>
 
   <profiles>
@@ -89,9 +92,6 @@
       </activation>
       <modules>
         <module>CCSDS_MAL_TRANSPORT_FILE</module>
-        <module>CCSDS_MAL_ENCODING_BINARY_SPLIT</module>
-        <module>CCSDS_MAL_ENCODING_BINARY_FIXED</module>
-        <module>CCSDS_MAL_TRANSPORT_SPP</module>
       </modules>  
     </profile>
   </profiles>

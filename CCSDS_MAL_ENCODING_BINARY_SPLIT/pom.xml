@@ -19,13 +19,13 @@
   <parent>
     <groupId>int.esa.ccsds.mo</groupId>
     <artifactId>POM</artifactId>
-    <version>3</version>
+    <version>4</version>
     <relativePath/>
   </parent>
   
   <artifactId>ENCODING_BINARY_SPLIT</artifactId>
   <packaging>jar</packaging>
-  <version>1.0.3-FC-SNAPSHOT</version>
+  <version>1.0.3-FC</version>
 
   <name>ESA MAL Split Binary Java encoder (FC)</name>
   <description>A simple split binary Java encoder for the CCSDS MAL</description>
@@ -68,12 +68,12 @@
     <dependency>
       <groupId>int.esa.ccsds.mo</groupId>
       <artifactId>ENCODING_GEN</artifactId>
-      <version>1.0.2-FC-SNAPSHOT</version>
+      <version>1.0.3-FC</version>
     </dependency>
     <dependency>
       <groupId>int.esa.ccsds.mo</groupId>
       <artifactId>ENCODING_BINARY</artifactId>
-      <version>1.0.3-FC-SNAPSHOT</version>
+      <version>1.0.3-FC</version>
       <exclusions>
         <exclusion>
           <groupId>int.esa.ccsds.mo</groupId>
@@ -101,10 +101,6 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <configuration>
-          <source>1.7</source>
-          <target>1.7</target>
-        </configuration>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>

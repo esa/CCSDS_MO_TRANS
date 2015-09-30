@@ -40,7 +40,7 @@ import java.util.Iterator;
 /**
  * File transmitter and receiver. Used by the GEN message poller class.
  */
-public class FileTransceiver implements esa.mo.mal.transport.gen.util.GENMessagePoller.GENStreamMessageReceiver, GENMessageSender
+public class FileTransceiver implements esa.mo.mal.transport.gen.util.GENMessagePoller.GENMessageReceiver<InputStream>, GENMessageSender
 {
   private final Path incomingDirectory;
   private final Path outgoingDirectory;
@@ -85,10 +85,15 @@ public class FileTransceiver implements esa.mo.mal.transport.gen.util.GENMessage
 
     java.io.File tmpFile = new File(outgoingDirectory.toFile(), tmpname + ".tmp");
 
-    try (java.io.FileOutputStream fos = new FileOutputStream(tmpFile))
+    java.io.FileOutputStream fos = new FileOutputStream(tmpFile);
+    try
     {
       fos.write(packetData.getEncodedMessage());
       fos.flush();
+    }
+    finally
+    {
+      fos.close();
     }
 
     // rename file to correct file name

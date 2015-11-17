@@ -68,7 +68,7 @@
     <dependency>
       <groupId>int.esa.ccsds.mo</groupId>
       <artifactId>ENCODING_GEN</artifactId>
-      <version>1.0.3-FC</version>
+      <version>1.0.2-FC</version>
     </dependency>
     <dependency>
       <groupId>int.esa.ccsds.mo</groupId>

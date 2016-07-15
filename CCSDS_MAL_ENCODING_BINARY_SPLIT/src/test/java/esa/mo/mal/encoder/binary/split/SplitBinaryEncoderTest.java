@@ -49,7 +49,8 @@ public class SplitBinaryEncoderTest {
 	}
 
     @After
-    public void tearDown() {
+    public void tearDown() throws IOException {
+        //os.close();
         System.out.println("~~~  End  ~~~");
     }
     

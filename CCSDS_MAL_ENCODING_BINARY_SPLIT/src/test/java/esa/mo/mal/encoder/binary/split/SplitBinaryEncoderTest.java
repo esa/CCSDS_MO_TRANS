@@ -32,6 +32,8 @@ import org.junit.Test;
 import org.ccsds.moims.mo.mal.MALException;
 import org.ccsds.moims.mo.mal.structures.UInteger;
 import org.ccsds.moims.mo.mal.structures.URI;
+import org.ccsds.moims.mo.mal.structures.Identifier;
+import org.ccsds.moims.mo.mal.structures.UOctet;
 
 import esa.mo.mal.encoder.gen.GENEncoder;
 
@@ -134,6 +136,36 @@ public class SplitBinaryEncoderTest {
         System.out.println("expected -> " + Arrays.toString(expectedBytes));
         Assert.assertArrayEquals(bytes, expectedBytes);
     }
+    
+    @Test
+    public void testIdentifier() throws MALException {
+        Identifier id1 = new Identifier("Id1");
+        Identifier id2 = new Identifier("Id2");
+        encoder.encodeIdentifier(id1);
+        encoder.encodeIdentifier(id2);
+        encoder.close();
+        byte[] bytes = this.os.toByteArray();
+        System.out.println("Identifier : [" + id1 + "," + id2 + "] -> " + Arrays.toString(bytes));
+        byte[] expectedBytes = new byte[]{0,3,'I','d','1',3,'I','d','2'};
+        System.out.println("expected -> " + Arrays.toString(expectedBytes));
+        Assert.assertArrayEquals(bytes, expectedBytes);
+    }
+    
+    @Test
+    public void testNullableIdentifier() throws MALException {
+        Identifier id1 = new Identifier("Id1");
+        Identifier id2 = new Identifier("Id2");
+        encoder.encodeNullableIdentifier(id1);
+        encoder.encodeNullableIdentifier(id2);
+        encoder.close();
+        byte[] bytes = this.os.toByteArray();
+        System.out.println("Nullable Identifier : [" + id1 + "," + id2 + "] -> " + Arrays.toString(bytes));
+        // byte field length 1
+        // byte field 2
+        byte[] expectedBytes = new byte[]{1,2,3,'I','d','1',3,'I','d','2'};
+        System.out.println("expected -> " + Arrays.toString(expectedBytes));
+        Assert.assertArrayEquals(bytes, expectedBytes);
+    }
 
     @Test
     public void testBoolean() throws MALException {
@@ -177,10 +209,9 @@ public class SplitBinaryEncoderTest {
         encoder.close();
         byte[] bytes = this.os.toByteArray();
         System.out.println("Integer : [" + i1 + "," + i2 + "," + i3 + "] -> " + Arrays.toString(bytes));
-        // byte field length 1
-        // byte field 0
+        // byte field length 0
         // switch left 1 bit to get sign 
-        byte[] expectedBytes = new byte[]{1,0,0,32,(byte)0x06,(byte)0x40};
+        byte[] expectedBytes = new byte[]{0,0,32,(byte)0x0c,(byte)0xc0};
         System.out.println("expected -> " + Arrays.toString(expectedBytes));
         Assert.assertArrayEquals(bytes, expectedBytes);
     }
@@ -197,8 +228,8 @@ public class SplitBinaryEncoderTest {
         byte[] bytes = this.os.toByteArray();
         System.out.println("Nullable Integer : [" + i1 + "," + i2 + "," + i3 + "] -> " + Arrays.toString(bytes));
         // byte field length 1
-        // byte field 0
-        byte[] expectedBytes = new byte[]{1,(byte)0x07,0,32,(byte)0x06,(byte)0x40};
+        // byte field 0000 0111
+        byte[] expectedBytes = new byte[]{1,(byte)0x07,0,32,(byte)0x0c,(byte)0xc0};
         System.out.println("expected -> " + Arrays.toString(expectedBytes));
         Assert.assertArrayEquals(bytes, expectedBytes);
     }
@@ -234,7 +265,7 @@ public class SplitBinaryEncoderTest {
         byte[] bytes = this.os.toByteArray();
         System.out.println("Nullable UInteger : [" + ui1 + "," + ui2 + "," + ui3 + "] -> " + Arrays.toString(bytes));
         // byte field length 1
-        // byte field 0
+        // byte field 0000 0111
         byte[] expectedBytes = new byte[]{1,(byte)0x07,0,16,(byte)0x03,(byte)0x20};
         System.out.println("expected -> " + Arrays.toString(expectedBytes));
         Assert.assertArrayEquals(bytes, expectedBytes);
@@ -251,8 +282,7 @@ public class SplitBinaryEncoderTest {
         encoder.close();
         byte[] bytes = this.os.toByteArray();
         System.out.println("Double : [" + d1 + "," + d2 + "," + d3 + "] -> " + Arrays.toString(bytes));
-        // byte field length 1
-        // byte field 0
+        // byte field length 0
         // Decale 1 bit to get sign
         // FIXME get the good encoding value
         byte[] expectedBytes = new byte[]{1,0,0,16,(byte)0x03,(byte)0x20};
@@ -290,11 +320,10 @@ public class SplitBinaryEncoderTest {
         encoder.close();
         byte[] bytes = this.os.toByteArray();
         System.out.println("Long : [" + l1 + "," + l2 + "," + l3 + "] -> " + Arrays.toString(bytes));
-        // byte field length 1
-        // byte field 0
+        // byte field length 0
         // Decale 1 bit to get sign
         // FIXME get the good encoding value
-        byte[] expectedBytes = new byte[]{1,0,0,16,(byte)0x03,(byte)0x20};
+        byte[] expectedBytes = new byte[]{0,0,16,(byte)0x03,(byte)0x20};
         System.out.println("expected -> " + Arrays.toString(expectedBytes));
         Assert.assertArrayEquals(bytes, expectedBytes);
     }
@@ -311,7 +340,7 @@ public class SplitBinaryEncoderTest {
         byte[] bytes = this.os.toByteArray();
         System.out.println("Nullable Long : [" + l1 + "," + l2 + "," + l3 + "] -> " + Arrays.toString(bytes));
         // byte field length 1
-        // byte field 0
+        // byte field 0000 0111
         // FIXME get the good encoding value
         byte[] expectedBytes = new byte[]{1,(byte)0x07,0,16,(byte)0x03,(byte)0x20};
         System.out.println("expected -> " + Arrays.toString(expectedBytes));
@@ -329,11 +358,10 @@ public class SplitBinaryEncoderTest {
         encoder.close();
         byte[] bytes = this.os.toByteArray();
         System.out.println("Float : [" + f1 + "," + f2 + "," + f3 + "] -> " + Arrays.toString(bytes));
-        // byte field length 1
-        // byte field 0
+        // byte field length 0
         // Decale 1 bit to get sign
         // FIXME get the good encoding value
-        byte[] expectedBytes = new byte[]{1,0,0,16,(byte)0x03,(byte)0x20};
+        byte[] expectedBytes = new byte[]{0,0,16,(byte)0x03,(byte)0x20};
         System.out.println("expected -> " + Arrays.toString(expectedBytes));
         Assert.assertArrayEquals(bytes, expectedBytes);
     }
@@ -350,7 +378,7 @@ public class SplitBinaryEncoderTest {
         byte[] bytes = this.os.toByteArray();
         System.out.println("Nullable Float : [" + f1 + "," + f2 + "," + f3 + "] -> " + Arrays.toString(bytes));
         // byte field length 1
-        // byte field 0
+        // byte field 0000 0111
         // FIXME get the good encoding value
         byte[] expectedBytes = new byte[]{1,(byte)0x07,0,16,(byte)0x03,(byte)0x20};
         System.out.println("expected -> " + Arrays.toString(expectedBytes));
@@ -368,11 +396,10 @@ public class SplitBinaryEncoderTest {
         encoder.close();
         byte[] bytes = this.os.toByteArray();
         System.out.println("Short : [" + s1 + "," + s2 + "," + s3 + "] -> " + Arrays.toString(bytes));
-        // byte field length 1
-        // byte field 0
+        // byte field length 0
         // Decale 1 bit to get sign
         // FIXME get the good encoding value
-        byte[] expectedBytes = new byte[]{1,0,0,16,(byte)0x03,(byte)0x20};
+        byte[] expectedBytes = new byte[]{0,0,16,(byte)0x03,(byte)0x20};
         System.out.println("expected -> " + Arrays.toString(expectedBytes));
         Assert.assertArrayEquals(bytes, expectedBytes);
     }
@@ -389,12 +416,48 @@ public class SplitBinaryEncoderTest {
         byte[] bytes = this.os.toByteArray();
         System.out.println("Nullable Short : [" + s1 + "," + s2 + "," + s3 + "] -> " + Arrays.toString(bytes));
         // byte field length 1
-        // byte field 0
+        // byte field 0000 0111
         // FIXME get the good encoding value
         byte[] expectedBytes = new byte[]{1,(byte)0x07,0,16,(byte)0x03,(byte)0x20};
         System.out.println("expected -> " + Arrays.toString(expectedBytes));
         Assert.assertArrayEquals(bytes, expectedBytes);
     }
     
+    @Test
+    public void testUOctet() throws MALException {
+        UOctet uo1 = new UOctet((short)0);
+        UOctet uo2 = new UOctet((short)16);
+        UOctet uo3 = new UOctet((short)80);
+        encoder.encodeUOctet(uo1);
+        encoder.encodeUOctet(uo2);
+        encoder.encodeUOctet(uo3);
+        encoder.close();
+        byte[] bytes = this.os.toByteArray();
+        System.out.println("UOctet : [" + uo1 + "," + uo2 + "," + uo3 + "] -> " + Arrays.toString(bytes));
+        // byte field length 0
+        // Decale 1 bit to get sign
+        // unsigned 8 bit integer encoding
+        byte[] expectedBytes = new byte[]{0,0,16,80};
+        System.out.println("expected -> " + Arrays.toString(expectedBytes));
+        Assert.assertArrayEquals(bytes, expectedBytes);
+    }
     
+    @Test
+    public void testNullableUOctet() throws MALException {
+        UOctet uo1 = new UOctet((short)0);
+        UOctet uo2 = new UOctet((short)16);
+        UOctet uo3 = new UOctet((short)80);
+        encoder.encodeNullableUOctet(uo1);
+        encoder.encodeNullableUOctet(uo2);
+        encoder.encodeNullableUOctet(uo3);
+        encoder.close();
+        byte[] bytes = this.os.toByteArray();
+        System.out.println("Nullable UOctet : [" + uo1 + "," + uo2 + "," + uo3 + "] -> " + Arrays.toString(bytes));
+        // byte field length 1
+        // byte field 0000 0111
+        // unsigned 8 bit integer encoding
+        byte[] expectedBytes = new byte[]{1,(byte)0x07,0,16,80};
+        System.out.println("expected -> " + Arrays.toString(expectedBytes));
+        Assert.assertArrayEquals(bytes, expectedBytes);
+    }
 }

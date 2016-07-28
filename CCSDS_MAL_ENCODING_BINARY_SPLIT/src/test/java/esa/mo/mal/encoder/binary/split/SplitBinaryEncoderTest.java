@@ -460,4 +460,42 @@ public class SplitBinaryEncoderTest {
         System.out.println("expected -> " + Arrays.toString(expectedBytes));
         Assert.assertArrayEquals(bytes, expectedBytes);
     }
+    
+    @Test
+    public void testTime() throws MALException {
+        Time uo1 = new Time((short)0);
+        Time uo2 = new Time((short)16);
+        Time uo3 = new Time((short)80);
+        encoder.encodeTime(uo1);
+        encoder.encodeTime(uo2);
+        encoder.encodeTime(uo3);
+        encoder.close();
+        byte[] bytes = this.os.toByteArray();
+        System.out.println("Time : [" + uo1 + "," + uo2 + "," + uo3 + "] -> " + Arrays.toString(bytes));
+        // byte field length 0
+        // Decale 1 bit to get sign
+        // unsigned 8 bit integer encoding
+        byte[] expectedBytes = new byte[]{0,0,16,80};
+        System.out.println("expected -> " + Arrays.toString(expectedBytes));
+        Assert.assertArrayEquals(bytes, expectedBytes);
+    }
+    
+    @Test
+    public void testNullableTime() throws MALException {
+        Time uo1 = new Time((short)0);
+        Time uo2 = new Time((short)16);
+        Time uo3 = new Time((short)80);
+        encoder.encodeNullableTime(uo1);
+        encoder.encodeNullableTime(uo2);
+        encoder.encodeNullableTime(uo3);
+        encoder.close();
+        byte[] bytes = this.os.toByteArray();
+        System.out.println("Nullable Time : [" + uo1 + "," + uo2 + "," + uo3 + "] -> " + Arrays.toString(bytes));
+        // byte field length 1
+        // byte field 0000 0111
+        // unsigned 8 bit integer encoding
+        byte[] expectedBytes = new byte[]{1,(byte)0x07,0,16,80};
+        System.out.println("expected -> " + Arrays.toString(expectedBytes));
+        Assert.assertArrayEquals(bytes, expectedBytes);
+    }
 }

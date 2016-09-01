@@ -1,10 +1,10 @@
 /* ----------------------------------------------------------------------------
- * Copyright (C) 2013      European Space Agency
+ * Copyright (C) 2016      European Space Agency
  *                         European Space Operations Centre
  *                         Darmstadt
  *                         Germany
  * ----------------------------------------------------------------------------
- * System                : CCSDS MO Split Binary encoder
+ * System                : CCSDS MO Split Binary encoder Test
  * ----------------------------------------------------------------------------
  * Licensed under the European Space Agency Public License, Version 2.0
  * You may not use this file except in compliance with the License.
@@ -43,6 +43,11 @@ import esa.mo.mal.encoder.gen.GENEncoder;
  */
 public class SplitBinaryEncoderTest {
 	
+	public static final String ANSI_RESET = "\u001B[0m";
+	public static final String ANSI_RED = "\u001B[31m";
+	public static final String ANSI_GREEN = "\u001B[32m";
+	public static final String ANSI_CYAN = "\u001B[36m";
+	
 	private ByteArrayOutputStream os;
 	private GENEncoder encoder;
 	
@@ -50,13 +55,13 @@ public class SplitBinaryEncoderTest {
 	public void setup() {
 		os = new ByteArrayOutputStream();
 		encoder = new SplitBinaryEncoder(os);
-		System.out.println("~~~ Start ~~~");
+		System.out.println(ANSI_CYAN + "~~~ Start ~~~" + ANSI_RESET);
 	}
 
     @After
     public void tearDown() throws IOException {
         //os.close();
-        System.out.println("~~~  End  ~~~");
+        System.out.println(ANSI_CYAN +  "~~~  End  ~~~\n" + ANSI_RESET);
     }
     
 	
@@ -84,8 +89,7 @@ public class SplitBinaryEncoderTest {
 		byte[] bytes = doEncodeString(string);
 		// Don't forget the presence flag length set to 0 (no presence flag)
 		byte[] expectedBytes = new byte[]{0,4,'T','e','s','t'};
-		System.out.println("expected -> " + Arrays.toString(expectedBytes));
-		Assert.assertArrayEquals(bytes, expectedBytes);
+		checkResult(bytes, expectedBytes);
 	}
 
 	@Test
@@ -97,8 +101,7 @@ public class SplitBinaryEncoderTest {
         // 4 : string length
         // Test : real string
         byte[] expectedBytes = new byte[]{1,1,4,'T','e','s','t'};
-        System.out.println("expected -> " + Arrays.toString(expectedBytes));
-        Assert.assertArrayEquals(bytes, expectedBytes);
+        checkResult(bytes, expectedBytes);
     }
 
     @Test
@@ -106,8 +109,7 @@ public class SplitBinaryEncoderTest {
         byte[] bytes = doEncodeNullableString(null);
         // Only the *empty* presence flag (bitfield's length = 1 + bitfield = 0)
         byte[] expectedBytes = new byte[]{1,0};
-        System.out.println("expected -> " + Arrays.toString(expectedBytes));
-        Assert.assertArrayEquals(bytes, expectedBytes);
+        checkResult(bytes, expectedBytes);
     }
     
     @Test
@@ -119,8 +121,7 @@ public class SplitBinaryEncoderTest {
         System.out.println("URI : [" + uri + "] -> " + Arrays.toString(bytes));
         byte[] expectedBytes = new byte[]{0,25,'t','c','p',':','/','/','1','2','7','.','0','0','1',':','5','4','2','1',
                                           '/','D','e','m','o'};
-        System.out.println("expected -> " + Arrays.toString(expectedBytes));
-        Assert.assertArrayEquals(bytes, expectedBytes);
+        checkResult(bytes, expectedBytes);
     }
     
     @Test
@@ -134,8 +135,7 @@ public class SplitBinaryEncoderTest {
         // byte field 1
         byte[] expectedBytes = new byte[]{1,1,25,'t','c','p',':','/','/','1','2','7','.','0','0','1',':','5','4','2','1',
                                           '/','D','e','m','o'};
-        System.out.println("expected -> " + Arrays.toString(expectedBytes));
-        Assert.assertArrayEquals(bytes, expectedBytes);
+        checkResult(bytes, expectedBytes);
     }
     
     @Test
@@ -148,8 +148,7 @@ public class SplitBinaryEncoderTest {
         byte[] bytes = this.os.toByteArray();
         System.out.println("Identifier : [" + id1 + "," + id2 + "] -> " + Arrays.toString(bytes));
         byte[] expectedBytes = new byte[]{0,3,'I','d','1',3,'I','d','2'};
-        System.out.println("expected -> " + Arrays.toString(expectedBytes));
-        Assert.assertArrayEquals(bytes, expectedBytes);
+        checkResult(bytes, expectedBytes);
     }
     
     @Test
@@ -164,8 +163,7 @@ public class SplitBinaryEncoderTest {
         // byte field length 1
         // byte field 2
         byte[] expectedBytes = new byte[]{1,2,3,'I','d','1',3,'I','d','2'};
-        System.out.println("expected -> " + Arrays.toString(expectedBytes));
-        Assert.assertArrayEquals(bytes, expectedBytes);
+        checkResult(bytes, expectedBytes);
     }
 
     @Test
@@ -179,8 +177,7 @@ public class SplitBinaryEncoderTest {
         System.out.println("Boolean : [" + imTrue + imFalse + "] -> " + Arrays.toString(bytes));
         // Boolean are encoded in the byte field
         byte[] expectedBytes = new byte[]{(byte)1,(byte)2};
-        System.out.println("expected -> " + Arrays.toString(expectedBytes));
-        Assert.assertArrayEquals(bytes, expectedBytes);
+        checkResult(bytes, expectedBytes);
     }
     
     @Test
@@ -195,8 +192,7 @@ public class SplitBinaryEncoderTest {
         // Boolean are encoded in the byte field
         // present, present, false, true -> on a byte 0000 1101 (0x0d)
         byte[] expectedBytes = new byte[]{(byte)1,(byte)0x0d};
-        System.out.println("expected -> " + Arrays.toString(expectedBytes));
-        Assert.assertArrayEquals(bytes, expectedBytes);
+        checkResult(bytes, expectedBytes);
     }
     
     @Test
@@ -213,8 +209,7 @@ public class SplitBinaryEncoderTest {
         // byte field length 0
         // switch left 1 bit to get sign 
         byte[] expectedBytes = new byte[]{0,0,32,(byte)0x0c,(byte)0xc0};
-        System.out.println("expected -> " + Arrays.toString(expectedBytes));
-        Assert.assertArrayEquals(bytes, expectedBytes);
+        checkResult(bytes, expectedBytes);
     }
     
     @Test
@@ -231,8 +226,7 @@ public class SplitBinaryEncoderTest {
         // byte field length 1
         // byte field 0000 0111
         byte[] expectedBytes = new byte[]{1,(byte)0x07,0,32,(byte)0x0c,(byte)0xc0};
-        System.out.println("expected -> " + Arrays.toString(expectedBytes));
-        Assert.assertArrayEquals(bytes, expectedBytes);
+        checkResult(bytes, expectedBytes);
     }
     
     @Test
@@ -250,8 +244,7 @@ public class SplitBinaryEncoderTest {
         // byte field 0
         // Decale 1 bit to get sign 
         byte[] expectedBytes = new byte[]{1,0,0,16,(byte)0x03,(byte)0x20};
-        System.out.println("expected -> " + Arrays.toString(expectedBytes));
-        Assert.assertArrayEquals(bytes, expectedBytes);
+        checkResult(bytes, expectedBytes);
     }
     
     @Test
@@ -268,8 +261,7 @@ public class SplitBinaryEncoderTest {
         // byte field length 1
         // byte field 0000 0111
         byte[] expectedBytes = new byte[]{1,(byte)0x07,0,16,(byte)0x03,(byte)0x20};
-        System.out.println("expected -> " + Arrays.toString(expectedBytes));
-        Assert.assertArrayEquals(bytes, expectedBytes);
+        checkResult(bytes, expectedBytes);
     }
     
     @Test
@@ -287,8 +279,7 @@ public class SplitBinaryEncoderTest {
         // Decale 1 bit to get sign
         // FIXME get the good encoding value
         byte[] expectedBytes = new byte[]{1,0,0,16,(byte)0x03,(byte)0x20};
-        System.out.println("expected -> " + Arrays.toString(expectedBytes));
-        Assert.assertArrayEquals(bytes, expectedBytes);
+        checkResult(bytes, expectedBytes);
     }
     
     @Test
@@ -306,8 +297,7 @@ public class SplitBinaryEncoderTest {
         // byte field 0
         // FIXME get the good encoding value
         byte[] expectedBytes = new byte[]{1,(byte)0x07,0,16,(byte)0x03,(byte)0x20};
-        System.out.println("expected -> " + Arrays.toString(expectedBytes));
-        Assert.assertArrayEquals(bytes, expectedBytes);
+        checkResult(bytes, expectedBytes);
     }
     
     @Test
@@ -325,8 +315,7 @@ public class SplitBinaryEncoderTest {
         // Decale 1 bit to get sign
         // FIXME get the good encoding value
         byte[] expectedBytes = new byte[]{0,0,16,(byte)0x03,(byte)0x20};
-        System.out.println("expected -> " + Arrays.toString(expectedBytes));
-        Assert.assertArrayEquals(bytes, expectedBytes);
+        checkResult(bytes, expectedBytes);
     }
     
     @Test
@@ -344,8 +333,7 @@ public class SplitBinaryEncoderTest {
         // byte field 0000 0111
         // FIXME get the good encoding value
         byte[] expectedBytes = new byte[]{1,(byte)0x07,0,16,(byte)0x03,(byte)0x20};
-        System.out.println("expected -> " + Arrays.toString(expectedBytes));
-        Assert.assertArrayEquals(bytes, expectedBytes);
+        checkResult(bytes, expectedBytes);
     }
     
     @Test
@@ -363,8 +351,7 @@ public class SplitBinaryEncoderTest {
         // Decale 1 bit to get sign
         // FIXME get the good encoding value
         byte[] expectedBytes = new byte[]{0,0,16,(byte)0x03,(byte)0x20};
-        System.out.println("expected -> " + Arrays.toString(expectedBytes));
-        Assert.assertArrayEquals(bytes, expectedBytes);
+        checkResult(bytes, expectedBytes);
     }
     
     @Test
@@ -382,8 +369,7 @@ public class SplitBinaryEncoderTest {
         // byte field 0000 0111
         // FIXME get the good encoding value
         byte[] expectedBytes = new byte[]{1,(byte)0x07,0,16,(byte)0x03,(byte)0x20};
-        System.out.println("expected -> " + Arrays.toString(expectedBytes));
-        Assert.assertArrayEquals(bytes, expectedBytes);
+        checkResult(bytes, expectedBytes);
     }
     
     @Test
@@ -401,8 +387,7 @@ public class SplitBinaryEncoderTest {
         // Decale 1 bit to get sign
         // FIXME get the good encoding value
         byte[] expectedBytes = new byte[]{0,0,16,(byte)0x03,(byte)0x20};
-        System.out.println("expected -> " + Arrays.toString(expectedBytes));
-        Assert.assertArrayEquals(bytes, expectedBytes);
+        checkResult(bytes, expectedBytes);
     }
     
     @Test
@@ -420,8 +405,7 @@ public class SplitBinaryEncoderTest {
         // byte field 0000 0111
         // FIXME get the good encoding value
         byte[] expectedBytes = new byte[]{1,(byte)0x07,0,16,(byte)0x03,(byte)0x20};
-        System.out.println("expected -> " + Arrays.toString(expectedBytes));
-        Assert.assertArrayEquals(bytes, expectedBytes);
+        checkResult(bytes, expectedBytes);
     }
     
     @Test
@@ -439,8 +423,7 @@ public class SplitBinaryEncoderTest {
         // Decale 1 bit to get sign
         // unsigned 8 bit integer encoding
         byte[] expectedBytes = new byte[]{0,0,16,80};
-        System.out.println("expected -> " + Arrays.toString(expectedBytes));
-        Assert.assertArrayEquals(bytes, expectedBytes);
+        checkResult(bytes, expectedBytes);
     }
     
     @Test
@@ -458,8 +441,7 @@ public class SplitBinaryEncoderTest {
         // byte field 0000 0111
         // unsigned 8 bit integer encoding
         byte[] expectedBytes = new byte[]{1,(byte)0x07,0,16,80};
-        System.out.println("expected -> " + Arrays.toString(expectedBytes));
-        Assert.assertArrayEquals(bytes, expectedBytes);
+        checkResult(bytes, expectedBytes);
     }
     
     @Test
@@ -477,8 +459,7 @@ public class SplitBinaryEncoderTest {
         // Decale 1 bit to get sign
         // unsigned 8 bit integer encoding
         byte[] expectedBytes = new byte[]{0,0,16,80};
-        System.out.println("expected -> " + Arrays.toString(expectedBytes));
-        Assert.assertArrayEquals(bytes, expectedBytes);
+        checkResult(bytes, expectedBytes);
     }
     
     @Test
@@ -496,7 +477,14 @@ public class SplitBinaryEncoderTest {
         // byte field 0000 0111
         // unsigned 8 bit integer encoding
         byte[] expectedBytes = new byte[]{1,(byte)0x07,0,16,80};
-        System.out.println("expected -> " + Arrays.toString(expectedBytes));
-        Assert.assertArrayEquals(bytes, expectedBytes);
+        checkResult(bytes, expectedBytes);
+    }
+    
+    private void checkResult(byte[] encoded, byte[] expected)
+    {
+    	System.out.println("expected -> " + Arrays.toString(expected));
+    	String result = (Arrays.equals(encoded, expected)) ? ANSI_GREEN + "success" + ANSI_RESET : ANSI_RED + "failed" + ANSI_RESET;
+    	System.out.println(result);
+        Assert.assertArrayEquals(encoded, expected);
     }
 }

@@ -119,7 +119,7 @@ public class SplitBinaryEncoderTest {
         encoder.close();
         byte[] bytes = this.os.toByteArray();
         System.out.println("URI : [" + uri + "] -> " + Arrays.toString(bytes));
-        byte[] expectedBytes = new byte[]{0,25,'t','c','p',':','/','/','1','2','7','.','0','0','1',':','5','4','2','1',
+        byte[] expectedBytes = new byte[]{0,25,'t','c','p',':','/','/','1','2','7','.','0','.','0','.','1',':','5','4','2','1',
                                           '/','D','e','m','o'};
         checkResult(bytes, expectedBytes);
     }
@@ -133,7 +133,7 @@ public class SplitBinaryEncoderTest {
         System.out.println("Nullable URI : [" + uri + "] -> " + Arrays.toString(bytes));
         // byte field length 1
         // byte field 1
-        byte[] expectedBytes = new byte[]{1,1,25,'t','c','p',':','/','/','1','2','7','.','0','0','1',':','5','4','2','1',
+        byte[] expectedBytes = new byte[]{1,1,25,'t','c','p',':','/','/','1','2','7','.','0','.','0','.','1',':','5','4','2','1',
                                           '/','D','e','m','o'};
         checkResult(bytes, expectedBytes);
     }
@@ -161,8 +161,8 @@ public class SplitBinaryEncoderTest {
         byte[] bytes = this.os.toByteArray();
         System.out.println("Nullable Identifier : [" + id1 + "," + id2 + "] -> " + Arrays.toString(bytes));
         // byte field length 1
-        // byte field 2
-        byte[] expectedBytes = new byte[]{1,2,3,'I','d','1',3,'I','d','2'};
+        // byte field 0000 0011 (3)
+        byte[] expectedBytes = new byte[]{1,3,3,'I','d','1',3,'I','d','2'};
         checkResult(bytes, expectedBytes);
     }
 
@@ -174,7 +174,7 @@ public class SplitBinaryEncoderTest {
         encoder.encodeBoolean(imTrue);
         encoder.close();
         byte[] bytes = this.os.toByteArray();
-        System.out.println("Boolean : [" + imTrue + imFalse + "] -> " + Arrays.toString(bytes));
+        System.out.println("Boolean : [" + imFalse + imTrue + "] -> " + Arrays.toString(bytes));
         // Boolean are encoded in the byte field
         byte[] expectedBytes = new byte[]{(byte)1,(byte)2};
         checkResult(bytes, expectedBytes);
@@ -188,7 +188,7 @@ public class SplitBinaryEncoderTest {
         encoder.encodeNullableBoolean(imTrue);
         encoder.close();
         byte[] bytes = this.os.toByteArray();
-        System.out.println("Nullable Boolean : [" + imTrue + imFalse + "] -> " + Arrays.toString(bytes));
+        System.out.println("Nullable Boolean : [" + imFalse + imTrue + "] -> " + Arrays.toString(bytes));
         // Boolean are encoded in the byte field
         // present, present, false, true -> on a byte 0000 1101 (0x0d)
         byte[] expectedBytes = new byte[]{(byte)1,(byte)0x0d};
@@ -207,8 +207,11 @@ public class SplitBinaryEncoderTest {
         byte[] bytes = this.os.toByteArray();
         System.out.println("Integer : [" + i1 + "," + i2 + "," + i3 + "] -> " + Arrays.toString(bytes));
         // byte field length 0
-        // switch left 1 bit to get sign 
-        byte[] expectedBytes = new byte[]{0,0,32,(byte)0x0c,(byte)0xc0};
+        // switch left 1 bit to get sign
+        // 0 = 00000000 = 0x00
+        // 16 = 00010000 sign => 00100000 = 0x20
+        // 800 = 00000011 00100000 sign + split => 11000000 00001100 = 0xc0 0x0c 
+        byte[] expectedBytes = new byte[]{0,(byte)0x00,(byte)0x20,(byte)0xc0,(byte)0x0c};
         checkResult(bytes, expectedBytes);
     }
     
@@ -225,7 +228,10 @@ public class SplitBinaryEncoderTest {
         System.out.println("Nullable Integer : [" + i1 + "," + i2 + "," + i3 + "] -> " + Arrays.toString(bytes));
         // byte field length 1
         // byte field 0000 0111
-        byte[] expectedBytes = new byte[]{1,(byte)0x07,0,32,(byte)0x0c,(byte)0xc0};
+        // 0 = 00000000 = 0x00
+        // 16 = 00010000 sign => 00100000 = 0x20
+        // 800 = 00000011 00100000 sign + split => 11000000 00001100 = 0xc0 0x0c
+        byte[] expectedBytes = new byte[]{1,(byte)0x07,(byte)0x00,(byte)0x20,(byte)0xc0,(byte)0x0c};
         checkResult(bytes, expectedBytes);
     }
     
@@ -240,10 +246,12 @@ public class SplitBinaryEncoderTest {
         encoder.close();
         byte[] bytes = this.os.toByteArray();
         System.out.println("UInteger : [" + ui1 + "," + ui2 + "," + ui3 + "] -> " + Arrays.toString(bytes));
-        // byte field length 1
-        // byte field 0
-        // Decale 1 bit to get sign 
-        byte[] expectedBytes = new byte[]{1,0,0,16,(byte)0x03,(byte)0x20};
+        // byte field length 0
+        // do not take care of the sign
+        // 0 = 00000000 = 0x00
+        // 16 = 00010000 = 0x10
+        // 800 = 00000011 00100000 split => 101000000 00000110 = 0xa0 0x06  
+        byte[] expectedBytes = new byte[]{0,(byte)0x00,(byte)0x10,(byte)0xa0,(byte)0x06};
         checkResult(bytes, expectedBytes);
     }
     
@@ -259,8 +267,12 @@ public class SplitBinaryEncoderTest {
         byte[] bytes = this.os.toByteArray();
         System.out.println("Nullable UInteger : [" + ui1 + "," + ui2 + "," + ui3 + "] -> " + Arrays.toString(bytes));
         // byte field length 1
-        // byte field 0000 0111
-        byte[] expectedBytes = new byte[]{1,(byte)0x07,0,16,(byte)0x03,(byte)0x20};
+        // byte field 0000 0111 = 0x07 (all values present)
+        // do not take care of the sign
+        // 0 = 00000000 = 0x00
+        // 16 = 00010000 = 0x10
+        // 800 = 00000011 00100000 split => 101000000 00000110 = 0xa0 0x06  
+        byte[] expectedBytes = new byte[]{1,(byte)0x07,(byte)0x00,(byte)0x10,(byte)0xa0,(byte)0x06};
         checkResult(bytes, expectedBytes);
     }
     
@@ -276,9 +288,17 @@ public class SplitBinaryEncoderTest {
         byte[] bytes = this.os.toByteArray();
         System.out.println("Double : [" + d1 + "," + d2 + "," + d3 + "] -> " + Arrays.toString(bytes));
         // byte field length 0
-        // Decale 1 bit to get sign
-        // FIXME get the good encoding value
-        byte[] expectedBytes = new byte[]{1,0,0,16,(byte)0x03,(byte)0x20};
+        // 0 = 0x00
+        // 16 = 01000000 00110000 00000000 00000000 00000000 00000000 00000000 00000000 
+        // split + sign = 10000000 10000000 10000000 10000000 10000000 10000000 10000000 10110000 10000000 00000001 
+        // = 0x80 0x80 0x80 0x80 0x80 0x80 0x80 0xb0 0x80 0x01
+        // 800 = 01000000 10001001 00000000 00000000 00000000 00000000 00000000 00000000
+        // split + sign = 10000000 10000000 10000000 10000000 10000000 10000000 10000000 10001001 10000001 00000001
+        // = 0x80 0x80 0x80 0x80 0x80 0x80 0x80 0x89 0x81 0x01
+
+        byte[] expectedBytes = new byte[]{0,(byte)0x00,
+        		(byte)0x80,(byte)0x80,(byte)0x80,(byte)0x80,(byte)0x80,(byte)0x80,(byte)0x80,(byte)0xb0,(byte)0x80,(byte)0x01,
+        		(byte)0x80,(byte)0x80,(byte)0x80,(byte)0x80,(byte)0x80,(byte)0x80,(byte)0x80,(byte)0x89,(byte)0x81,(byte)0x01};
         checkResult(bytes, expectedBytes);
     }
     
@@ -294,9 +314,18 @@ public class SplitBinaryEncoderTest {
         byte[] bytes = this.os.toByteArray();
         System.out.println("Nullable Double : [" + d1 + "," + d2 + "," + d3 + "] -> " + Arrays.toString(bytes));
         // byte field length 1
-        // byte field 0
-        // FIXME get the good encoding value
-        byte[] expectedBytes = new byte[]{1,(byte)0x07,0,16,(byte)0x03,(byte)0x20};
+        // byte field 0000 0111 = 0x07
+        // 0 = 0x00
+        // 16 = 01000000 00110000 00000000 00000000 00000000 00000000 00000000 00000000 
+        // split + sign = 10000000 10000000 10000000 10000000 10000000 10000000 10000000 11000000 01000001 
+        // = 0x80 0x80 0x80 0x80 0x80 0x80 0x80 0xc0 0x41
+        // 800 = 01000000 00110000 00000000 00000000 00000000 00000000 00000000 00000000 
+        // split + sign = 10000000 10000000 10000000 10000000 10000000 10000000 10000000 10100100 01000100 
+        // = 0x80 0x80 0x80 0x80 0x80 0x80 0x80 0xa4 0x44
+        // 8000 8080 8080 8080 83b0 0001 8080 8080 8080 80c8 8801
+        byte[] expectedBytes = new byte[]{1,(byte)0x07,(byte)0x00,
+        		(byte)0x80,(byte)0x80,(byte)0x80,(byte)0x80,(byte)0x80,(byte)0x80,(byte)0x80,(byte)0xb0,(byte)0x80,(byte)0x01,
+        		(byte)0x80,(byte)0x80,(byte)0x80,(byte)0x80,(byte)0x80,(byte)0x80,(byte)0x80,(byte)0x89,(byte)0x81,(byte)0x01};
         checkResult(bytes, expectedBytes);
     }
     
@@ -313,8 +342,10 @@ public class SplitBinaryEncoderTest {
         System.out.println("Long : [" + l1 + "," + l2 + "," + l3 + "] -> " + Arrays.toString(bytes));
         // byte field length 0
         // Decale 1 bit to get sign
-        // FIXME get the good encoding value
-        byte[] expectedBytes = new byte[]{0,0,16,(byte)0x03,(byte)0x20};
+        // 0 = 00000000 = 0x00
+        // 16 = 00010000 sign => 00100000 = 0x20
+        // 800 = 00000011 00100000 sign + split => 11000000 00001100 = 0xc0 0x0c  
+        byte[] expectedBytes = new byte[]{0,(byte)0x00,(byte)0x20,(byte)0xc0,(byte)0x0c};
         checkResult(bytes, expectedBytes);
     }
     
@@ -330,9 +361,11 @@ public class SplitBinaryEncoderTest {
         byte[] bytes = this.os.toByteArray();
         System.out.println("Nullable Long : [" + l1 + "," + l2 + "," + l3 + "] -> " + Arrays.toString(bytes));
         // byte field length 1
-        // byte field 0000 0111
-        // FIXME get the good encoding value
-        byte[] expectedBytes = new byte[]{1,(byte)0x07,0,16,(byte)0x03,(byte)0x20};
+        // byte field 0000 0111 = 0x07
+        // 0 = 00000000 = 0x00
+        // 16 = 00010000 sign => 00100000 = 0x20
+        // 800 = 00000011 00100000 sign + split => 11000000 00001100 = 0xc0 0x0c 
+        byte[] expectedBytes = new byte[]{1,(byte)0x07,(byte)0x00,(byte)0x20,(byte)0xc0,(byte)0x0c};
         checkResult(bytes, expectedBytes);
     }
     
@@ -349,8 +382,14 @@ public class SplitBinaryEncoderTest {
         System.out.println("Float : [" + f1 + "," + f2 + "," + f3 + "] -> " + Arrays.toString(bytes));
         // byte field length 0
         // Decale 1 bit to get sign
-        // FIXME get the good encoding value
-        byte[] expectedBytes = new byte[]{0,0,16,(byte)0x03,(byte)0x20};
+        // 0 = 0x00
+        // 16 = 01000001 10000000 00000000 00000000 
+        // split + sign = 10000000 10000000 10000000 10011000 00001000 = 0x80 0x80 0x80 0x98 0x08
+        // 800 = 01000100 01001000 00000000 00000000
+        // split + sign = 10000000 10000000 11000000 11000100 00001000 = 0x80 0x80 0xc0 0xc4 0x08
+        byte[] expectedBytes = new byte[]{0,(byte)0x00,
+        		(byte)0x80,(byte)0x80,(byte)0x80,(byte)0x98,(byte)0x08,
+        		(byte)0x80,(byte)0x80,(byte)0xc0,(byte)0xc4,(byte)0x08};
         checkResult(bytes, expectedBytes);
     }
     
@@ -366,9 +405,15 @@ public class SplitBinaryEncoderTest {
         byte[] bytes = this.os.toByteArray();
         System.out.println("Nullable Float : [" + f1 + "," + f2 + "," + f3 + "] -> " + Arrays.toString(bytes));
         // byte field length 1
-        // byte field 0000 0111
-        // FIXME get the good encoding value
-        byte[] expectedBytes = new byte[]{1,(byte)0x07,0,16,(byte)0x03,(byte)0x20};
+        // byte field 0000 0111 = 0x07
+        // 0 = 0x00
+        // 16 = 01000001 10000000 00000000 00000000 
+        // split + sign = 10000000 10000000 10000000 10011000 00001000 = 0x80 0x80 0x80 0x98 0x08
+        // 800 = 01000100 01001000 00000000 00000000
+        // split + sign = 10000000 10000000 11000000 11000100 00001000 = 0x80 0x80 0xc0 0xc4 0x08
+        byte[] expectedBytes = new byte[]{1,(byte)0x07,(byte)0x00,
+        		(byte)0x80,(byte)0x80,(byte)0x80,(byte)0x98,(byte)0x08,
+        		(byte)0x80,(byte)0x80,(byte)0xc0,(byte)0xc4,(byte)0x08};
         checkResult(bytes, expectedBytes);
     }
     
@@ -384,9 +429,11 @@ public class SplitBinaryEncoderTest {
         byte[] bytes = this.os.toByteArray();
         System.out.println("Short : [" + s1 + "," + s2 + "," + s3 + "] -> " + Arrays.toString(bytes));
         // byte field length 0
-        // Decale 1 bit to get sign
-        // FIXME get the good encoding value
-        byte[] expectedBytes = new byte[]{0,0,16,(byte)0x03,(byte)0x20};
+        // switch left 1 bit to get sign
+        // 0 = 00000000 = 0x00
+        // 16 = 00010000 sign => 00100000 = 0x20
+        // 800 = 00000011 00100000 sign + split => 11000000 00001100 = 0xc0 0x0c
+        byte[] expectedBytes = new byte[]{0,(byte)0x00,(byte)0x20,(byte)0xc0,(byte)0x0c};
         checkResult(bytes, expectedBytes);
     }
     
@@ -402,9 +449,11 @@ public class SplitBinaryEncoderTest {
         byte[] bytes = this.os.toByteArray();
         System.out.println("Nullable Short : [" + s1 + "," + s2 + "," + s3 + "] -> " + Arrays.toString(bytes));
         // byte field length 1
-        // byte field 0000 0111
-        // FIXME get the good encoding value
-        byte[] expectedBytes = new byte[]{1,(byte)0x07,0,16,(byte)0x03,(byte)0x20};
+        // byte field 0000 0111 = 0x07
+        // 0 = 00000000 = 0x00
+        // 16 = 00010000 sign => 00100000 = 0x20
+        // 800 = 00000011 00100000 sign + split => 11000000 00001100 = 0xc0 0x0c
+        byte[] expectedBytes = new byte[]{1,(byte)0x07,(byte)0x00,(byte)0x20,(byte)0xc0,(byte)0x0c};
         checkResult(bytes, expectedBytes);
     }
     

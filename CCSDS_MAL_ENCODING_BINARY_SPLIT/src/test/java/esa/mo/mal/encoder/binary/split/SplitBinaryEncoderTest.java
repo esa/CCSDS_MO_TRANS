@@ -47,6 +47,7 @@ public class SplitBinaryEncoderTest {
 	public static final String ANSI_RED = "\u001B[31m";
 	public static final String ANSI_GREEN = "\u001B[32m";
 	public static final String ANSI_CYAN = "\u001B[36m";
+	public static final String ANSI_YELLOW = "\u001B[33m";
 	
 	private ByteArrayOutputStream os;
 	private GENEncoder encoder;
@@ -70,7 +71,7 @@ public class SplitBinaryEncoderTest {
 	    encoder.encodeString(string);
         encoder.close();
         byte[] bytes = os.toByteArray();
-        System.out.println("String : [" + string + "] -> " + Arrays.toString(bytes));
+        System.out.println(ANSI_YELLOW + "String : [" + string + "]" + ANSI_RESET);
         return bytes;
     }
 	
@@ -79,7 +80,7 @@ public class SplitBinaryEncoderTest {
         encoder.encodeNullableString(string);
         encoder.close();
         byte[] bytes = os.toByteArray();
-        System.out.println("Nullable string : [" + string + "] -> " + Arrays.toString(bytes));
+        System.out.println(ANSI_YELLOW + "Nullable string : [" + string + "]" + ANSI_RESET);
         return bytes;
     }
 
@@ -118,7 +119,7 @@ public class SplitBinaryEncoderTest {
         encoder.encodeURI(uri);
         encoder.close();
         byte[] bytes = this.os.toByteArray();
-        System.out.println("URI : [" + uri + "] -> " + Arrays.toString(bytes));
+        System.out.println(ANSI_YELLOW + "URI : [" + uri + "]" + ANSI_RESET);
         byte[] expectedBytes = new byte[]{0,25,'t','c','p',':','/','/','1','2','7','.','0','.','0','.','1',':','5','4','2','1',
                                           '/','D','e','m','o'};
         checkResult(bytes, expectedBytes);
@@ -130,7 +131,7 @@ public class SplitBinaryEncoderTest {
         encoder.encodeNullableURI(uri);
         encoder.close();
         byte[] bytes = this.os.toByteArray();
-        System.out.println("Nullable URI : [" + uri + "] -> " + Arrays.toString(bytes));
+        System.out.println(ANSI_YELLOW + "Nullable URI : [" + uri + "]" + ANSI_RESET);
         // byte field length 1
         // byte field 1
         byte[] expectedBytes = new byte[]{1,1,25,'t','c','p',':','/','/','1','2','7','.','0','.','0','.','1',':','5','4','2','1',
@@ -146,7 +147,7 @@ public class SplitBinaryEncoderTest {
         encoder.encodeIdentifier(id2);
         encoder.close();
         byte[] bytes = this.os.toByteArray();
-        System.out.println("Identifier : [" + id1 + "," + id2 + "] -> " + Arrays.toString(bytes));
+        System.out.println(ANSI_YELLOW + "Identifier : [" + id1 + "," + id2 + "]" + ANSI_RESET);
         byte[] expectedBytes = new byte[]{0,3,'I','d','1',3,'I','d','2'};
         checkResult(bytes, expectedBytes);
     }
@@ -159,7 +160,7 @@ public class SplitBinaryEncoderTest {
         encoder.encodeNullableIdentifier(id2);
         encoder.close();
         byte[] bytes = this.os.toByteArray();
-        System.out.println("Nullable Identifier : [" + id1 + "," + id2 + "] -> " + Arrays.toString(bytes));
+        System.out.println(ANSI_YELLOW + "Nullable Identifier : [" + id1 + "," + id2 + "]" + ANSI_RESET);
         // byte field length 1
         // byte field 0000 0011 (3)
         byte[] expectedBytes = new byte[]{1,3,3,'I','d','1',3,'I','d','2'};
@@ -174,7 +175,7 @@ public class SplitBinaryEncoderTest {
         encoder.encodeBoolean(imTrue);
         encoder.close();
         byte[] bytes = this.os.toByteArray();
-        System.out.println("Boolean : [" + imFalse + imTrue + "] -> " + Arrays.toString(bytes));
+        System.out.println(ANSI_YELLOW + "Boolean : [" + imFalse + imTrue + "]" + ANSI_RESET);
         // Boolean are encoded in the byte field
         byte[] expectedBytes = new byte[]{(byte)1,(byte)2};
         checkResult(bytes, expectedBytes);
@@ -188,7 +189,7 @@ public class SplitBinaryEncoderTest {
         encoder.encodeNullableBoolean(imTrue);
         encoder.close();
         byte[] bytes = this.os.toByteArray();
-        System.out.println("Nullable Boolean : [" + imFalse + imTrue + "] -> " + Arrays.toString(bytes));
+        System.out.println(ANSI_YELLOW + "Nullable Boolean : [" + imFalse + imTrue + "]" + ANSI_RESET);
         // Boolean are encoded in the byte field
         // present, present, false, true -> on a byte 0000 1101 (0x0d)
         byte[] expectedBytes = new byte[]{(byte)1,(byte)0x0d};
@@ -205,7 +206,7 @@ public class SplitBinaryEncoderTest {
         encoder.encodeInteger(i3);
         encoder.close();
         byte[] bytes = this.os.toByteArray();
-        System.out.println("Integer : [" + i1 + "," + i2 + "," + i3 + "] -> " + Arrays.toString(bytes));
+        System.out.println(ANSI_YELLOW + "Integer : [" + i1 + "," + i2 + "," + i3 + "]" + ANSI_RESET);
         // byte field length 0
         // switch left 1 bit to get sign
         // 0 = 00000000 = 0x00
@@ -225,7 +226,7 @@ public class SplitBinaryEncoderTest {
         encoder.encodeNullableInteger(i3);
         encoder.close();
         byte[] bytes = this.os.toByteArray();
-        System.out.println("Nullable Integer : [" + i1 + "," + i2 + "," + i3 + "] -> " + Arrays.toString(bytes));
+        System.out.println(ANSI_YELLOW + "Nullable Integer : [" + i1 + "," + i2 + "," + i3 + "]" + ANSI_RESET);
         // byte field length 1
         // byte field 0000 0111
         // 0 = 00000000 = 0x00
@@ -245,7 +246,7 @@ public class SplitBinaryEncoderTest {
         encoder.encodeUInteger(ui3);
         encoder.close();
         byte[] bytes = this.os.toByteArray();
-        System.out.println("UInteger : [" + ui1 + "," + ui2 + "," + ui3 + "] -> " + Arrays.toString(bytes));
+        System.out.println(ANSI_YELLOW + "UInteger : [" + ui1 + "," + ui2 + "," + ui3 + "]" + ANSI_RESET);
         // byte field length 0
         // do not take care of the sign
         // 0 = 00000000 = 0x00
@@ -265,7 +266,7 @@ public class SplitBinaryEncoderTest {
         encoder.encodeNullableUInteger(ui3);
         encoder.close();
         byte[] bytes = this.os.toByteArray();
-        System.out.println("Nullable UInteger : [" + ui1 + "," + ui2 + "," + ui3 + "] -> " + Arrays.toString(bytes));
+        System.out.println(ANSI_YELLOW + "Nullable UInteger : [" + ui1 + "," + ui2 + "," + ui3 + "]" + ANSI_RESET);
         // byte field length 1
         // byte field 0000 0111 = 0x07 (all values present)
         // do not take care of the sign
@@ -286,7 +287,7 @@ public class SplitBinaryEncoderTest {
         encoder.encodeDouble(d3);
         encoder.close();
         byte[] bytes = this.os.toByteArray();
-        System.out.println("Double : [" + d1 + "," + d2 + "," + d3 + "] -> " + Arrays.toString(bytes));
+        System.out.println(ANSI_YELLOW + "Double : [" + d1 + "," + d2 + "," + d3 + "]" + ANSI_RESET);
         // byte field length 0
         // 0 = 0x00
         // 16 = 01000000 00110000 00000000 00000000 00000000 00000000 00000000 00000000 
@@ -312,7 +313,7 @@ public class SplitBinaryEncoderTest {
         encoder.encodeNullableDouble(d3);
         encoder.close();
         byte[] bytes = this.os.toByteArray();
-        System.out.println("Nullable Double : [" + d1 + "," + d2 + "," + d3 + "] -> " + Arrays.toString(bytes));
+        System.out.println(ANSI_YELLOW + "Nullable Double : [" + d1 + "," + d2 + "," + d3 + "]" + ANSI_RESET);
         // byte field length 1
         // byte field 0000 0111 = 0x07
         // 0 = 0x00
@@ -339,7 +340,7 @@ public class SplitBinaryEncoderTest {
         encoder.encodeLong(l3);
         encoder.close();
         byte[] bytes = this.os.toByteArray();
-        System.out.println("Long : [" + l1 + "," + l2 + "," + l3 + "] -> " + Arrays.toString(bytes));
+        System.out.println(ANSI_YELLOW + "Long : [" + l1 + "," + l2 + "," + l3 + "]" + ANSI_RESET);
         // byte field length 0
         // Decale 1 bit to get sign
         // 0 = 00000000 = 0x00
@@ -359,7 +360,7 @@ public class SplitBinaryEncoderTest {
         encoder.encodeNullableLong(l3);
         encoder.close();
         byte[] bytes = this.os.toByteArray();
-        System.out.println("Nullable Long : [" + l1 + "," + l2 + "," + l3 + "] -> " + Arrays.toString(bytes));
+        System.out.println(ANSI_YELLOW + "Nullable Long : [" + l1 + "," + l2 + "," + l3 + "]" + ANSI_RESET);
         // byte field length 1
         // byte field 0000 0111 = 0x07
         // 0 = 00000000 = 0x00
@@ -379,7 +380,7 @@ public class SplitBinaryEncoderTest {
         encoder.encodeFloat(f3);
         encoder.close();
         byte[] bytes = this.os.toByteArray();
-        System.out.println("Float : [" + f1 + "," + f2 + "," + f3 + "] -> " + Arrays.toString(bytes));
+        System.out.println(ANSI_YELLOW + "Float : [" + f1 + "," + f2 + "," + f3 + "]" + ANSI_RESET);
         // byte field length 0
         // Decale 1 bit to get sign
         // 0 = 0x00
@@ -403,7 +404,7 @@ public class SplitBinaryEncoderTest {
         encoder.encodeNullableFloat(f3);
         encoder.close();
         byte[] bytes = this.os.toByteArray();
-        System.out.println("Nullable Float : [" + f1 + "," + f2 + "," + f3 + "] -> " + Arrays.toString(bytes));
+        System.out.println(ANSI_YELLOW + "Nullable Float : [" + f1 + "," + f2 + "," + f3 + "]" + ANSI_RESET);
         // byte field length 1
         // byte field 0000 0111 = 0x07
         // 0 = 0x00
@@ -427,7 +428,7 @@ public class SplitBinaryEncoderTest {
         encoder.encodeShort(s3);
         encoder.close();
         byte[] bytes = this.os.toByteArray();
-        System.out.println("Short : [" + s1 + "," + s2 + "," + s3 + "] -> " + Arrays.toString(bytes));
+        System.out.println(ANSI_YELLOW + "Short : [" + s1 + "," + s2 + "," + s3 + "]" + ANSI_RESET);
         // byte field length 0
         // switch left 1 bit to get sign
         // 0 = 00000000 = 0x00
@@ -447,7 +448,7 @@ public class SplitBinaryEncoderTest {
         encoder.encodeNullableShort(s3);
         encoder.close();
         byte[] bytes = this.os.toByteArray();
-        System.out.println("Nullable Short : [" + s1 + "," + s2 + "," + s3 + "] -> " + Arrays.toString(bytes));
+        System.out.println(ANSI_YELLOW + "Nullable Short : [" + s1 + "," + s2 + "," + s3 + "]" + ANSI_RESET);
         // byte field length 1
         // byte field 0000 0111 = 0x07
         // 0 = 00000000 = 0x00
@@ -467,7 +468,7 @@ public class SplitBinaryEncoderTest {
         encoder.encodeUOctet(uo3);
         encoder.close();
         byte[] bytes = this.os.toByteArray();
-        System.out.println("UOctet : [" + uo1 + "," + uo2 + "," + uo3 + "] -> " + Arrays.toString(bytes));
+        System.out.println(ANSI_YELLOW + "UOctet : [" + uo1 + "," + uo2 + "," + uo3 + "]" + ANSI_RESET);
         // byte field length 0
         // Decale 1 bit to get sign
         // unsigned 8 bit integer encoding
@@ -485,7 +486,7 @@ public class SplitBinaryEncoderTest {
         encoder.encodeNullableUOctet(uo3);
         encoder.close();
         byte[] bytes = this.os.toByteArray();
-        System.out.println("Nullable UOctet : [" + uo1 + "," + uo2 + "," + uo3 + "] -> " + Arrays.toString(bytes));
+        System.out.println(ANSI_YELLOW + "Nullable UOctet : [" + uo1 + "," + uo2 + "," + uo3 + "]" + ANSI_RESET);
         // byte field length 1
         // byte field 0000 0111
         // unsigned 8 bit integer encoding
@@ -503,7 +504,7 @@ public class SplitBinaryEncoderTest {
         encoder.encodeTime(uo3);
         encoder.close();
         byte[] bytes = this.os.toByteArray();
-        System.out.println("Time : [" + uo1 + "," + uo2 + "," + uo3 + "] -> " + Arrays.toString(bytes));
+        System.out.println(ANSI_YELLOW + "Time : [" + uo1 + "," + uo2 + "," + uo3 + "]" + ANSI_RESET);
         // byte field length 0
         // Decale 1 bit to get sign
         // unsigned 8 bit integer encoding
@@ -521,7 +522,7 @@ public class SplitBinaryEncoderTest {
         encoder.encodeNullableTime(uo3);
         encoder.close();
         byte[] bytes = this.os.toByteArray();
-        System.out.println("Nullable Time : [" + uo1 + "," + uo2 + "," + uo3 + "] -> " + Arrays.toString(bytes));
+        System.out.println(ANSI_YELLOW + "Nullable Time : [" + uo1 + "," + uo2 + "," + uo3 + "]"+ ANSI_RESET);
         // byte field length 1
         // byte field 0000 0111
         // unsigned 8 bit integer encoding
@@ -531,6 +532,7 @@ public class SplitBinaryEncoderTest {
     
     private void checkResult(byte[] encoded, byte[] expected)
     {
+    	System.out.println("encoded  -> " + Arrays.toString(encoded));
     	System.out.println("expected -> " + Arrays.toString(expected));
     	String result = (Arrays.equals(encoded, expected)) ? ANSI_GREEN + "success" + ANSI_RESET : ANSI_RED + "failed" + ANSI_RESET;
     	System.out.println(result);

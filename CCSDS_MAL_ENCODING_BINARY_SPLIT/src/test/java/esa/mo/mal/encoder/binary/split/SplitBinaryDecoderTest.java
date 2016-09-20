@@ -106,20 +106,23 @@ public class SplitBinaryDecoderTest {
     
     @Test
     public void testNullableInteger() throws MALException {
-    	// byte field 1 + presence flag 0000 0111 + 0 + 16 + 800
-    	byte[] testBytes = new byte[]{1,(byte)0x07,(byte)0x00,(byte)0x20,(byte)0xc0,(byte)0x0c};
+    	// byte field 1 + presence flag 0000 1101 + 0 + null + 16 + 800
+    	byte[] testBytes = new byte[]{1,(byte)0x0d,(byte)0x00,(byte)0x20,(byte)0xc0,(byte)0x0c};
 		SplitBinaryDecoder decoder = new SplitBinaryDecoder(testBytes);
 		Integer i1 = decoder.decodeNullableInteger();
 		Integer i2 = decoder.decodeNullableInteger();
 		Integer i3 = decoder.decodeNullableInteger();
+		Integer i4 = decoder.decodeNullableInteger();
 		Integer e1 = 0;
-		Integer e2 = 16;
-		Integer e3 = 800;
+		Integer e2 = null;
+		Integer e3 = 16;
+		Integer e4 = 800;
 		System.out.println(ANSI_YELLOW + "Nullable Integer"+ ANSI_RESET);
-		System.out.println("Decoded  -> [" + i1 + "," + i2 + "," + i3 + "]\nExpected -> [" + e1 + "," + e2 + "," + e3 + "]");
+		System.out.println("Decoded  -> [" + i1 + "," + i2 + "," + i3 + "," + i4 + "]\nExpected -> [" + e1 + "," + e2 + "," + e3 + "," + e4 + "]");
 		Assert.assertEquals(i1, e1);
 		Assert.assertEquals(i2, e2);
 		Assert.assertEquals(i3, e3);
+		Assert.assertEquals(i4, e4);
 	}
     
     @Test
@@ -144,22 +147,25 @@ public class SplitBinaryDecoderTest {
     
     @Test
     public void testNullableFloat() throws MALException {
-    	// byte field 1 + presence flag 0000 0111 + 0 + 16 + 800
-    	byte[] testBytes = new byte[]{1,(byte)0x07,(byte)0x00,
+    	// byte field 1 + presence flag 0000 1011 + 0 + 16 + null + 800
+    	byte[] testBytes = new byte[]{1,(byte)0x0b,(byte)0x00,
         		(byte)0x80,(byte)0x80,(byte)0x80,(byte)0x98,(byte)0x08,
         		(byte)0x80,(byte)0x80,(byte)0xc0,(byte)0xc4,(byte)0x08};
 		SplitBinaryDecoder decoder = new SplitBinaryDecoder(testBytes);
 		Float f1 = decoder.decodeNullableFloat();
 		Float f2 = decoder.decodeNullableFloat();
 		Float f3 = decoder.decodeNullableFloat();
+		Float f4 = decoder.decodeNullableFloat();
 		Float e1 = 0.0f;
 		Float e2 = 16.0f;
-		Float e3 = 800.0f;
+		Float e3 = null;
+		Float e4 = 800.0f;
 		System.out.println(ANSI_YELLOW + "Nullable Float"+ ANSI_RESET);
-		System.out.println("Decoded  -> [" + f1 + "," + f2 + "," + f3 + "]\nExpected -> [" + e1 + "," + e2 + "," + e3 + "]");
+		System.out.println("Decoded  -> [" + f1 + "," + f2 + "," + f3 + "," + f4 + "]\nExpected -> [" + e1 + "," + e2 + "," + e3 + "," + e4 + "]");
 		Assert.assertEquals(f1, e1);
 		Assert.assertEquals(f2, e2);
 		Assert.assertEquals(f3, e3);
+		Assert.assertEquals(f4, e4);
 	}
     
     @Test
@@ -184,22 +190,25 @@ public class SplitBinaryDecoderTest {
     
     @Test
     public void testNullableDouble() throws MALException {
-    	// byte field 1 + presence flag 0000 0111 + 0 + 16 + 800
-    	byte[] testBytes = new byte[]{1,(byte)0x07,(byte)0x00,
+    	// byte field 1 + presence flag 0000 1110 + null + 0 + 16 + 800
+    	byte[] testBytes = new byte[]{1,(byte)0x0e,(byte)0x00,
         		(byte)0x80,(byte)0x80,(byte)0x80,(byte)0x80,(byte)0x80,(byte)0x80,(byte)0x80,(byte)0xb0,(byte)0x80,(byte)0x01,
         		(byte)0x80,(byte)0x80,(byte)0x80,(byte)0x80,(byte)0x80,(byte)0x80,(byte)0x80,(byte)0x89,(byte)0x81,(byte)0x01};
 		SplitBinaryDecoder decoder = new SplitBinaryDecoder(testBytes);
 		Double d1 = decoder.decodeNullableDouble();
 		Double d2 = decoder.decodeNullableDouble();
 		Double d3 = decoder.decodeNullableDouble();
-		Double e1 = 0.0;
-		Double e2 = 16.0;
-		Double e3 = 800.0;
+		Double d4 = decoder.decodeNullableDouble();
+		Double e1 = null;
+		Double e2 = 0.0;
+		Double e3 = 16.0;
+		Double e4 = 800.0;
 		System.out.println(ANSI_YELLOW + "Nullable Double"+ ANSI_RESET);
-		System.out.println("Decoded  -> [" + d1 + "," + d2 + "," + d3 + "]\nExpected -> [" + e1 + "," + e2 + "," + e3 + "]");
+		System.out.println("Decoded  -> [" + d1 + "," + d2 + "," + d3 + "," + d4 + "]\nExpected -> [" + e1 + "," + e2 + "," + e3 + "," + e4 + "]");
 		Assert.assertEquals(d1, e1);
 		Assert.assertEquals(d2, e2);
 		Assert.assertEquals(d3, e3);
+		Assert.assertEquals(d4, e4);
 	}
 
 }

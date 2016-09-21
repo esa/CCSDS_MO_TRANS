@@ -67,6 +67,11 @@
       <name>Petros Pissias</name>
       <email>petros.pissias@esa.int</email>
     </developer>
+    <developer>
+      <id>rvangijlswijk</id>
+      <name>Rian van Gijlswijk</name>
+      <email>rian.vangijlswijk@telespazio-vega.de</email>
+    </developer>
   </developers>
  
   <dependencies>

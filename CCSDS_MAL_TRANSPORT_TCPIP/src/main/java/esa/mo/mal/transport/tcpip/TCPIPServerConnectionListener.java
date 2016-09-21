@@ -90,6 +90,7 @@ public class TCPIPServerConnectionListener extends Thread
       }
       catch (java.net.SocketTimeoutException ex)
       {
+    	  RLOGGER.warning(ex.getLocalizedMessage());
         // this is ok, we just loop back around
       }
       catch (IOException e)

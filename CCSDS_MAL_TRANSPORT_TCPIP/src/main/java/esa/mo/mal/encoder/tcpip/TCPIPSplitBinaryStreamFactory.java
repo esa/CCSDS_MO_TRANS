@@ -16,6 +16,7 @@ public class TCPIPSplitBinaryStreamFactory extends MALElementStreamFactory {
 	@Override
 	protected void init(String protocol, Map properties)
 			throws IllegalArgumentException, MALException {
+		System.out.println("TCPIPSplitBinaryStreamFactory.init()");
 		// TODO Auto-generated method stub
 		
 	}
@@ -23,13 +24,14 @@ public class TCPIPSplitBinaryStreamFactory extends MALElementStreamFactory {
 	@Override
 	public MALElementInputStream createInputStream(InputStream is)
 			throws IllegalArgumentException, MALException {
-		// TODO Auto-generated method stub
-		return null;
+		System.out.println("TCPIPSplitBinaryStreamFactory.createInputStream(InputStream)");
+		return new TCPIPSplitBinaryElementInputStream(is);
 	}
 
 	@Override
 	public MALElementInputStream createInputStream(byte[] bytes, int offset)
 			throws IllegalArgumentException, MALException {
+		System.out.println("TCPIPSplitBinaryStreamFactory.createInputStream(byte[], int)");
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -37,6 +39,7 @@ public class TCPIPSplitBinaryStreamFactory extends MALElementStreamFactory {
 	@Override
 	public MALElementOutputStream createOutputStream(OutputStream os)
 			throws IllegalArgumentException, MALException {
+		System.out.println("TCPIPSplitBinaryStreamFactory.createOutputStream(OutputStream)");
 		// TODO Auto-generated method stub
 		return new TCPIPSplitBinaryElementOutputStream(os);
 	}
@@ -44,6 +47,7 @@ public class TCPIPSplitBinaryStreamFactory extends MALElementStreamFactory {
 	@Override
 	public Blob encode(Object[] elements, MALEncodingContext ctx)
 			throws IllegalArgumentException, MALException {
+		System.out.println("TCPIPSplitBinaryStreamFactory.encode()");
 		// TODO Auto-generated method stub
 		return null;
 	}

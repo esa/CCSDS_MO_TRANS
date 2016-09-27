@@ -20,12 +20,21 @@
  */
 package esa.mo.mal.transport.tcpip;
 
+import esa.mo.mal.encoder.tcpip.TCPIPSplitBinaryElementInputStream;
+import esa.mo.mal.encoder.tcpip.TCPIPSplitBinaryElementOutputStream;
 import esa.mo.mal.transport.gen.sending.GENMessageSender;
 import esa.mo.mal.transport.gen.sending.GENOutgoingMessageHolder;
+
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.nio.ByteBuffer;
+import java.util.Arrays;
+import java.util.logging.Logger;
+
+import org.ccsds.moims.mo.mal.MALException;
+import org.ccsds.moims.mo.mal.encoding.MALEncodingContext;
 
 /**
  * This class implements the low level data (MAL Message) transport protocol. In order to differentiate messages with
@@ -34,11 +43,12 @@ import java.net.Socket;
  * If the protocol uses a different message encoding this class can be replaced in the TCPIPTransport.
  *
  */
-public class TCPIPTransportDataTransceiver implements esa.mo.mal.transport.gen.util.GENMessagePoller.GENMessageReceiver<byte[]>, GENMessageSender
-{
-  protected final Socket socket;
-  protected final DataOutputStream socketWriteIf;
-  protected final DataInputStream socketReadIf;
+public class TCPIPTransportDataTransceiver implements esa.mo.mal.transport.gen.util.GENMessagePoller.GENMessageReceiver<byte[]>, GENMessageSender {
+	
+	public static final java.util.logging.Logger RLOGGER = Logger .getLogger("org.ccsds.moims.mo.mal.transport.tcpip");
+	protected final Socket socket;
+	protected final DataOutputStream socketWriteIf;
+	protected final DataInputStream socketReadIf;
 
   /**
    * Constructor.
@@ -53,37 +63,51 @@ public class TCPIPTransportDataTransceiver implements esa.mo.mal.transport.gen.u
     socketReadIf = new DataInputStream(socket.getInputStream());
   }
 
-  @Override
-  public void sendEncodedMessage(GENOutgoingMessageHolder packetData) throws IOException
-  {
-    // write packet length and then the packet
-    socketWriteIf.writeInt(packetData.getEncodedMessage().length);
+	@Override
+	public void sendEncodedMessage(GENOutgoingMessageHolder packetData) throws IOException {
+		
+		System.out.println("TCPIPTransportDataTransciever.sendEncodedMessage()");
+		System.out.println("Writing to socket:");
+		System.out.println("---------------------------------------");
+		System.out.println("packetData length: " + packetData.getEncodedMessage().length);
+		System.out.write(packetData.getEncodedMessage());
+		System.out.println("---------------------------------------");
+		
+		socketWriteIf.write(packetData.getEncodedMessage());
+		socketWriteIf.flush();
+	}
 
-    socketWriteIf.write(packetData.getEncodedMessage());
-    socketWriteIf.flush();
-  }
+	@Override
+	public byte[] readEncodedMessage() throws IOException {
 
-  @Override
-  public byte[] readEncodedMessage() throws IOException
-  {
-    try
-    {
-      // read packet length and then the packet
-      int packetSize = socketReadIf.readInt();
-      byte[] data = new byte[packetSize];
-      socketReadIf.readFully(data);
-      return data;
-    }
-    catch (java.net.SocketException ex)
-    {
-      if (socket.isClosed())
-      {
-        // socket has been closed to throw EOF exception higher
-        throw new java.io.EOFException();
-      }
-
-      throw ex;
-    }
+		// figure out length according to mal message mapping to determine byte arr length, then read the rest.
+		
+		final int headerSize = 23;
+		final int bodyLengthFieldSize = 4;
+		byte[] rawHeader = new byte[headerSize];
+		socketReadIf.read(rawHeader, 0, headerSize);
+		byte[] bodyLengthParam = Arrays.copyOfRange(rawHeader, 19, 23);
+		int bodyLength = byteArrayToInt(bodyLengthParam);
+		
+		// read body
+	    byte[] bodyData = new byte[bodyLength];
+		int bytesRead = socketReadIf.read(bodyData);
+	
+		// merge header and body
+		// TODO: replace by system.arraycopy.
+	    byte[] totalPacketData = new byte[headerSize + bodyLength];
+	    for (int i = 0; i < headerSize + bodyLength; i++) {
+	    	totalPacketData[i] = (i < headerSize ? rawHeader[i] : bodyData[i-headerSize]);
+	    }
+	    
+		System.out.println("TCPIPTransportDataTransciever.readEncodedMessage()");
+		System.out.println("Reading from socket:");
+		System.out.println("---------------------------------------");
+		System.out.println("totalPacketData headerLength: " + rawHeader.length + ", BodyLength: " + bodyLength + ", bytesRead: " + (headerSize+bytesRead) + ", length: " + totalPacketData.length);
+		System.out.write(totalPacketData);
+		System.out.println("\n---------------------------------------");
+		
+		return totalPacketData;
   }
 
   @Override
@@ -97,5 +121,12 @@ public class TCPIPTransportDataTransceiver implements esa.mo.mal.transport.gen.u
     {
       // ignore
     }
+  }
+  
+  public static int byteArrayToInt(byte[] b) {
+      return   b[3] & 0xFF |
+              (b[2] & 0xFF) << 8 |
+              (b[1] & 0xFF) << 16 |
+              (b[0] & 0xFF) << 24;
   }
 }

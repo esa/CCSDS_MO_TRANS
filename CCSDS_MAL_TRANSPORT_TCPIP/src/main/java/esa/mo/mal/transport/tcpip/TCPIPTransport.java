@@ -20,20 +20,25 @@
  */
 package esa.mo.mal.transport.tcpip;
 
+import esa.mo.mal.encoder.binary.fixed.FixedBinaryElementInputStream;
 import esa.mo.mal.transport.gen.GENEndpoint;
 import esa.mo.mal.transport.gen.GENMessage;
+import esa.mo.mal.transport.gen.GENMessageHeader;
 import esa.mo.mal.transport.gen.GENTransport;
 import static esa.mo.mal.transport.gen.GENTransport.LOGGER;
 import esa.mo.mal.transport.gen.receivers.GENIncomingByteMessageDecoderFactory;
 import esa.mo.mal.transport.gen.sending.GENMessageSender;
+import esa.mo.mal.transport.gen.sending.GENOutgoingMessageHolder;
 import esa.mo.mal.transport.gen.util.GENMessagePoller;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.Inet4Address;
 import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.URI;
 import java.net.UnknownHostException;
 import java.rmi.server.UID;
 import java.util.ArrayList;
@@ -48,7 +53,9 @@ import org.ccsds.moims.mo.mal.MALException;
 import org.ccsds.moims.mo.mal.MALHelper;
 import org.ccsds.moims.mo.mal.MALStandardError;
 import org.ccsds.moims.mo.mal.broker.MALBrokerBinding;
+import org.ccsds.moims.mo.mal.encoding.MALElementInputStream;
 import org.ccsds.moims.mo.mal.encoding.MALElementStreamFactory;
+import org.ccsds.moims.mo.mal.encoding.MALEncodingContext;
 import org.ccsds.moims.mo.mal.structures.Blob;
 import org.ccsds.moims.mo.mal.structures.InteractionType;
 import org.ccsds.moims.mo.mal.structures.QoSLevel;
@@ -109,6 +116,8 @@ public class TCPIPTransport extends GENTransport
    * Port delimiter
    */
   private static final char PORT_DELIMITER = ':';
+  
+  private static final char SERVICE_DELIMITER = '/';
 
   /**
    * The server port that the TCP transport listens for incoming connections
@@ -251,9 +260,8 @@ public class TCPIPTransport extends GENTransport
 		return true;
   }
 
-  @Override
-  public void close() throws MALException
-  {
+	@Override
+	public void close() throws MALException {
 		System.out.println("TCPIPTransport.close()");
 		synchronized (this) {
 			for (GENMessagePoller entry : pollerThreads) {
@@ -270,18 +278,26 @@ public class TCPIPTransport extends GENTransport
 				serverConnectionListener.interrupt();
 			}
 		}
-  }
-  
-  @Override
-  protected GENEndpoint internalCreateEndpoint(final String localName, final String routingName, final Map properties) throws MALException
-  {	  
-		System.out.println("TCPIPTransport.internalCreateEndpoint()");
-		return new TCPIPEndpoint(this, localName, routingName, uriBase, wrapBodyParts);
-  }
+	}
 
-  @Override
-  protected String createTransportAddress() throws MALException
-  {
+	protected GENMessage internalCreateMessage(final int apidQualifier,
+			final int apid, int sequenceFlags, final byte[] packet)
+			throws MALException {
+		System.out.println("TCPIPTransport.internalCreateMessage()");
+				return null;
+
+	}
+  
+	@Override
+	protected GENEndpoint internalCreateEndpoint(final String localName,
+			final String routingName, final Map properties) throws MALException {
+		System.out.println("TCPIPTransport.internalCreateEndpoint()");
+		return new TCPIPEndpoint(this, localName, routingName, uriBase,
+				wrapBodyParts);
+	}
+
+	@Override
+	protected String createTransportAddress() throws MALException {
 		System.out.println("TCPIPTransport.createTransportAddress()");
 		if (serverHost == null) {
 			// this is a pure client
@@ -296,15 +312,25 @@ public class TCPIPTransport extends GENTransport
 			// this a server (and potentially a client)
 			return serverHost + PORT_DELIMITER + serverPort;
 		}
-  }
+	}  
 
-  @Override
-  protected GENMessageSender createMessageSender(GENMessage msg, String remoteRootURI) throws MALException, MALTransmitErrorException
-  {
+	/**
+	 * Called for received messages
+	 */
+	public GENMessage createMessage(final byte[] packet) throws MALException {
+		System.out.println("TCPIPTransport.createMessage() for decoding");
+		return new TCPIPMessage(wrapBodyParts, new TCPIPMessageHeader(), qosProperties, packet, getStreamFactory());
+	}
+
+	@Override
+	protected GENMessageSender createMessageSender(GENMessage msg,
+			String remoteRootURI) throws MALException,
+			MALTransmitErrorException {
 		System.out.println("TCPIPTransport.createMessageSender()");
 		try {
 			// decode target address
-			String targetAddress = remoteRootURI.replaceAll(protocol + protocolDelim, "");
+			String targetAddress = remoteRootURI.replaceAll(protocol
+					+ protocolDelim, "");
 			targetAddress = targetAddress.replaceAll(protocol, "");
 
 			if (!targetAddress.contains(":")) {
@@ -322,7 +348,7 @@ public class TCPIPTransport extends GENTransport
 			// create also a data reader thread for this socket in order to read
 			// messages from it
 			// no need to register this as it will automatically terminate when
-			// the uunderlying connection is terminated.
+			// the underlying connection is terminated.
 			GENMessagePoller rcvr = new GENMessagePoller<byte[]>(this, trans,
 					trans, new GENIncomingByteMessageDecoderFactory());
 			rcvr.setRemoteURI(remoteRootURI);
@@ -332,20 +358,30 @@ public class TCPIPTransport extends GENTransport
 
 			return trans;
 		} catch (NumberFormatException nfe) {
-			LOGGER.log(Level.WARNING, "Have no means to communicate with client URI : {0}", remoteRootURI);
-			throw new MALException("Have no means to communicate with client URI : " + remoteRootURI);
+			LOGGER.log(Level.WARNING,
+					"Have no means to communicate with client URI : {0}",
+					remoteRootURI);
+			throw new MALException(
+					"Have no means to communicate with client URI : "
+							+ remoteRootURI);
 		} catch (UnknownHostException e) {
-			LOGGER.log(Level.WARNING, "TCPIP could not find host :{0}", remoteRootURI);
-			LOGGER.log(Level.FINE, "TCPIP could not find host :" + remoteRootURI, e);
+			LOGGER.log(Level.WARNING, "TCPIP could not find host :{0}",
+					remoteRootURI);
+			LOGGER.log(Level.FINE, "TCPIP could not find host :"
+					+ remoteRootURI, e);
 			throw new MALTransmitErrorException(msg.getHeader(),
-					new MALStandardError(MALHelper.DESTINATION_UNKNOWN_ERROR_NUMBER, null),
+					new MALStandardError(
+							MALHelper.DESTINATION_UNKNOWN_ERROR_NUMBER, null),
 					null);
 		} catch (java.net.ConnectException e) {
-			LOGGER.log(Level.WARNING, "TCPIP could not connect to :{0}", remoteRootURI);
-			LOGGER.log(Level.FINE, "TCPIP could not connect to :" + remoteRootURI, e);
+			LOGGER.log(Level.WARNING, "TCPIP could not connect to :{0}",
+					remoteRootURI);
+			LOGGER.log(Level.FINE, "TCPIP could not connect to :"
+					+ remoteRootURI, e);
 			throw new MALTransmitErrorException(
 					msg.getHeader(),
-					new MALStandardError(MALHelper.DESTINATION_TRANSIENT_ERROR_NUMBER, null),
+					new MALStandardError(
+							MALHelper.DESTINATION_TRANSIENT_ERROR_NUMBER, null),
 					null);
 		} catch (IOException e) {
 			// there was a communication problem, we need to clean up the
@@ -355,7 +391,7 @@ public class TCPIPTransport extends GENTransport
 			// rethrow for higher MAL leyers
 			throw new MALException("IO Exception", e);
 		}
-  }
+	}
 
   /**
    * Allows transport derived from this, where the message encoding is changed for example, to easily replace the

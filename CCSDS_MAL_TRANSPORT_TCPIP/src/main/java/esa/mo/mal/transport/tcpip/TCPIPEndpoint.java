@@ -20,7 +20,7 @@ public class TCPIPEndpoint extends GENEndpoint {
 		super(transport, localName, routingName, uri, wrapBodyParts);
 		// TODO Auto-generated constructor stub
 	}
-	
+
 	@Override
 	public MALMessage createMessage(final Blob authenticationId,
 			final URI uriTo, final Time timestamp, final QoSLevel qosLevel,
@@ -90,7 +90,7 @@ public class TCPIPEndpoint extends GENEndpoint {
 				interactionStage, transactionId, op.getService().getArea().getNumber(), 
 				op.getService().getNumber(), op.getNumber(), op.getService().getArea().getVersion(),
 				isErrorMessage, qosProperties);
-		System.out.println("TCPIPEndpoint.createMessage() uriTo: " + uriTo);
+		System.out.println("TCPIPEndpoint.createMessage() uriFrom: " + getURI() + " uriTo: " + uriTo);
 		try {
 			return new TCPIPMessage(false, hdr, qosProperties, op, transport.getStreamFactory(), body);
 		} catch (MALInteractionException e) {
@@ -119,7 +119,7 @@ public class TCPIPEndpoint extends GENEndpoint {
 	          final Boolean isErrorMessage,
 	          final Map qosProperties)
 	  {
-		return new GENMessageHeader(uriFrom, authenticationId, uriTo, timestamp, qosLevel, priority, domain, networkZone, session, sessionName, interactionType, interactionStage, transactionId, serviceArea, service, operation, serviceVersion, isErrorMessage);
+		return new TCPIPMessageHeader(uriFrom, authenticationId, uriTo, timestamp, qosLevel, priority, domain, networkZone, session, sessionName, interactionType, interactionStage, transactionId, serviceArea, service, operation, serviceVersion, isErrorMessage);
 		  
 	  }
 

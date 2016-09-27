@@ -64,49 +64,39 @@ public class TCPIPServerConnectionListener extends Thread
   @Override
   public void run()
   {
-    try
-    {
-      serverSocket.setSoTimeout(1000);
-    }
-    catch (IOException e)
-    {
-      RLOGGER.log(Level.WARNING, "Error while setting connection timeout", e);
-    }
+		try {
+			serverSocket.setSoTimeout(1000);
+		} catch (IOException e) {
+			RLOGGER.log(Level.WARNING, "Error while setting connection timeout", e);
+		}
 
-    // setup socket and then listen for connections forever
-    while (!interrupted())
-    {
-      try
-      {
-        // wait for connection
-        Socket socket = serverSocket.accept();
+		// setup socket and then listen for connections forever
+		while (!interrupted()) {
+			try {
+				// wait for connection
+				Socket socket = serverSocket.accept();
 
-        // handle socket in separate thread
-        TCPIPTransportDataTransceiver tc = transport.createDataTransceiver(socket);
+				// handle socket in separate thread
+				TCPIPTransportDataTransceiver tc = transport.createDataTransceiver(socket);
 
-        GENMessagePoller poller = new GENMessagePoller<byte[]>(transport, tc, tc, new GENIncomingByteMessageDecoderFactory());
-        pollerThreads.add(poller);
-        poller.start();
-      }
-      catch (java.net.SocketTimeoutException ex)
-      {
-    	  RLOGGER.warning(ex.getLocalizedMessage());
-        // this is ok, we just loop back around
-      }
-      catch (IOException e)
-      {
-        RLOGGER.log(Level.WARNING, "Error while accepting connection", e);
-      }
-    }
+				GENMessagePoller poller = new GENMessagePoller<byte[]>(
+						transport, tc, tc,
+						new GENIncomingByteMessageDecoderFactory());
+				pollerThreads.add(poller);
+				poller.start();
+			} catch (java.net.SocketTimeoutException ex) {
+				// this is ok, we just loop back around
+			} catch (IOException e) {
+				RLOGGER.log(Level.WARNING, "Error while accepting connection", e);
+			}
+		}
 
-    for (Thread pollerThread : pollerThreads)
-    {
-      synchronized (pollerThread)
-      {
-        pollerThread.interrupt();
-      }
-    }
+		for (Thread pollerThread : pollerThreads) {
+			synchronized (pollerThread) {
+				pollerThread.interrupt();
+			}
+		}
 
-    pollerThreads.clear();
+		pollerThreads.clear();
   }
 }

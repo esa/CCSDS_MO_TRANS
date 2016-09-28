@@ -42,17 +42,6 @@ public class TCPIPSplitBinaryElementInputStream extends GENElementInputStream {
 			throw new MALException("Wrong header element supplied. Must be instance of TCPIPMessageHeader");
 		}
 		
-//		enc.encodeUOctet(new UOctet(versionAndSDU));
-//		enc.encodeUShort(header.getServiceArea());
-//		enc.encodeUShort(header.getService());
-//		enc.encodeUShort(header.getOperation());
-//		enc.encodeUOctet(header.getAreaVersion());
-//		enc.encodeUOctet(new UOctet(parts));
-//		enc.encodeLong(header.getTransactionId());
-//		enc.encodeUOctet(new UOctet()); // flags
-//		enc.encodeUOctet(new UOctet());
-//		enc.encodeInteger(header.getBodyLength());
-		
 		TCPIPMessageHeader header = (TCPIPMessageHeader)element;
 				
 		short versionAndSDU = dec.decodeUOctet().getValue();
@@ -69,18 +58,21 @@ public class TCPIPSplitBinaryElementInputStream extends GENElementInputStream {
 		header.setSession(SessionType.fromOrdinal(parts & 0xf));
 		Long transactionId = ((TCPIPDecoder)dec).decodeMALLong();
 		header.setTransactionId(transactionId);
-//		boolean sourceIdFlag = dec.decodeBoolean();
-//		boolean destinationIdFlag = dec.decodeBoolean();
-		dec.decodeOctet(); // flags
+		
+		short flags = dec.decodeUOctet().getValue(); // flags
+		boolean sourceIdFlag = (((flags & 0x80) >> 7) == 0x1);
+		boolean destinationIdFlag = (((flags & 0x40) >> 6) == 0x1);
+		boolean priorityFlag = (((flags & 0x20) >> 5) == 0x1);
+		
 		dec.decodeOctet(); // encoding id
 		int bodyLength = dec.decodeInteger();
 		header.setBodyLength(bodyLength);
 		
-		if (true) {
+		if (sourceIdFlag) {
 			String sourceId = dec.decodeString();
 			header.setURIFrom(new URI(sourceId));
 		}
-		if (true) {
+		if (destinationIdFlag) {
 			String destinationId = dec.decodeString();
 			header.setURITo(new URI(destinationId));
 		}

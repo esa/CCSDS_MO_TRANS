@@ -78,15 +78,7 @@ public class TCPIPSplitBinaryElementOutputStream extends GENElementOutputStream 
 		((TCPIPEncoder)enc).encodeMALLong(header.getTransactionId());
 
 		// set flags
-		enc.encodeBoolean(header.getURIFrom() != null);
-		enc.encodeBoolean(header.getURITo() != null);
-		enc.encodeBoolean(!header.getPriority().equals(0));
-		enc.encodeBoolean(false);
-		enc.encodeBoolean(false);
-		enc.encodeBoolean(false);
-		enc.encodeBoolean(false);
-		enc.encodeBoolean(false);
-
+		enc.encodeUOctet(getFlags(header));
 		// set encoding id
 		enc.encodeUOctet(new UOctet());
 		
@@ -110,5 +102,21 @@ public class TCPIPSplitBinaryElementOutputStream extends GENElementOutputStream 
 			
 			// TODO: after successful body generation, write body length param to header part
 		}
+	}
+	
+	private UOctet getFlags(TCPIPMessageHeader header) {
+		
+		short result = 0;
+		if (header.getURIFrom() != null) {
+			result |= (0x1 << 7);
+		}
+		if (header.getURITo() != null) {
+			result |= (0x1 << 6);
+		}
+		if (header.getPriority().equals(0)) {
+			result |= (0x1 << 5);
+		}
+		
+		return new UOctet(result);
 	}
 }

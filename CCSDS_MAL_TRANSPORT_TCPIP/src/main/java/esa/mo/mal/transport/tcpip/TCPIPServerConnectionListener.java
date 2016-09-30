@@ -20,14 +20,17 @@
  */
 package esa.mo.mal.transport.tcpip;
 
+import esa.mo.mal.encoder.tcpip.TCPIPMessageDecoderFactory;
 import esa.mo.mal.transport.gen.receivers.GENIncomingByteMessageDecoderFactory;
 import esa.mo.mal.transport.gen.util.GENMessagePoller;
+
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.logging.Level;
 
 import static esa.mo.mal.transport.tcpip.TCPIPTransport.RLOGGER;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -77,11 +80,12 @@ public class TCPIPServerConnectionListener extends Thread
 				Socket socket = serverSocket.accept();
 
 				// handle socket in separate thread
-				TCPIPTransportDataTransceiver tc = transport.createDataTransceiver(socket);
+				TCPIPTransportDataTransceiver tc = transport.createDataTransceiver(socket,
+						serverSocket.getInetAddress().getCanonicalHostName(), serverSocket.getLocalPort());
 
-				GENMessagePoller poller = new GENMessagePoller<byte[]>(
+				GENMessagePoller poller = new GENMessagePoller<TCPIPPacketInfoHolder>(
 						transport, tc, tc,
-						new GENIncomingByteMessageDecoderFactory());
+						new TCPIPMessageDecoderFactory());
 				pollerThreads.add(poller);
 				poller.start();
 			} catch (java.net.SocketTimeoutException ex) {

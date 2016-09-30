@@ -20,8 +20,6 @@
  */
 package esa.mo.mal.transport.tcpip;
 
-import esa.mo.mal.encoder.tcpip.TCPIPSplitBinaryElementInputStream;
-import esa.mo.mal.encoder.tcpip.TCPIPSplitBinaryElementOutputStream;
 import esa.mo.mal.transport.gen.sending.GENMessageSender;
 import esa.mo.mal.transport.gen.sending.GENOutgoingMessageHolder;
 
@@ -29,12 +27,10 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
-import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.logging.Logger;
 
-import org.ccsds.moims.mo.mal.MALException;
-import org.ccsds.moims.mo.mal.encoding.MALEncodingContext;
+import org.ccsds.moims.mo.mal.structures.URI;
 
 /**
  * This class implements the low level data (MAL Message) transport protocol. In order to differentiate messages with
@@ -43,25 +39,33 @@ import org.ccsds.moims.mo.mal.encoding.MALEncodingContext;
  * If the protocol uses a different message encoding this class can be replaced in the TCPIPTransport.
  *
  */
-public class TCPIPTransportDataTransceiver implements esa.mo.mal.transport.gen.util.GENMessagePoller.GENMessageReceiver<byte[]>, GENMessageSender {
+public class TCPIPTransportDataTransceiver implements esa.mo.mal.transport.gen.util.GENMessagePoller.GENMessageReceiver<TCPIPPacketInfoHolder>, GENMessageSender {
 	
 	public static final java.util.logging.Logger RLOGGER = Logger .getLogger("org.ccsds.moims.mo.mal.transport.tcpip");
 	protected final Socket socket;
 	protected final DataOutputStream socketWriteIf;
 	protected final DataInputStream socketReadIf;
-
-  /**
-   * Constructor.
-   *
-   * @param socket the TCPIP socket.
-   * @throws IOException if there is an error.
-   */
-  public TCPIPTransportDataTransceiver(Socket socket) throws IOException
-  {
-    this.socket = socket;
-    socketWriteIf = new DataOutputStream(socket.getOutputStream());
-    socketReadIf = new DataInputStream(socket.getInputStream());
-  }
+	
+	private final String serverHost;
+	private final int serverPort;
+	
+	/**
+	 * Constructor.
+	 *
+	 * @param socket the TCPIP socket.
+	 * @throws IOException if there is an error.
+	 */
+	public TCPIPTransportDataTransceiver(Socket socket, String serverHost, int serverPort) throws IOException {
+		this.socket = socket;
+		this.serverHost = serverHost;
+		this.serverPort = serverPort;
+		socketWriteIf = new DataOutputStream(socket.getOutputStream());
+		socketReadIf = new DataInputStream(socket.getInputStream());
+	}
+	
+//	public TCPIPTransportDataTransceiver(String host, int port) {
+//		this.socket = new Socket(host, port);
+//	}
 
 	@Override
 	public void sendEncodedMessage(GENOutgoingMessageHolder packetData) throws IOException {
@@ -78,7 +82,7 @@ public class TCPIPTransportDataTransceiver implements esa.mo.mal.transport.gen.u
 	}
 
 	@Override
-	public byte[] readEncodedMessage() throws IOException {
+	public TCPIPPacketInfoHolder readEncodedMessage() throws IOException {
 
 		// figure out length according to mal message mapping to determine byte arr length, then read the rest.
 		
@@ -106,8 +110,17 @@ public class TCPIPTransportDataTransceiver implements esa.mo.mal.transport.gen.u
 		System.out.println("totalPacketData headerLength: " + rawHeader.length + ", BodyLength: " + bodyLength + ", bytesRead: " + (headerSize+bytesRead) + ", length: " + totalPacketData.length);
 		System.out.write(totalPacketData);
 		System.out.println("\n---------------------------------------");
+
+		String remoteHost = socket.getInetAddress().getCanonicalHostName();
+		int remotePort = socket.getPort();
+		String localHost = socket.getLocalAddress().getCanonicalHostName();
+		int localPort = socket.getLocalPort();
+		System.out.println("Remote addr: " + remoteHost + ":" + remotePort);
 		
-		return totalPacketData;
+		URI from = new URI("maltcp://" + remoteHost + ":" + remotePort);
+		URI to = new URI("maltcp://" + localHost + ":" + localPort);
+		
+		return new TCPIPPacketInfoHolder(totalPacketData, from, to);
   }
 
   @Override

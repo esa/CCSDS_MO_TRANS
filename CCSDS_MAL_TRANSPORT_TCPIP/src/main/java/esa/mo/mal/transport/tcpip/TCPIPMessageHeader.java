@@ -29,26 +29,64 @@ public class TCPIPMessageHeader extends GENMessageHeader {
 	
 	private int bodyLength;
 	
+	private byte[] remainingEncodedData;
+	
+	private String serviceFrom;
+	
+	private String serviceTo;
+	
 	public TCPIPMessageHeader() {}
+	
+	public TCPIPMessageHeader(URI uriFrom, URI uriTo) {
+		this.URIFrom = uriFrom;
+		this.URITo = uriTo;
+	}
 
-	public TCPIPMessageHeader(URI uriFrom, Blob authenticationId, URI uriTo,
-			Time timestamp, QoSLevel qosLevel, UInteger priority,
-			IdentifierList domain, Identifier networkZone, SessionType session,
+	public TCPIPMessageHeader(URI uriFrom, String serviceFrom,
+			Blob authenticationId, URI uriTo, String serviceTo, Time timestamp,
+			QoSLevel qosLevel, UInteger priority, IdentifierList domain,
+			Identifier networkZone, SessionType session,
 			Identifier sessionName, InteractionType interactionType,
 			UOctet interactionStage, Long transactionId, UShort serviceArea,
 			UShort service, UShort operation, UOctet serviceVersion,
 			Boolean isErrorMessage) {
 		super(uriFrom, authenticationId, uriTo, timestamp, qosLevel, priority, domain, networkZone, session, sessionName, interactionType, interactionStage, transactionId, serviceArea, service, operation, serviceVersion, isErrorMessage);
+		this.serviceFrom = serviceFrom;
+		this.serviceTo = serviceTo;
 	}
 	
 	public int getBodyLength() {
 		return bodyLength;
 	}
-	
-	public void setBodyLength(int sz) {
-		bodyLength = sz;
+
+	public void setBodyLength(int bodyLength) {
+		this.bodyLength = bodyLength;
 	}
-	
+
+	public String getServiceFrom() {
+		return serviceFrom;
+	}
+
+	public void setServiceFrom(String serviceFrom) {
+		this.serviceFrom = serviceFrom;
+	}
+
+	public String getServiceTo() {
+		return serviceTo;
+	}
+
+	public void setServiceTo(String serviceTo) {
+		this.serviceTo = serviceTo;
+	}
+
+	public byte[] getRemainingEncodedData() {
+		return remainingEncodedData;
+	}
+
+	public void setRemainingEncodedData(byte[] remainingEncodedData) {
+		this.remainingEncodedData = remainingEncodedData;
+	}
+
 	@Override
 	public Element decode(final MALDecoder decoder) throws MALException {
 		System.out.println("TCPIPMessageHeader.decode()");

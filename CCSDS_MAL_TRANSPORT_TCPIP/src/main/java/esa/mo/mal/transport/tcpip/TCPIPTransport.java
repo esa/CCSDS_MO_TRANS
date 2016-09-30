@@ -20,46 +20,37 @@
  */
 package esa.mo.mal.transport.tcpip;
 
-import esa.mo.mal.encoder.binary.fixed.FixedBinaryElementInputStream;
+import esa.mo.mal.encoder.tcpip.TCPIPMessageDecoderFactory;
 import esa.mo.mal.transport.gen.GENEndpoint;
 import esa.mo.mal.transport.gen.GENMessage;
-import esa.mo.mal.transport.gen.GENMessageHeader;
 import esa.mo.mal.transport.gen.GENTransport;
-import static esa.mo.mal.transport.gen.GENTransport.LOGGER;
-import esa.mo.mal.transport.gen.receivers.GENIncomingByteMessageDecoderFactory;
 import esa.mo.mal.transport.gen.sending.GENMessageSender;
-import esa.mo.mal.transport.gen.sending.GENOutgoingMessageHolder;
 import esa.mo.mal.transport.gen.util.GENMessagePoller;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.Inet4Address;
 import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.URI;
 import java.net.UnknownHostException;
 import java.rmi.server.UID;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Handler;
 import java.util.logging.Level;
-import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
 import org.ccsds.moims.mo.mal.MALException;
 import org.ccsds.moims.mo.mal.MALHelper;
 import org.ccsds.moims.mo.mal.MALStandardError;
 import org.ccsds.moims.mo.mal.broker.MALBrokerBinding;
-import org.ccsds.moims.mo.mal.encoding.MALElementInputStream;
-import org.ccsds.moims.mo.mal.encoding.MALElementStreamFactory;
-import org.ccsds.moims.mo.mal.encoding.MALEncodingContext;
 import org.ccsds.moims.mo.mal.structures.Blob;
 import org.ccsds.moims.mo.mal.structures.InteractionType;
 import org.ccsds.moims.mo.mal.structures.QoSLevel;
 import org.ccsds.moims.mo.mal.structures.UInteger;
+import org.ccsds.moims.mo.mal.structures.URI;
 import org.ccsds.moims.mo.mal.transport.MALEndpoint;
 import org.ccsds.moims.mo.mal.transport.MALTransmitErrorException;
 import org.ccsds.moims.mo.mal.transport.MALTransportFactory;
@@ -118,6 +109,8 @@ public class TCPIPTransport extends GENTransport
   private static final char PORT_DELIMITER = ':';
   
   private static final char SERVICE_DELIMITER = '/';
+  
+  private HashMap<String, Socket> socketConnections;
 
   /**
    * The server port that the TCP transport listens for incoming connections
@@ -128,7 +121,7 @@ public class TCPIPTransport extends GENTransport
    * Server host, this can be one of the IP Addresses / hostnames of the host.
    */
   private final String serverHost;
-
+  
   /**
    * Holds the server connection listener
    */
@@ -279,26 +272,19 @@ public class TCPIPTransport extends GENTransport
 			}
 		}
 	}
-
-	protected GENMessage internalCreateMessage(final int apidQualifier,
-			final int apid, int sequenceFlags, final byte[] packet)
-			throws MALException {
-		System.out.println("TCPIPTransport.internalCreateMessage()");
-				return null;
-
-	}
   
 	@Override
 	protected GENEndpoint internalCreateEndpoint(final String localName,
 			final String routingName, final Map properties) throws MALException {
 		System.out.println("TCPIPTransport.internalCreateEndpoint()");
-		return new TCPIPEndpoint(this, localName, routingName, uriBase,
-				wrapBodyParts);
+		
+		return new TCPIPEndpoint(this, localName, routingName, uriBase + routingName, wrapBodyParts);
 	}
 
 	@Override
 	protected String createTransportAddress() throws MALException {
 		System.out.println("TCPIPTransport.createTransportAddress()");
+		String addr;
 		if (serverHost == null) {
 			// this is a pure client
 			// in this case we get the IP Address of the host and provide a
@@ -307,19 +293,34 @@ public class TCPIPTransport extends GENTransport
 			// will not try
 			// to connect to it, it is used as an identifier for the MAL in the
 			// URI.
-			return getDefaultHost() + PORT_DELIMITER + getRandomClientId();
+			addr = getDefaultHost() + PORT_DELIMITER + getRandomClientId();
 		} else {
 			// this a server (and potentially a client)
-			return serverHost + PORT_DELIMITER + serverPort;
+			addr = serverHost + PORT_DELIMITER + serverPort;
 		}
+		System.out.println("I'm using address " + addr);
+		return addr;
 	}  
 
 	/**
 	 * Called for received messages
 	 */
-	public GENMessage createMessage(final byte[] packet) throws MALException {
+	public GENMessage createMessage(final TCPIPPacketInfoHolder packetInfo) throws MALException {
 		System.out.println("TCPIPTransport.createMessage() for decoding");
-		return new TCPIPMessage(wrapBodyParts, new TCPIPMessageHeader(), qosProperties, packet, getStreamFactory());
+
+		String serviceDelimStr = Character.toString(serviceDelim);
+		String from = packetInfo.getUriFrom().getValue();
+		if (!from.endsWith(serviceDelimStr)) {
+			from += serviceDelimStr;
+		}
+		String to = packetInfo.getUriTo().getValue();
+		if (!to.endsWith(serviceDelimStr)) {
+			to += serviceDelimStr;
+		}
+		
+		TCPIPMessageHeader header = new TCPIPMessageHeader(new URI(from), new URI(to));
+		
+		return new TCPIPMessage(wrapBodyParts, header, qosProperties, packetInfo.getPacketData(), getStreamFactory());
 	}
 
 	@Override
@@ -328,29 +329,33 @@ public class TCPIPTransport extends GENTransport
 			MALTransmitErrorException {
 		System.out.println("TCPIPTransport.createMessageSender()");
 		try {
-			// decode target address
-			String targetAddress = remoteRootURI.replaceAll(protocol
-					+ protocolDelim, "");
-			targetAddress = targetAddress.replaceAll(protocol, "");
-
-			if (!targetAddress.contains(":")) {
-				// malformed URI
-				throw new MALException("Malformed URI:" + remoteRootURI);
-			}
-
-			String host = targetAddress.split(":")[0];
-			int port = Integer.parseInt(targetAddress.split(":")[1]);
+			
+			ConnectionTuple ct = getConnectionParts(remoteRootURI);
 
 			// create a message sender and receiver for the socket
-			TCPIPTransportDataTransceiver trans = createDataTransceiver(new Socket(
-					host, port));
+			Socket s = new Socket(ct.host, ct.port);
+			TCPIPTransportDataTransceiver trans = createDataTransceiver(s, serverHost, serverPort);
+		    System.out.println("transport.createMessageSender() SERVERSOCKET: " + ct.host + ":" + s.getLocalPort() + " (was " + ct.port + ")");
+		    
+		    RLOGGER.fine("Original message for sending: " + msg.toString());
+			
+			// update message uriFrom
+			URI from = msg.getHeader().getURIFrom();
+			ConnectionTuple fromCt = getConnectionParts(from.toString());
+			
+			String newFrom = protocol + protocolDelim + fromCt.host + PORT_DELIMITER + s.getLocalPort();
+			String service = getRoutingPart(from.toString());
+			if (!service.isEmpty()) {
+				newFrom += serviceDelim + service;
+			}
+			msg.getHeader().setURIFrom(new URI(newFrom));
 
 			// create also a data reader thread for this socket in order to read
 			// messages from it
 			// no need to register this as it will automatically terminate when
 			// the underlying connection is terminated.
-			GENMessagePoller rcvr = new GENMessagePoller<byte[]>(this, trans,
-					trans, new GENIncomingByteMessageDecoderFactory());
+			GENMessagePoller rcvr = new GENMessagePoller<TCPIPPacketInfoHolder>(this, trans,
+					trans, new TCPIPMessageDecoderFactory());
 			rcvr.setRemoteURI(remoteRootURI);
 			rcvr.start();
 
@@ -401,10 +406,10 @@ public class TCPIPTransport extends GENTransport
    * @return the new transceiver
    * @throws IOException if there is an error
    */
-  protected TCPIPTransportDataTransceiver createDataTransceiver(Socket socket) throws IOException
+  protected TCPIPTransportDataTransceiver createDataTransceiver(Socket socket, String serverAddr, int serverPort) throws IOException
   {
 		System.out.println("TCPIPTransport.createDataTransceiver()");
-		return new TCPIPTransportDataTransceiver(socket);
+		return new TCPIPTransportDataTransceiver(socket, serverAddr, serverPort);
   }
 
   /**
@@ -435,13 +440,50 @@ public class TCPIPTransport extends GENTransport
 		}
   }
 
-  /**
-   * This method returns a random Id to be used for differentiating different MAL instances in the same host.
-   *
-   * @return the random, host unique, id
-   */
-  private String getRandomClientId()
-  {
-    return new UID().toString().replaceAll("[^abcdef0-9]", "");
-  }
+	/**
+	 * This method returns a random Id to be used for differentiating different
+	 * MAL instances in the same host.
+	 *
+	 * @return the random, host unique, id
+	 */
+	private String getRandomClientId() {
+//		return new UID().toString().replaceAll("[^0-9]", "");
+		return "-1";
+	}
+  
+	public char getServiceDelim() {
+		return this.serviceDelim;
+	}
+	
+	private ConnectionTuple getConnectionParts(String addr) throws MALException {
+		
+		// decode address
+		String targetAddress = addr.replaceAll(protocol + protocolDelim, "");
+		targetAddress = targetAddress.replaceAll(protocol, "");
+		
+		// remove service URI part, i.e. the part after the service delimiter
+		int serviceIdx = targetAddress.indexOf(serviceDelim);
+		if (serviceIdx >= 0) {
+			targetAddress = targetAddress.substring(0, serviceIdx);
+		}
+		targetAddress = targetAddress.replaceAll(Character.toString(serviceDelim), "");
+
+		if (!targetAddress.contains(":")) {
+			// malformed URI
+			throw new MALException("Malformed URI:" + addr);
+		}
+
+		String host = targetAddress.split(":")[0];
+		int port = Integer.parseInt(targetAddress.split(":")[1]);
+		return new ConnectionTuple(host, port);
+	}
+	
+	public static class ConnectionTuple {
+		public String host;
+		public int port;
+		public ConnectionTuple(String h, int p) {
+			this.host = h;
+			this.port = p;
+		}
+	}
 }

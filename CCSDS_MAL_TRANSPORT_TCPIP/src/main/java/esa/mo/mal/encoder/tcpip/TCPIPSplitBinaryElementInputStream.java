@@ -1,7 +1,10 @@
 package esa.mo.mal.encoder.tcpip;
 
+import java.io.InputStream;
+
 import org.ccsds.moims.mo.mal.MALException;
 import org.ccsds.moims.mo.mal.encoding.MALEncodingContext;
+import org.ccsds.moims.mo.mal.structures.Element;
 import org.ccsds.moims.mo.mal.structures.QoSLevel;
 import org.ccsds.moims.mo.mal.structures.SessionType;
 import org.ccsds.moims.mo.mal.structures.ULong;
@@ -9,14 +12,18 @@ import org.ccsds.moims.mo.mal.structures.UOctet;
 import org.ccsds.moims.mo.mal.structures.URI;
 import org.ccsds.moims.mo.mal.structures.UShort;
 
+import esa.mo.mal.encoder.binary.split.SplitBinaryDecoder;
 import esa.mo.mal.encoder.gen.GENDecoder;
 import esa.mo.mal.encoder.gen.GENElementInputStream;
 import esa.mo.mal.transport.tcpip.TCPIPMessageHeader;
 
 public class TCPIPSplitBinaryElementInputStream extends GENElementInputStream {
+	
+	private InputStream is;
 
 	public TCPIPSplitBinaryElementInputStream(final java.io.InputStream is) {
 		super(new TCPIPDecoder(is));
+		this.is = is;
 	}
 	
 	protected TCPIPSplitBinaryElementInputStream(GENDecoder pdec) {
@@ -32,7 +39,7 @@ public class TCPIPSplitBinaryElementInputStream extends GENElementInputStream {
 		if (element == ctx.getHeader()) {
 			return decodeHeader(element);
 		} else {
-			return decodeBody(element);
+			return decodeBody(element, (TCPIPMessageHeader) ctx.getHeader());
 		}
 	}
 	
@@ -63,6 +70,11 @@ public class TCPIPSplitBinaryElementInputStream extends GENElementInputStream {
 		boolean sourceIdFlag = (((flags & 0x80) >> 7) == 0x1);
 		boolean destinationIdFlag = (((flags & 0x40) >> 6) == 0x1);
 		boolean priorityFlag = (((flags & 0x20) >> 5) == 0x1);
+		boolean timestampFlag = (((flags & 0x10) >> 4) == 0x1);
+		boolean networkZoneFlag = (((flags & 0x8) >> 3) == 0x1);
+		boolean sessionNameFlag = (((flags & 0x4) >> 2) == 0x1);
+		boolean domainFlag = (((flags & 0x2) >> 1) == 0x1);
+		boolean authenticationIdFlag = ((flags & 0x1) == 0x1);		
 		
 		dec.decodeOctet(); // encoding id
 		int bodyLength = dec.decodeInteger();
@@ -70,12 +82,32 @@ public class TCPIPSplitBinaryElementInputStream extends GENElementInputStream {
 		
 		if (sourceIdFlag) {
 			String sourceId = dec.decodeString();
-			header.setURIFrom(new URI(sourceId));
+			String from = header.getURIFrom() + sourceId;
+			header.setURIFrom(new URI(from));
 		}
 		if (destinationIdFlag) {
 			String destinationId = dec.decodeString();
-			header.setURITo(new URI(destinationId));
+			String to = header.getURITo() + destinationId;
+			header.setURITo(new URI(to));
 		}
+		if (priorityFlag) {
+			header.setPriority(dec.decodeUInteger());
+		}
+		if (timestampFlag) {
+			header.setTimestamp(dec.decodeTime());
+		}
+		if (networkZoneFlag) {
+			header.setNetworkZone(dec.decodeIdentifier());
+		}
+		if (sessionNameFlag) {
+			header.setSessionName(dec.decodeIdentifier());
+		}
+		if (domainFlag) {
+			// TODO: implement
+		}
+		if (authenticationIdFlag) {
+			header.setAuthenticationId(dec.decodeBlob());
+		}	
 		
 		header.setInteractionType(sduType);
 		header.setInteractionStage(sduType);
@@ -85,15 +117,26 @@ public class TCPIPSplitBinaryElementInputStream extends GENElementInputStream {
 		System.out.println(element.toString());
 		System.out.println("---------------------------------------");
 		
+
 		return header;
 	}
 	
-	private Object decodeBody(final Object element) {
-
-//		SplitBinaryDecoder sbDec = new SplitBinaryDecoder(dec.g)
+	private Object decodeBody(final Object element, TCPIPMessageHeader header) throws MALException {
 		
 		return null;
-		
+
+////		if (header.getRemainingEncodedData().length == 0) {
+////			return null;
+////		}
+//		
+//		SplitBinaryDecoder sbDec = new SplitBinaryDecoder(is);
+//		try {
+//			Element el = sbDec.decodeElement((Element) element);
+//			return el;
+//		} catch (IllegalArgumentException | MALException e) {
+//			// TODO Auto-generated catch block
+//			throw new MALException(e.getMessage());
+//		}
 	}
 
 }

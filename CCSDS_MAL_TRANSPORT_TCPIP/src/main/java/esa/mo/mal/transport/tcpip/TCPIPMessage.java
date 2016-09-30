@@ -60,7 +60,6 @@ public class TCPIPMessage extends GENMessage {
 		// overwrite bodysize parameter
 		int totalMessageLength = msgBaos.size();
 		int bodySize = totalMessageLength - 23;
-//		int encodedBodySize = ((TCPIPEncoder)enc).encodeInteger(bodySize);
 		ByteBuffer b = ByteBuffer.allocate(4);
 		b.order(ByteOrder.BIG_ENDIAN);
 		b.putInt(bodySize);
@@ -76,5 +75,12 @@ public class TCPIPMessage extends GENMessage {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+	}
+	
+	public String toString() {
+		return "TCPIPMessage {URIFrom:" 
+			+ header.getURIFrom() 
+			+ "URITo:" + header.getURITo()
+			+ "}";		
 	}
 }

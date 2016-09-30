@@ -79,6 +79,14 @@
       <groupId>int.esa.ccsds.mo</groupId>
       <artifactId>TRANSPORT_GEN</artifactId>
     </dependency>
+    <dependency>
+    	<groupId>int.esa.ccsds.mo</groupId>
+    	<artifactId>ENCODING_BINARY_FIXED</artifactId>
+    </dependency>
+    <dependency>
+    	<groupId>int.esa.ccsds.mo</groupId>
+    	<artifactId>ENCODING_BINARY_SPLIT</artifactId>
+    </dependency>
   </dependencies>
  
   <build>

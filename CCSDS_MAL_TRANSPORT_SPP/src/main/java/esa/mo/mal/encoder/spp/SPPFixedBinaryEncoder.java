@@ -20,8 +20,10 @@
  */
 package esa.mo.mal.encoder.spp;
 
+import esa.mo.mal.encoder.binary.BinaryEncoder.BinaryStreamHolder;
 import esa.mo.mal.encoder.binary.fixed.FixedBinaryEncoder.FixedStreamHolder;
 import esa.mo.mal.encoder.gen.GENEncoder;
+import esa.mo.mal.encoder.spp.SPPTimeHandler.TimeOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigInteger;
@@ -39,7 +41,7 @@ import org.ccsds.moims.mo.mal.structures.URI;
 /**
  * Implements the MALEncoder and MALListEncoder interfaces for a SPP binary encoding.
  */
-public class SPPBinaryEncoder extends GENEncoder
+public class SPPFixedBinaryEncoder extends GENEncoder
 {
   private static final byte[] PADDING =
   {
@@ -48,6 +50,8 @@ public class SPPBinaryEncoder extends GENEncoder
   protected static final BigInteger ZERO = new BigInteger("0");
   protected static final BigInteger MAX_ULONG = new BigInteger("18446744073709551615");
   private final boolean smallLengthField;
+  private final SPPTimeHandler timeHandler;
+  private final SPPTimeOutputStream timeOutputStream = new SPPTimeOutputStream();
 
   /**
    * Constructor.
@@ -55,11 +59,12 @@ public class SPPBinaryEncoder extends GENEncoder
    * @param os Output stream to write to.
    * @param smallLengthField True if length field is 16bits, otherwise assumed to be 32bits.
    */
-  public SPPBinaryEncoder(final OutputStream os, final boolean smallLengthField)
+  public SPPFixedBinaryEncoder(final OutputStream os, final boolean smallLengthField, final SPPTimeHandler timeHandler)
   {
-    super(new SPPStreamHolder(os, smallLengthField));
+    super(new SPPFixedStreamHolder(os, smallLengthField));
 
     this.smallLengthField = smallLengthField;
+    this.timeHandler = timeHandler;
   }
 
   @Override
@@ -158,15 +163,9 @@ public class SPPBinaryEncoder extends GENEncoder
   @Override
   public void encodeDuration(Duration value) throws MALException
   {
-    long tm = (long)(value.getValue() * 1000);
-
-    int ms = (int) (tm % 1000);
-    int s = (int) (tm / 1000);
-
     try
     {
-      outputStream.directAdd(java.nio.ByteBuffer.allocate(4).putInt(s).array(), 0, 4);
-      outputStream.directAdd(java.nio.ByteBuffer.allocate(4).putInt(ms).array(), 1, 3);
+      timeHandler.encodeDuration(timeOutputStream, value);
     }
     catch (IOException ex)
     {
@@ -177,15 +176,9 @@ public class SPPBinaryEncoder extends GENEncoder
   @Override
   public void encodeFineTime(FineTime value) throws MALException
   {
-    long tm = value.getValue();
-
-    int ms = (int) (tm % 1000);
-    int s = (int) (tm / 1000);
-
     try
     {
-      outputStream.directAdd(java.nio.ByteBuffer.allocate(4).putInt(s).array(), 0, 4);
-      outputStream.directAdd(java.nio.ByteBuffer.allocate(4).putInt(ms).array(), 1, 3);
+      timeHandler.encodeFineTime(timeOutputStream, value);
     }
     catch (IOException ex)
     {
@@ -196,15 +189,9 @@ public class SPPBinaryEncoder extends GENEncoder
   @Override
   public void encodeTime(Time value) throws MALException
   {
-    long tm = value.getValue();
-
-    int ms = (int) (tm % 1000);
-    int s = (int) (tm / 1000);
-
     try
     {
-      outputStream.directAdd(java.nio.ByteBuffer.allocate(4).putInt(s).array(), 0, 4);
-      outputStream.directAdd(java.nio.ByteBuffer.allocate(4).putInt(ms).array(), 1, 3);
+      timeHandler.encodeTime(timeOutputStream, value);
     }
     catch (IOException ex)
     {
@@ -298,8 +285,18 @@ public class SPPBinaryEncoder extends GENEncoder
     }
   }
 
+  public SPPTimeHandler getTimeHandler()
+  {
+    return timeHandler;
+  }
+
+  public BinaryStreamHolder getStreamHolder()
+  {
+    return (BinaryStreamHolder)outputStream;
+  }
+
   @Override
-  protected byte internalEncodeAttributeType(byte value) throws MALException
+  public byte internalEncodeAttributeType(byte value) throws MALException
   {
     return (byte) (value - 1);
   }
@@ -307,7 +304,7 @@ public class SPPBinaryEncoder extends GENEncoder
   /**
    * Extends the FixedStreamHolder class for handling SPP fields.
    */
-  protected static class SPPStreamHolder extends FixedStreamHolder
+  protected static class SPPFixedStreamHolder extends FixedStreamHolder
   {
     private final boolean smallLengthField;
 
@@ -317,7 +314,7 @@ public class SPPBinaryEncoder extends GENEncoder
      * @param outputStream The output stream to encode into.
      * @param smallLengthField True if length field is 16bits, otherwise assumed to be 32bits.
      */
-    public SPPStreamHolder(OutputStream outputStream, final boolean smallLengthField)
+    public SPPFixedStreamHolder(OutputStream outputStream, final boolean smallLengthField)
     {
       super(outputStream);
 
@@ -350,6 +347,19 @@ public class SPPBinaryEncoder extends GENEncoder
         }
         directAdd(val);
       }
+    }
+  }
+  
+  private final class SPPTimeOutputStream implements TimeOutputStream
+  {
+    public void directAdd(byte[] value, int os, int ln) throws IOException
+    {
+      outputStream.directAdd(value, os, ln);
+    }
+
+    public void directAdd(byte value) throws IOException
+    {
+      outputStream.directAdd(value);
     }
   }
 }

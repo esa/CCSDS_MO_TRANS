@@ -36,7 +36,7 @@ import org.ccsds.moims.mo.mal.transport.MALEncodedElementList;
 /**
  * Implements the MALElementInputStream interface for a fixed length binary encoding.
  */
-public class SPPBinaryElementInputStream extends esa.mo.mal.encoder.binary.fixed.FixedBinaryElementInputStream
+public class SPPFixedBinaryElementInputStream extends esa.mo.mal.encoder.binary.fixed.FixedBinaryElementInputStream
 {
   /**
    * Constructor.
@@ -44,9 +44,11 @@ public class SPPBinaryElementInputStream extends esa.mo.mal.encoder.binary.fixed
    * @param is Input stream to read from.
    * @param smallLengthField True if length field is 16bits, otherwise assumed to be 32bits.
    */
-  public SPPBinaryElementInputStream(final java.io.InputStream is, final boolean smallLengthField)
+  public SPPFixedBinaryElementInputStream(final java.io.InputStream is,
+          final boolean smallLengthField,
+          final SPPTimeHandler timeHandler)
   {
-    super(new SPPBinaryDecoder(is, smallLengthField));
+    super(new SPPFixedBinaryDecoder(is, smallLengthField, timeHandler));
   }
 
   /**
@@ -56,16 +58,21 @@ public class SPPBinaryElementInputStream extends esa.mo.mal.encoder.binary.fixed
    * @param offset Offset into buffer to start from.
    * @param smallLengthField True if length field is 16bits, otherwise assumed to be 32bits.
    */
-  public SPPBinaryElementInputStream(final byte[] buf, final int offset, final boolean smallLengthField)
+  public SPPFixedBinaryElementInputStream(final byte[] buf,
+          final int offset,
+          final boolean smallLengthField,
+          final SPPTimeHandler timeHandler)
   {
-    super(new SPPBinaryDecoder(buf, offset, smallLengthField));
+    super(new SPPFixedBinaryDecoder(buf, offset, smallLengthField, timeHandler));
   }
 
   @Override
   public Object readElement(final Object element, final MALEncodingContext ctx)
           throws IllegalArgumentException, MALException
   {
-    if ((element != ctx.getHeader()) && (!ctx.getHeader().getIsErrorMessage()) && (InteractionType._PUBSUB_INDEX == ctx.getHeader().getInteractionType().getOrdinal()))
+    if ((element != ctx.getHeader())
+            && (!ctx.getHeader().getIsErrorMessage())
+            && (InteractionType._PUBSUB_INDEX == ctx.getHeader().getInteractionType().getOrdinal()))
     {
       switch (ctx.getHeader().getInteractionStage().getValue())
       {
@@ -102,11 +109,15 @@ public class SPPBinaryElementInputStream extends esa.mo.mal.encoder.binary.fixed
           else
           {
             Object sf = ctx.getOperation().getOperationStage(ctx.getHeader().getInteractionStage()).getElementShortForms()[ctx.getBodyElementIndex()];
+            if (null == sf)
+            {
+              sf = dec.decodeAbstractElementType(true);
+            }
             return decodeSubElement((Long) sf, ctx);
           }
         }
         default:
-          return decodeSubElement(dec.decodeNullableLong(), ctx);
+          return decodeSubElement(dec.decodeAbstractElementType(true), ctx);
       }
     }
 
@@ -117,7 +128,7 @@ public class SPPBinaryElementInputStream extends esa.mo.mal.encoder.binary.fixed
   {
     if (null == sf)
     {
-      sf = dec.decodeLong();
+      sf = dec.decodeAbstractElementType(false);
     }
 
     final Long sfv = (sf & ~0xFFFFFF) | (-(sf & 0xFFFFFF) & 0xFFFFFF);

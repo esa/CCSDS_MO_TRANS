@@ -4,7 +4,7 @@
  *                         Darmstadt
  *                         Germany
  * ----------------------------------------------------------------------------
- * System                : CCSDS MO Generic Transport Framework
+ * System                : CCSDS MO SPP Transport Framework
  * ----------------------------------------------------------------------------
  * Licensed under the European Space Agency Public License, Version 2.0
  * You may not use this file except in compliance with the License.
@@ -18,26 +18,29 @@
  * limitations under the License. 
  * ----------------------------------------------------------------------------
  */
-package esa.mo.mal.transport.gen.receivers;
-
-import esa.mo.mal.transport.gen.GENReceptionHandler;
-import esa.mo.mal.transport.gen.GENTransport;
+package esa.mo.mal.transport.spp;
 
 /**
- * Interface for factory classes used by the receivers for creating decoders.
- *
- * @param <I> The type of the incoming messages.
- * @param <O> The type of the outgoing messages.
+ * Small class that implements a simple segment counter.
  */
-public interface GENIncomingMessageDecoderFactory<I, O>
+public class SPPSegmentCounter
 {
-  /**
-   * Creates a decoder for the supplied message source.
-   *
-   * @param transport Transport to pass messages to.
-   * @param receptionHandler The reception handler.
-   * @param messageSource The message source to pass to the decoder.
-   * @return the new message decoder.
-   */
-  GENIncomingMessageDecoder createDecoder(final GENTransport<I, O> transport, GENReceptionHandler receptionHandler, I messageSource);
+  private int sequenceCount = 0;
+
+  public int getNextSegmentCount()
+  {
+    int i;
+
+    synchronized (this)
+    {
+      i = sequenceCount++;
+
+      if (sequenceCount < 0)
+      {
+        sequenceCount = 0;
+      }
+    }
+
+    return i;
+  }
 }

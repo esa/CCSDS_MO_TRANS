@@ -20,47 +20,42 @@
  */
 package esa.mo.mal.encoder.spp;
 
+import static esa.mo.mal.encoder.spp.SPPFixedBinaryStreamFactory.SMALL_LENGTH_FIELD;
 import java.util.Map;
 import org.ccsds.moims.mo.mal.MALException;
 
 /**
  * Implements the MALElementStreamFactory interface for a SPP binary encoding.
  */
-public class SPPBinaryStreamFactory extends esa.mo.mal.encoder.binary.fixed.FixedBinaryStreamFactory
+public class SPPVarBinaryStreamFactory extends esa.mo.mal.encoder.binary.BinaryStreamFactory
 {
-  public static final String SMALL_LENGTH_FIELD = "esa.mo.mal.encoding.spp.smallLengthField";
-  private boolean smallLengthField = false;
+  private SPPTimeHandler timeHandler = null;
 
   @Override
   protected void init(final String protocol, final Map properties) throws IllegalArgumentException, MALException
   {
     super.init(protocol, properties);
 
-    if ((null != properties)
-            && properties.containsKey(SMALL_LENGTH_FIELD)
-            && Boolean.parseBoolean((String) properties.get(SMALL_LENGTH_FIELD)))
-    {
-      smallLengthField = true;
-    }
+    timeHandler = new SPPTimeHandler(properties);
   }
 
   @Override
   public org.ccsds.moims.mo.mal.encoding.MALElementInputStream createInputStream(final byte[] bytes, final int offset)
   {
-    return new SPPBinaryElementInputStream(bytes, offset, smallLengthField);
+    return new SPPVarBinaryElementInputStream(bytes, offset, timeHandler);
   }
 
   @Override
   public org.ccsds.moims.mo.mal.encoding.MALElementInputStream createInputStream(final java.io.InputStream is)
           throws org.ccsds.moims.mo.mal.MALException
   {
-    return new SPPBinaryElementInputStream(is, smallLengthField);
+    return new SPPVarBinaryElementInputStream(is, timeHandler);
   }
 
   @Override
   public org.ccsds.moims.mo.mal.encoding.MALElementOutputStream createOutputStream(final java.io.OutputStream os)
           throws org.ccsds.moims.mo.mal.MALException
   {
-    return new SPPBinaryElementOutputStream(os, smallLengthField);
+    return new SPPVarBinaryElementOutputStream(os, timeHandler);
   }
 }

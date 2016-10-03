@@ -139,8 +139,9 @@ public class GENEndpoint implements MALEndpoint
               service,
               operation,
               serviceVersion,
-              isErrorMessage),
-              qosProperties, null, body);
+              isErrorMessage,
+              qosProperties),
+              qosProperties, null, transport.getStreamFactory(), body);
     }
     catch (MALInteractionException ex)
     {
@@ -188,8 +189,9 @@ public class GENEndpoint implements MALEndpoint
               service,
               operation,
               serviceVersion,
-              isErrorMessage),
-              qosProperties, null, body);
+              isErrorMessage,
+              qosProperties),
+              qosProperties, null, transport.getStreamFactory(), body);
     }
     catch (MALInteractionException ex)
     {
@@ -233,10 +235,11 @@ public class GENEndpoint implements MALEndpoint
               op.getService().getNumber(),
               op.getNumber(),
               op.getService().getArea().getVersion(),
-              isErrorMessage),
+              isErrorMessage,
+              qosProperties),
               qosProperties,
               op,
-              body);
+              transport.getStreamFactory(), body);
     }
     catch (MALInteractionException ex)
     {
@@ -280,10 +283,11 @@ public class GENEndpoint implements MALEndpoint
               op.getService().getNumber(),
               op.getNumber(),
               op.getService().getArea().getVersion(),
-              isErrorMessage),
+              isErrorMessage,
+              qosProperties),
               qosProperties,
               op,
-              body);
+              transport.getStreamFactory(), body);
     }
     catch (MALInteractionException ex)
     {
@@ -461,6 +465,7 @@ public class GENEndpoint implements MALEndpoint
    * @param operation Operation number
    * @param serviceVersion Service version number
    * @param isErrorMessage Flag indicating if the message conveys an error
+   * @param qosProperties QoS properties of the message, may be null.
    * @return the new message header.
    */
   public GENMessageHeader createMessageHeader(final URI uriFrom,
@@ -480,7 +485,8 @@ public class GENEndpoint implements MALEndpoint
           final UShort service,
           final UShort operation,
           final UOctet serviceVersion,
-          final Boolean isErrorMessage)
+          final Boolean isErrorMessage,
+          final Map qosProperties)
   {
     return new GENMessageHeader(uriFrom,
             authenticationId,

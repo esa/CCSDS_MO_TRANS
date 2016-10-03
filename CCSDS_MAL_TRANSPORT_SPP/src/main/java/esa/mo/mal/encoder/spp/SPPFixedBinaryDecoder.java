@@ -33,9 +33,11 @@ import org.ccsds.moims.mo.mal.structures.URI;
 /**
  * Implements the MALDecoder interface for a SPP binary encoding.
  */
-public class SPPBinaryDecoder extends esa.mo.mal.encoder.binary.fixed.FixedBinaryDecoder
+public class SPPFixedBinaryDecoder extends esa.mo.mal.encoder.binary.fixed.FixedBinaryDecoder
 {
   private final boolean smallLengthField;
+  private final SPPTimeHandler timeHandler;
+  private final SPPTimeInputStream timeInputStream = new SPPTimeInputStream();
 
   /**
    * Constructor.
@@ -43,11 +45,13 @@ public class SPPBinaryDecoder extends esa.mo.mal.encoder.binary.fixed.FixedBinar
    * @param src Byte array to read from.
    * @param smallLengthField True if length field is 16bits, otherwise assumed to be 32bits.
    */
-  public SPPBinaryDecoder(final byte[] src, final boolean smallLengthField)
+  public SPPFixedBinaryDecoder(final byte[] src, final boolean smallLengthField,
+          final SPPTimeHandler timeHandler)
   {
     super(new SPPBufferHolder(null, src, 0, src.length, smallLengthField));
 
     this.smallLengthField = smallLengthField;
+    this.timeHandler = timeHandler;
   }
 
   /**
@@ -56,11 +60,13 @@ public class SPPBinaryDecoder extends esa.mo.mal.encoder.binary.fixed.FixedBinar
    * @param is Input stream to read from.
    * @param smallLengthField True if length field is 16bits, otherwise assumed to be 32bits.
    */
-  public SPPBinaryDecoder(final java.io.InputStream is, final boolean smallLengthField)
+  public SPPFixedBinaryDecoder(final java.io.InputStream is, final boolean smallLengthField,
+          final SPPTimeHandler timeHandler)
   {
     super(new SPPBufferHolder(is, null, 0, 0, smallLengthField));
 
     this.smallLengthField = smallLengthField;
+    this.timeHandler = timeHandler;
   }
 
   /**
@@ -70,11 +76,13 @@ public class SPPBinaryDecoder extends esa.mo.mal.encoder.binary.fixed.FixedBinar
    * @param offset index in array to start reading from.
    * @param smallLengthField True if length field is 16bits, otherwise assumed to be 32bits.
    */
-  public SPPBinaryDecoder(final byte[] src, final int offset, final boolean smallLengthField)
+  public SPPFixedBinaryDecoder(final byte[] src, final int offset, final boolean smallLengthField,
+          final SPPTimeHandler timeHandler)
   {
     super(new SPPBufferHolder(null, src, offset, src.length, smallLengthField));
 
     this.smallLengthField = smallLengthField;
+    this.timeHandler = timeHandler;
   }
 
   /**
@@ -83,17 +91,19 @@ public class SPPBinaryDecoder extends esa.mo.mal.encoder.binary.fixed.FixedBinar
    * @param src Source buffer holder to use.
    * @param smallLengthField True if length field is 16bits, otherwise assumed to be 32bits.
    */
-  protected SPPBinaryDecoder(final BufferHolder src, final boolean smallLengthField)
+  protected SPPFixedBinaryDecoder(final BufferHolder src, final boolean smallLengthField,
+          final SPPTimeHandler timeHandler)
   {
     super(src);
 
     this.smallLengthField = smallLengthField;
+    this.timeHandler = timeHandler;
   }
 
   @Override
   public org.ccsds.moims.mo.mal.MALListDecoder createListDecoder(final java.util.List list) throws MALException
   {
-    return new SPPBinaryListDecoder(list, sourceBuffer, smallLengthField);
+    return new SPPFixedBinaryListDecoder(list, sourceBuffer, smallLengthField, timeHandler);
   }
 
   @Override
@@ -156,20 +166,9 @@ public class SPPBinaryDecoder extends esa.mo.mal.encoder.binary.fixed.FixedBinar
   @Override
   public Time decodeTime() throws MALException
   {
-    long s = sourceBuffer.getUnsignedLong32() * 1000;
-    byte[] ss = sourceBuffer.directGetBytes(3);
-
-    byte[] b = new byte[4];
-    b[0] = 0;
-    b[1] = ss[0];
-    b[2] = ss[1];
-    b[3] = ss[2];
-    int ms = java.nio.ByteBuffer.wrap(b).getInt();
-
-    s += ms;
-    return new Time(s);
+    return timeHandler.decodeTime(timeInputStream);
   }
-
+  
   @Override
   public Time decodeNullableTime() throws MALException
   {
@@ -184,18 +183,7 @@ public class SPPBinaryDecoder extends esa.mo.mal.encoder.binary.fixed.FixedBinar
   @Override
   public FineTime decodeFineTime() throws MALException
   {
-    long s = sourceBuffer.getUnsignedLong32() * 1000;
-    byte[] ss = sourceBuffer.directGetBytes(3);
-
-    byte[] b = new byte[4];
-    b[0] = 0;
-    b[1] = ss[0];
-    b[2] = ss[1];
-    b[3] = ss[2];
-    int ms = java.nio.ByteBuffer.wrap(b).getInt();
-
-    s += ms;
-    return new FineTime(s);
+    return timeHandler.decodeFineTime(timeInputStream);
   }
 
   @Override
@@ -212,18 +200,7 @@ public class SPPBinaryDecoder extends esa.mo.mal.encoder.binary.fixed.FixedBinar
   @Override
   public Duration decodeDuration() throws MALException
   {
-    long s = sourceBuffer.getUnsignedLong32() * 1000;
-    byte[] ss = sourceBuffer.directGetBytes(3);
-
-    byte[] b = new byte[4];
-    b[0] = 0;
-    b[1] = ss[0];
-    b[2] = ss[1];
-    b[3] = ss[2];
-    int ms = java.nio.ByteBuffer.wrap(b).getInt();
-
-    s += ms;
-    return new Duration(((double) s)/1000.0);
+    return timeHandler.decodeDuration(timeInputStream);
   }
 
   @Override
@@ -271,9 +248,19 @@ public class SPPBinaryDecoder extends esa.mo.mal.encoder.binary.fixed.FixedBinar
   }
 
   @Override
-  protected int internalDecodeAttributeType(byte value) throws MALException
+  public int internalDecodeAttributeType(byte value) throws MALException
   {
     return value + 1;
+  }
+
+  public BufferHolder getSourceBuffer()
+  {
+    return sourceBuffer;
+  }
+
+  public SPPTimeHandler getTimeHandler()
+  {
+    return timeHandler;
   }
 
   /**
@@ -313,10 +300,10 @@ public class SPPBinaryDecoder extends esa.mo.mal.encoder.binary.fixed.FixedBinar
 
         if (len >= 0)
         {
-          checkBuffer(len);
+          buf.checkBuffer(len);
 
-          final String s = new String(buf, offset, len, UTF8_CHARSET);
-          offset += len;
+          final String s = new String(buf.getBuf(), buf.getOffset(), len, UTF8_CHARSET);
+          buf.shiftOffsetAndReturnPrevious(len);
           return s;
         }
 
@@ -326,6 +313,14 @@ public class SPPBinaryDecoder extends esa.mo.mal.encoder.binary.fixed.FixedBinar
       {
         return super.getString();
       }
+    }
+  }
+  
+  private final class SPPTimeInputStream implements SPPTimeHandler.TimeInputStream
+  {
+    public byte[] directGetBytes(int length) throws MALException
+    {
+      return sourceBuffer.directGetBytes(length);
     }
   }
 }

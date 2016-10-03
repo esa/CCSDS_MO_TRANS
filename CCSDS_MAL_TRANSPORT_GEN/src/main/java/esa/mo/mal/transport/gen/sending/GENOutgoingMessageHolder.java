@@ -25,20 +25,26 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 
 import static esa.mo.mal.transport.gen.GENTransport.LOGGER;
+import java.util.concurrent.TimeUnit;
 import org.ccsds.moims.mo.mal.transport.MALMessage;
 
 /**
  * This class holds the message to be sent in encoded format and a reply queue that the internal sender of the message
  * can listen to in order to be informed if the message was successfully sent or not.
  *
+ * @param <O> The type of the encoded message.
  */
-public class GENOutgoingMessageHolder
+public class GENOutgoingMessageHolder<O>
 {
   /**
    * The reply queue
    */
   private final BlockingQueue<Boolean> replyQueue;
 
+  /**
+   * The timeout in seconds to wait for confirmation of delivery
+   */
+  private final int timeout;
   /**
    * The destination root URI, holds the connection level URI
    */
@@ -62,11 +68,12 @@ public class GENOutgoingMessageHolder
   /**
    * The encoded message
    */
-  private final byte[] encodedMessage;
+  private final O encodedMessage;
 
   /**
    * Will construct a new object and create a new internal reply queue.
    *
+   * @param timeout The timeout in seconds to wait for confirmation of delivery.
    * @param destinationRootURI The destination root URI, holds the connection level URI.
    * @param destinationURI The complete destination URI.
    * @param multiSendHandle The message handle for multi-send messages, may be NULL.
@@ -74,14 +81,16 @@ public class GENOutgoingMessageHolder
    * @param originalMessage The un-encoded message to be sent
    * @param encodedMessage The encoded message to be sent
    */
-  public GENOutgoingMessageHolder(final String destinationRootURI,
+  public GENOutgoingMessageHolder(final int timeout,
+          final String destinationRootURI,
           final String destinationURI,
           final Object multiSendHandle,
           final boolean lastForHandle,
           final MALMessage originalMessage,
-          byte[] encodedMessage)
+          O encodedMessage)
   {
     replyQueue = new LinkedBlockingQueue<Boolean>();
+    this.timeout = timeout;
     this.destinationRootURI = destinationRootURI;
     this.destinationURI = destinationURI;
     this.multiSendHandle = multiSendHandle;
@@ -98,7 +107,7 @@ public class GENOutgoingMessageHolder
    */
   public Boolean getResult() throws InterruptedException
   {
-    return replyQueue.take();
+    return replyQueue.poll(timeout, TimeUnit.SECONDS);
   }
 
   /**
@@ -173,7 +182,7 @@ public class GENOutgoingMessageHolder
    *
    * @return the encoded message
    */
-  public byte[] getEncodedMessage()
+  public O getEncodedMessage()
   {
     return encodedMessage;
   }

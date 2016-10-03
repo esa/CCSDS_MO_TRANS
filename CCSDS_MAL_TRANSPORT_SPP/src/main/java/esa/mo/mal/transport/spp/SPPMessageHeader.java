@@ -20,8 +20,15 @@
  */
 package esa.mo.mal.transport.spp;
 
+import esa.mo.mal.encoder.spp.SPPFixedBinaryDecoder;
+import esa.mo.mal.encoder.spp.SPPFixedBinaryEncoder;
+import esa.mo.mal.encoder.spp.SPPVarBinaryDecoder;
+import esa.mo.mal.encoder.spp.SPPVarBinaryEncoder;
+import esa.mo.mal.encoder.spp.SPPVarBinaryStreamFactory;
 import esa.mo.mal.transport.gen.GENMessageHeader;
+import static esa.mo.mal.transport.spp.SPPBaseTransport.LOGGER;
 import java.util.Date;
+import java.util.logging.Level;
 import org.ccsds.moims.mo.mal.MALDecoder;
 import org.ccsds.moims.mo.mal.MALEncoder;
 import org.ccsds.moims.mo.mal.MALException;
@@ -30,6 +37,7 @@ import org.ccsds.moims.mo.mal.MALProgressOperation;
 import org.ccsds.moims.mo.mal.MALPubSubOperation;
 import org.ccsds.moims.mo.mal.MALRequestOperation;
 import org.ccsds.moims.mo.mal.MALSubmitOperation;
+import org.ccsds.moims.mo.mal.encoding.MALElementStreamFactory;
 import org.ccsds.moims.mo.mal.structures.*;
 
 /**
@@ -37,22 +45,30 @@ import org.ccsds.moims.mo.mal.structures.*;
  */
 public class SPPMessageHeader extends GENMessageHeader
 {
+  private final Boolean forceTC;
   private final int primaryApidQualifier;
   private final SPPConfiguration configuration;
   private final SPPURIRepresentation uriRepresentation;
   private final SPPSourceSequenceCounter ssCounter;
+  private final MALElementStreamFactory secondaryFactory;
   private short ssc = -1;
+  private int segmentFlags = 0x0000C000;
+  private long segmentCounter = 0;
 
   /**
    * Constructor.
    *
+   * @param configuration The SPP configuration to use for this message header
+   * @param forceTC Should the SPP TC field value be forced. Used in TC to TC situations.
    * @param primaryApidQualifier The APID qualifier to use for the one that will be missing from the encoded packet
    * @param uriRep Interface used to convert from URI to SPP APID etc
    * @param ssCounter Interface used to get the SPP source sequence count
    *
    */
-  public SPPMessageHeader(SPPConfiguration configuration, int primaryApidQualifier, SPPURIRepresentation uriRep, SPPSourceSequenceCounter ssCounter)
+  public SPPMessageHeader(final MALElementStreamFactory secondaryDecoder, SPPConfiguration configuration, Boolean forceTC, int primaryApidQualifier, SPPURIRepresentation uriRep, SPPSourceSequenceCounter ssCounter)
   {
+    this.secondaryFactory = secondaryDecoder;
+    this.forceTC = forceTC;
     this.configuration = configuration;
     this.primaryApidQualifier = primaryApidQualifier;
     this.uriRepresentation = uriRep;
@@ -62,6 +78,8 @@ public class SPPMessageHeader extends GENMessageHeader
   /**
    * Constructor.
    *
+   * @param configuration
+   * @param forceTC Should the SPP TC field value be forced. Used in TC to TC situations.
    * @param primaryApidQualifier The APID qualifier to use for the one that will be missing from the encoded packet
    * @param uriRep Interface used to convert from URI to SPP APID etc
    * @param ssCounter Interface used to get the SPP source sequence count
@@ -84,10 +102,12 @@ public class SPPMessageHeader extends GENMessageHeader
    * @param serviceVersion Service version number
    * @param isErrorMessage Flag indicating if the message conveys an error
    */
-  public SPPMessageHeader(SPPConfiguration configuration, int primaryApidQualifier, SPPURIRepresentation uriRep, SPPSourceSequenceCounter ssCounter, URI uriFrom, Blob authenticationId, URI uriTo, Time timestamp, QoSLevel qosLevel, UInteger priority, IdentifierList domain, Identifier networkZone, SessionType session, Identifier sessionName, InteractionType interactionType, UOctet interactionStage, Long transactionId, UShort serviceArea, UShort service, UShort operation, UOctet serviceVersion, Boolean isErrorMessage)
+  public SPPMessageHeader(final MALElementStreamFactory secondaryDecoder, SPPConfiguration configuration, Boolean forceTC, int primaryApidQualifier, SPPURIRepresentation uriRep, SPPSourceSequenceCounter ssCounter, URI uriFrom, Blob authenticationId, URI uriTo, Time timestamp, QoSLevel qosLevel, UInteger priority, IdentifierList domain, Identifier networkZone, SessionType session, Identifier sessionName, InteractionType interactionType, UOctet interactionStage, Long transactionId, UShort serviceArea, UShort service, UShort operation, UOctet serviceVersion, Boolean isErrorMessage)
   {
     super(uriFrom, authenticationId, uriTo, timestamp, qosLevel, priority, domain, networkZone, session, sessionName, interactionType, interactionStage, transactionId, serviceArea, service, operation, serviceVersion, isErrorMessage);
 
+    this.secondaryFactory = secondaryDecoder;
+    this.forceTC = forceTC;
     this.configuration = configuration;
     this.primaryApidQualifier = primaryApidQualifier;
     this.uriRepresentation = uriRep;
@@ -97,7 +117,7 @@ public class SPPMessageHeader extends GENMessageHeader
   @Override
   public Element createElement()
   {
-    return new SPPMessageHeader(configuration, primaryApidQualifier, uriRepresentation, ssCounter);
+    return new SPPMessageHeader(null, configuration, forceTC, primaryApidQualifier, uriRepresentation, ssCounter);
   }
 
   @Override
@@ -131,7 +151,7 @@ public class SPPMessageHeader extends GENMessageHeader
       lssc = ssCounter.getNextSourceSequenceCount();
       ssc = (short) lssc;
     }
-    encoder.encodeUShort(new UShort(0x0000C000 | lssc));
+    encoder.encodeUShort(new UShort(segmentFlags | lssc));
     encoder.encodeUShort(new UShort(0));
 
     // MAL SPP Header
@@ -144,46 +164,63 @@ public class SPPMessageHeader extends GENMessageHeader
     encoder.encodeUShort(new UShort(secondaryApidQualifier));
     encoder.encodeLong(transactionId);
 
-    encoder.encodeUOctet(new UOctet((short) configuration.getFlags()));
+    boolean hasFromSubId = uriRepresentation.hasSubId(URIFrom);
+    boolean hasToSubId = uriRepresentation.hasSubId(URITo);
 
-    if (configuration.isSrcSubId())
+    encoder.encodeUOctet(new UOctet((short) configuration.getFlags(hasFromSubId, hasToSubId)));
+
+    if (configuration.isSrcSubId() && hasFromSubId)
     {
       encoder.encodeUOctet(new UOctet(uriRepresentation.getSubId(URIFrom)));
     }
 
-    if (configuration.isDstSubId())
+    if (configuration.isDstSubId() && hasToSubId)
     {
       encoder.encodeUOctet(new UOctet(uriRepresentation.getSubId(URITo)));
     }
 
+    if (0xC000 != segmentFlags)
+    {
+      encoder.encodeUInteger(new UInteger(0));
+    }
+    
+    // nasty hack for now
+    MALEncoder usurperEncoder = encoder;
+    if (!configuration.isFixedBody())
+    {
+      System.out.println("Encoding with variable");
+      SPPFixedBinaryEncoder fixedEncoder = (SPPFixedBinaryEncoder)encoder;
+      usurperEncoder = new SPPVarBinaryEncoder(fixedEncoder.getStreamHolder().getOutputStream(), fixedEncoder.getTimeHandler());
+    }
+
     if (configuration.isPriority())
     {
-      encoder.encodeUInteger(priority);
+      usurperEncoder.encodeUInteger(priority);
     }
 
     if (configuration.isTimestamp())
     {
-      encoder.encodeTime(timestamp);
+      usurperEncoder.encodeTime(timestamp);
     }
 
     if (configuration.isNetwork())
     {
-      encoder.encodeIdentifier(networkZone);
+      usurperEncoder.encodeIdentifier(networkZone);
     }
 
     if (configuration.isSession())
     {
-      encoder.encodeIdentifier(sessionName);
+      usurperEncoder.encodeIdentifier(sessionName);
     }
 
     if (configuration.isDomain())
     {
-      encoder.encodeElement(domain);
+      usurperEncoder.encodeElement(domain);
     }
 
     if (configuration.isAuth())
     {
-      encoder.encodeBlob(authenticationId);
+      usurperEncoder.encodeBlob(authenticationId);
     }
   }
 
@@ -195,6 +232,7 @@ public class SPPMessageHeader extends GENMessageHeader
     final int ccsdsHdrPt2 = decoder.decodeUShort().getValue();
     decoder.decodeUShort();
     ssc = (short) (ccsdsHdrPt2 & 0x3FFF);
+    segmentFlags = (ccsdsHdrPt2 & 0xC000);
 
     // MAL SPP Header
     short sduType = decoder.decodeUOctet().getValue();
@@ -217,13 +255,28 @@ public class SPPMessageHeader extends GENMessageHeader
     {
       sourceSubId = decoder.decodeUOctet().getValue();
     }
+
     if (0 != (flags & 0x40))
     {
       destSubId = decoder.decodeUOctet().getValue();
     }
+
+    if (0xC000 != segmentFlags)
+    {
+      segmentCounter = decoder.decodeUInteger().getValue();
+    }
+
+    // nasty hack for now
+    MALDecoder usurperDecoder = decoder;
+    if (!configuration.isFixedBody())
+    {
+      SPPFixedBinaryDecoder fixedDecoder = (SPPFixedBinaryDecoder)decoder;
+      usurperDecoder = new SPPVarBinaryDecoder(fixedDecoder);
+    }
+
     if (0 != (flags & 0x20))
     {
-      priority = decoder.decodeUInteger();
+      priority = usurperDecoder.decodeUInteger();
     }
     else
     {
@@ -231,7 +284,7 @@ public class SPPMessageHeader extends GENMessageHeader
     }
     if (0 != (flags & 0x10))
     {
-      timestamp = decoder.decodeTime();
+      timestamp = usurperDecoder.decodeTime();
     }
     else
     {
@@ -239,15 +292,15 @@ public class SPPMessageHeader extends GENMessageHeader
     }
     if (0 != (flags & 0x08))
     {
-      networkZone = decoder.decodeIdentifier();
+      networkZone = usurperDecoder.decodeIdentifier();
     }
     else
     {
-      networkZone = null;
+      networkZone = new Identifier("");
     }
     if (0 != (flags & 0x04))
     {
-      sessionName = decoder.decodeIdentifier();
+      sessionName = usurperDecoder.decodeIdentifier();
     }
     else
     {
@@ -255,7 +308,7 @@ public class SPPMessageHeader extends GENMessageHeader
     }
     if (0 != (flags & 0x02))
     {
-      domain = (IdentifierList) decoder.decodeElement(new IdentifierList());
+      domain = (IdentifierList) usurperDecoder.decodeElement(new IdentifierList());
     }
     else
     {
@@ -263,11 +316,11 @@ public class SPPMessageHeader extends GENMessageHeader
     }
     if (0 != (flags & 0x01))
     {
-      authenticationId = decoder.decodeBlob();
+      authenticationId = usurperDecoder.decodeBlob();
     }
     else
     {
-      authenticationId = null;
+      authenticationId = new Blob(new byte[0]);
     }
 
     boolean isTC = 0 != (0x00001000 & ccsdsHdrPt1);
@@ -350,6 +403,11 @@ public class SPPMessageHeader extends GENMessageHeader
     return str.toString();
   }
 
+  public SPPConfiguration getConfiguration()
+  {
+    return configuration;
+  }
+
   protected static int getErrorFlag(boolean isError)
   {
     if (isError)
@@ -410,51 +468,73 @@ public class SPPMessageHeader extends GENMessageHeader
 
   public short getPacketType()
   {
-    switch (interactionType.getOrdinal())
+    if (null != forceTC)
     {
-      case InteractionType._SEND_INDEX:
-        return 0x00001000;
-      case InteractionType._SUBMIT_INDEX:
-        if (MALSubmitOperation._SUBMIT_STAGE == interactionStage.getValue())
-        {
-          return 0x00001000;
-        }
-        return 0;
-      case InteractionType._REQUEST_INDEX:
-        if (MALRequestOperation._REQUEST_STAGE == interactionStage.getValue())
-        {
-          return 0x00001000;
-        }
-        return 0;
-      case InteractionType._INVOKE_INDEX:
-        if (MALInvokeOperation._INVOKE_STAGE == interactionStage.getValue())
-        {
-          return 0x00001000;
-        }
-        return 0;
-      case InteractionType._PROGRESS_INDEX:
+      return forceTC ? 0x00001000 : (short) 0;
+    }
+    else
+    {
+      switch (interactionType.getOrdinal())
       {
-        if (MALProgressOperation._PROGRESS_STAGE == interactionStage.getValue())
-        {
+        case InteractionType._SEND_INDEX:
           return 0x00001000;
-        }
-        return 0;
-      }
-      case InteractionType._PUBSUB_INDEX:
-      {
-        switch (interactionStage.getValue())
-        {
-          case MALPubSubOperation._REGISTER_STAGE:
-          case MALPubSubOperation._DEREGISTER_STAGE:
-          case MALPubSubOperation._PUBLISH_REGISTER_STAGE:
-          case MALPubSubOperation._PUBLISH_DEREGISTER_STAGE:
+        case InteractionType._SUBMIT_INDEX:
+          if (MALSubmitOperation._SUBMIT_STAGE == interactionStage.getValue())
+          {
             return 0x00001000;
+          }
+          return 0;
+        case InteractionType._REQUEST_INDEX:
+          if (MALRequestOperation._REQUEST_STAGE == interactionStage.getValue())
+          {
+            return 0x00001000;
+          }
+          return 0;
+        case InteractionType._INVOKE_INDEX:
+          if (MALInvokeOperation._INVOKE_STAGE == interactionStage.getValue())
+          {
+            return 0x00001000;
+          }
+          return 0;
+        case InteractionType._PROGRESS_INDEX:
+        {
+          if (MALProgressOperation._PROGRESS_STAGE == interactionStage.getValue())
+          {
+            return 0x00001000;
+          }
+          return 0;
         }
-        return 0;
+        case InteractionType._PUBSUB_INDEX:
+        {
+          switch (interactionStage.getValue())
+          {
+            case MALPubSubOperation._REGISTER_STAGE:
+            case MALPubSubOperation._DEREGISTER_STAGE:
+            case MALPubSubOperation._PUBLISH_REGISTER_STAGE:
+            case MALPubSubOperation._PUBLISH_DEREGISTER_STAGE:
+              return 0x00001000;
+          }
+          return 0;
+        }
       }
     }
 
     return 0;
+  }
+
+  public byte getSegmentFlags()
+  {
+    return (byte) (segmentFlags >> 8);
+  }
+
+  public void setSegmentFlags(byte segmentFlags)
+  {
+    this.segmentFlags = ((int) segmentFlags) << 8;
+  }
+
+  public long getSegmentCounter()
+  {
+    return segmentCounter;
   }
 
   protected static short getSDUType(InteractionType interactionType, UOctet interactionStage)
@@ -610,6 +690,7 @@ public class SPPMessageHeader extends GENMessageHeader
         return MALPubSubOperation.PUBLISH_DEREGISTER_ACK_STAGE;
     }
 
+    LOGGER.log(Level.WARNING, "SPPMessageHeader: Unknown sdu value recieved during decoding of {0}", sduType);
     return null;
   }
 }

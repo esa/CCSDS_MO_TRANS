@@ -1,6 +1,8 @@
 package esa.mo.mal.encoder.tcpip;
 
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 import esa.mo.mal.encoder.binary.split.SplitBinaryEncoder;
 import esa.mo.mal.encoder.gen.GENElementOutputStream;
@@ -9,6 +11,9 @@ import esa.mo.mal.transport.tcpip.TCPIPMessageHeader;
 
 import org.ccsds.moims.mo.mal.MALException;
 import org.ccsds.moims.mo.mal.encoding.MALEncodingContext;
+import org.ccsds.moims.mo.mal.structures.Element;
+import org.ccsds.moims.mo.mal.structures.Identifier;
+import org.ccsds.moims.mo.mal.structures.UInteger;
 import org.ccsds.moims.mo.mal.structures.UOctet;
 import org.ccsds.moims.mo.mal.structures.URI;
 
@@ -83,16 +88,17 @@ public class TCPIPSplitBinaryElementOutputStream extends GENElementOutputStream 
 		// set encoding id
 		hdrEnc.encodeUOctet(new UOctet(header.getEncodingId()));
 		
-		// preset body length
+		// preset body length. Allocate four bytes.
 		// TODO: set bodyLength after encoding whole message
-		hdrEnc.encodeInteger(header.getBodyLength());
+		hdrEnc.encodeInteger(0);
 		
 		// encode rest of header
 		if (!header.getServiceFrom().isEmpty()) {
-			((TCPIPHeaderEncoder)hdrEnc).encodeMALString(getLocalNamePart(header.getURIFrom()));
+			// TODO ensure that urifrom is also correctly encoded in ScalAgent RID case
+			hdrEnc.encodeString(getLocalNamePart(header.getURIFrom()));
 		}
 		if (!header.getServiceTo().isEmpty()) {
-			((TCPIPHeaderEncoder)hdrEnc).encodeMALString(getLocalNamePart(header.getURITo()));
+			hdrEnc.encodeString(getLocalNamePart(header.getURITo()));
 		}
 		if (header.getPriority() != null) {
 			hdrEnc.encodeUInteger(header.getPriority());
@@ -107,7 +113,7 @@ public class TCPIPSplitBinaryElementOutputStream extends GENElementOutputStream 
 			hdrEnc.encodeIdentifier(header.getSessionName());
 		}
 		if (header.getDomain() != null && header.getDomain().size() > 0) {
-			// TODO: implement
+			header.getDomain().encode(hdrEnc);
 		}
 		if (header.getAuthenticationId() != null) {
 			hdrEnc.encodeBlob(header.getAuthenticationId());

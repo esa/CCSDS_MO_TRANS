@@ -5,7 +5,8 @@ import java.io.OutputStream;
 import java.util.List;
 
 import org.ccsds.moims.mo.mal.MALException;
-import org.ccsds.moims.mo.mal.structures.Element;
+import org.ccsds.moims.mo.mal.MALListEncoder;
+import org.ccsds.moims.mo.mal.structures.Identifier;
 import org.ccsds.moims.mo.mal.structures.UInteger;
 
 import esa.mo.mal.encoder.binary.fixed.FixedBinaryEncoder;
@@ -13,11 +14,20 @@ import esa.mo.mal.encoder.binary.fixed.FixedBinaryEncoder;
 public class TCPIPHeaderEncoder extends FixedBinaryEncoder {
 		
 	public TCPIPHeaderEncoder(final OutputStream os) {
-		super(new FixedStreamHolder(os));
+		super(new TCPIPStreamHolder(os));
 	}
 
 	private TCPIPHeaderEncoder(StreamHolder sh) {
 		super(sh);
+	}
+	
+	@Override
+	public MALListEncoder createListEncoder(List list) throws IllegalArgumentException, MALException {
+		
+		// encode number of elements
+		encodeUInteger(new UInteger(list.size()));
+		
+		return this;		
 	}
 	
 	/**
@@ -29,10 +39,13 @@ public class TCPIPHeaderEncoder extends FixedBinaryEncoder {
 	 * @param val The string to encode
 	 * @throws MALException if the string to encode is too large
 	 */
-	public void encodeMALString(String val) throws MALException {
+	@Override
+	public void encodeString(String val) throws MALException {
 
-		long MAX_STRING_LENGTH = 2 * (long)Integer.MAX_VALUE + 1;
+		long MAX_STRING_LENGTH = 2 * (long) Integer.MAX_VALUE + 1;
 		byte[] output = val.getBytes(UTF8_CHARSET);
+		
+		System.out.println("Encode " + val + " length: " + output.length);
 
 		if (output.length > MAX_STRING_LENGTH) {
 			throw new MALException("The string length is greater than 2^32 -1 bytes! Please provide a shorter string.");
@@ -48,34 +61,50 @@ public class TCPIPHeaderEncoder extends FixedBinaryEncoder {
 	
 	public void encodeMALLong(Long val) throws MALException {
 		
-	    try
-	    {
-	      outputStream.addSignedLong(val);
-	    }
-	    catch (IOException ex)
-	    {
-	      throw new MALException(ENCODING_EXCEPTION_STR, ex);
-	    }
+		try {
+			outputStream.addSignedLong(val);
+		} catch (IOException ex) {
+			throw new MALException(ENCODING_EXCEPTION_STR, ex);
+		}
 	}
 	
 	public void encodeMALShort(short val) throws MALException {
 		
-		try
-	    {
-	      outputStream.addUnsignedInt16(val);
-	    }
-	    catch (IOException ex)
-	    {
-	      throw new MALException(ENCODING_EXCEPTION_STR, ex);
-	    }
+		try {
+			outputStream.addUnsignedInt16(val);
+		} catch (IOException ex) {
+			throw new MALException(ENCODING_EXCEPTION_STR, ex);
+		}
 	}
 	
-	public void encodeList(List<Element> elements) throws MALException {
+	@Override
+	public void encodeUInteger(final UInteger value) throws MALException {
 		
-		encodeUInteger(new UInteger(elements.size()));
-		for (Element element : elements) {
-			element.encode(this);
+		try {
+			((TCPIPStreamHolder) outputStream).addUnsignedVarint4((int) value.getValue());
+		} catch (IOException ex) {
+			throw new MALException(ENCODING_EXCEPTION_STR, ex);
 		}
+	}
+
+	@Override
+	public void encodeNullableIdentifier(final Identifier value) throws MALException {
+		
+		if (value != null) {
+			// encode presence flag
+			encodeBoolean(true);
+			// encode element as String
+			encodeIdentifier(value);
+		} else {
+			// encode presence flag
+			encodeUInteger(new UInteger(0));
+		}
+	}
+	
+	@Override
+	public void encodeIdentifier(final Identifier value) throws MALException {
+		
+		encodeString(value.getValue());
 	}
 	
 	public OutputStream getOutputStream() {
@@ -87,6 +116,15 @@ public class TCPIPHeaderEncoder extends FixedBinaryEncoder {
 		
 		public TCPIPStreamHolder(OutputStream outputStream) {
 			super(outputStream);
+		}
+		
+		public void addUnsignedVarint4(int value) throws IOException {
+			
+			while ((value & 0xFFFFFF80) != 0L) {
+				outputStream.write((value & 0x7F) | 0x80);
+				value >>>= 7;
+			}
+			outputStream.write(value & 0x7F);
 		}
 
 		public OutputStream getOutputStream() {

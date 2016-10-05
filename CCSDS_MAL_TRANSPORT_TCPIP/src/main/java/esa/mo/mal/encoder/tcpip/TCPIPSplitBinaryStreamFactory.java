@@ -40,7 +40,6 @@ public class TCPIPSplitBinaryStreamFactory extends MALElementStreamFactory {
 	public MALElementOutputStream createOutputStream(OutputStream os)
 			throws IllegalArgumentException, MALException {
 		System.out.println("TCPIPSplitBinaryStreamFactory.createOutputStream(OutputStream)");
-		// TODO Auto-generated method stub
 		return new TCPIPSplitBinaryElementOutputStream(os);
 	}
 

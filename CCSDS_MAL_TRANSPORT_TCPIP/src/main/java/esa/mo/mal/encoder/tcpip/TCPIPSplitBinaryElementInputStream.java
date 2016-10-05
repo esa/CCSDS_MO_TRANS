@@ -2,10 +2,12 @@ package esa.mo.mal.encoder.tcpip;
 
 import org.ccsds.moims.mo.mal.MALException;
 import org.ccsds.moims.mo.mal.encoding.MALEncodingContext;
+import org.ccsds.moims.mo.mal.structures.IdentifierList;
 import org.ccsds.moims.mo.mal.structures.QoSLevel;
 import org.ccsds.moims.mo.mal.structures.SessionType;
 import org.ccsds.moims.mo.mal.structures.URI;
 import org.ccsds.moims.mo.mal.structures.UShort;
+
 import esa.mo.mal.encoder.binary.split.SplitBinaryDecoder;
 import esa.mo.mal.encoder.gen.GENDecoder;
 import esa.mo.mal.encoder.gen.GENElementInputStream;
@@ -73,13 +75,17 @@ public class TCPIPSplitBinaryElementInputStream extends GENElementInputStream {
 		boolean authenticationIdFlag = ((flags & 0x1) == 0x1);		
 		
 		header.setEncodingId(hdrDec.decodeUOctet().getValue());
-		int bodyLength = hdrDec.decodeInteger();
+		int bodyLength = (int) hdrDec.decodeInteger();
 		header.setBodyLength(bodyLength);
 		
 		if (sourceIdFlag) {
 			String sourceId = hdrDec.decodeString();
-			String from = header.getURIFrom() + sourceId;
-			header.setURIFrom(new URI(from));
+			if (isURI(sourceId)) {
+				header.setURIFrom(new URI(sourceId));
+			} else {
+				String from = header.getURIFrom() + sourceId;
+				header.setURIFrom(new URI(from));
+			}
 		}
 		if (destinationIdFlag) {
 			String destinationId = hdrDec.decodeString();
@@ -99,7 +105,8 @@ public class TCPIPSplitBinaryElementInputStream extends GENElementInputStream {
 			header.setSessionName(hdrDec.decodeIdentifier());
 		}
 		if (domainFlag) {
-			// TODO: implement
+			IdentifierList list = (IdentifierList) new IdentifierList().decode(hdrDec);
+			header.setDomain(list);
 		}
 		if (authenticationIdFlag) {
 			header.setAuthenticationId(hdrDec.decodeBlob());
@@ -114,5 +121,9 @@ public class TCPIPSplitBinaryElementInputStream extends GENElementInputStream {
 		System.out.println("---------------------------------------");		
 
 		return header;
+	}
+	
+	private boolean isURI(String uri) {
+		return uri.matches("\bmaltcp://[-A-Za-z0-9+&@#/%?=~_()|!:,.;]*[-A-Za-z0-9+&@#/%=~_()|]");
 	}
 }

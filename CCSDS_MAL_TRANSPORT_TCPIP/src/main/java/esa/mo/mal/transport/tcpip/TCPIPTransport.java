@@ -27,7 +27,9 @@ import esa.mo.mal.transport.gen.GENTransport;
 import esa.mo.mal.transport.gen.sending.GENMessageSender;
 import esa.mo.mal.transport.gen.util.GENMessagePoller;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.Inet4Address;
 import java.net.Inet6Address;
 import java.net.InetAddress;
@@ -46,6 +48,7 @@ import org.ccsds.moims.mo.mal.MALException;
 import org.ccsds.moims.mo.mal.MALHelper;
 import org.ccsds.moims.mo.mal.MALStandardError;
 import org.ccsds.moims.mo.mal.broker.MALBrokerBinding;
+import org.ccsds.moims.mo.mal.encoding.MALElementInputStream;
 import org.ccsds.moims.mo.mal.structures.Blob;
 import org.ccsds.moims.mo.mal.structures.InteractionType;
 import org.ccsds.moims.mo.mal.structures.QoSLevel;
@@ -318,9 +321,14 @@ public class TCPIPTransport extends GENTransport
 			to += serviceDelimStr;
 		}
 		
+		// preset header
 		TCPIPMessageHeader header = new TCPIPMessageHeader(new URI(from), new URI(to));
 		
-		return new TCPIPMessage(wrapBodyParts, header, qosProperties, packetInfo.getPacketData(), getStreamFactory());
+		// msg with decoded header and empty body
+		byte[] packetData = packetInfo.getPacketData();
+		TCPIPMessage msg = new TCPIPMessage(wrapBodyParts, header, qosProperties, packetData, getStreamFactory());
+		
+		return msg;
 	}
 
 	@Override

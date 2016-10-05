@@ -48,6 +48,7 @@ public class TCPIPMessage extends GENMessage {
 			final OutputStream lowLevelOutputStream, final boolean writeHeader)
 			throws MALException {
 		System.out.println("TCPIPMessage.encodeMessage()");
+		System.out.println("TCPIPMessageBody: " + this.getBody().toString());
 
 		// encode header and body using TCPIPEncoder class
 		ByteArrayOutputStream msgBaos = new ByteArrayOutputStream();

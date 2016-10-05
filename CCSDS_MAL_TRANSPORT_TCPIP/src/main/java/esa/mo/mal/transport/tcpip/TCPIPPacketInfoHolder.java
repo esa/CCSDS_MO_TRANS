@@ -5,13 +5,13 @@ import org.ccsds.moims.mo.mal.structures.URI;
 public class TCPIPPacketInfoHolder {
 	
 	private byte[] packetData;
-	private URI uriFrom;
-	private URI uriTo;
+	private URI tcpipFrom;
+	private URI tcpipTo;
 	
 	public TCPIPPacketInfoHolder(byte[] packetData, URI from, URI to) {
 		this.packetData = packetData;
-		this.uriFrom = from;
-		this.uriTo = to;
+		this.tcpipFrom = from;
+		this.tcpipTo = to;
 	}
 
 	public byte[] getPacketData() {
@@ -23,19 +23,19 @@ public class TCPIPPacketInfoHolder {
 	}
 
 	public URI getUriFrom() {
-		return uriFrom;
+		return tcpipFrom;
 	}
 
 	public void setUriFrom(URI uriFrom) {
-		this.uriFrom = uriFrom;
+		this.tcpipFrom = uriFrom;
 	}
 
 	public URI getUriTo() {
-		return uriTo;
+		return tcpipTo;
 	}
 
 	public void setUriTo(URI uriTo) {
-		this.uriTo = uriTo;
+		this.tcpipTo = uriTo;
 	}
 
 }

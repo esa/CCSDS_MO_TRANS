@@ -15,11 +15,11 @@ import org.ccsds.moims.mo.mal.structures.URI;
 
 public class TCPIPSplitBinaryElementOutputStream extends GENElementOutputStream {
 	
-	private OutputStream os;
+	private GENEncoder hdrEnc;
 
 	public TCPIPSplitBinaryElementOutputStream(OutputStream os) {
 		super(os);
-		this.os = os;
+		this.hdrEnc = createHeaderEncoder(os);
 		// TODO Auto-generated constructor stub
 	}
 
@@ -27,29 +27,26 @@ public class TCPIPSplitBinaryElementOutputStream extends GENElementOutputStream 
 	protected GENEncoder createEncoder(OutputStream os) {
 		// TODO Auto-generated method stub
 		System.out.println("TCPIPSplitBinaryElementOutputStream.createEncoder()");
-		this.os = os;		
-		return null;
+		return new SplitBinaryEncoder(os);
+	}
+	
+	private GENEncoder createHeaderEncoder(OutputStream os) {
+		System.out.println("TCPIPSplitBinaryElementOutputStream.createHeaderEncoder()");
+		return new TCPIPEncoder(os);
 	}
 
 	@Override
 	public void writeElement(final Object element, final MALEncodingContext ctx)
 			throws MALException {
 		System.out.println("TCPIPSplitBinaryElementOutputStream.writeElement(Object, MALEncodingContext)");		
-
-		// encode using our own encoder
-		
-		if (element == ctx.getHeader()) {
-
-			this.enc = new TCPIPEncoder(dos);
-			encodeHeader(element);
-
-		} else {
-
-			this.enc = new SplitBinaryEncoder(os);
-			encodeBody(element);
-
-		}
 				
+		if (element == ctx.getHeader()) {
+			// header is encoded using tcpip custom encoder
+			encodeHeader(element);
+		} else {
+			// body is encoded using default split binary encoder
+			super.writeElement(element, ctx);
+		}				
 	}
 	
 	private void encodeHeader(final Object element) throws MALException {
@@ -57,7 +54,6 @@ public class TCPIPSplitBinaryElementOutputStream extends GENElementOutputStream 
 		if (!(element instanceof TCPIPMessageHeader)) {
 			throw new MALException("Wrong header element supplied. Must be instance of TCPIPMessageHeader");
 		}
-		
 		
 		TCPIPMessageHeader header = (TCPIPMessageHeader)element;
 		
@@ -71,57 +67,51 @@ public class TCPIPSplitBinaryElementOutputStream extends GENElementOutputStream 
 		// version number & sdu type
 		byte versionAndSDU = (byte) (header.versionNumber << 5 | header.getSDUType());
 		
-		enc.encodeUOctet(new UOctet(versionAndSDU));
-		enc.encodeShort((short)header.getServiceArea().getValue());
-		enc.encodeShort((short)header.getService().getValue());
-		enc.encodeShort((short)header.getOperation().getValue());
-		enc.encodeUOctet(header.getAreaVersion());
+		UOctet test = new UOctet(versionAndSDU);
+		hdrEnc.encodeUOctet(test);
+		hdrEnc.encodeShort((short)header.getServiceArea().getValue());
+		hdrEnc.encodeShort((short)header.getService().getValue());
+		hdrEnc.encodeShort((short)header.getOperation().getValue());
+		hdrEnc.encodeUOctet(header.getAreaVersion());
 		
 		byte parts = (byte)((header.getIsErrorMessage() ? 0x1 : 0x0 ) | header.getQoSlevel().getOrdinal() << 4 | header.getSession().getOrdinal());
 
-		enc.encodeUOctet(new UOctet(parts));
-		((TCPIPEncoder)enc).encodeMALLong(header.getTransactionId());
+		hdrEnc.encodeUOctet(new UOctet(parts));
+		((TCPIPEncoder)hdrEnc).encodeMALLong(header.getTransactionId());
 
 		// set flags
-		enc.encodeUOctet(getFlags(header));
+		hdrEnc.encodeUOctet(getFlags(header));
 		// set encoding id
-		enc.encodeUOctet(new UOctet());
+		hdrEnc.encodeUOctet(new UOctet(header.getEncodingId()));
 		
 		// preset body length
 		// TODO: set bodyLength after encoding whole message
-		enc.encodeInteger(header.getBodyLength());
+		hdrEnc.encodeInteger(header.getBodyLength());
 		
 		// encode rest of header
 		if (!header.getServiceFrom().isEmpty()) {
-			((TCPIPEncoder)enc).encodeMALString(getLocalNamePart(header.getURIFrom()));
+			((TCPIPEncoder)hdrEnc).encodeMALString(getLocalNamePart(header.getURIFrom()));
 		}
 		if (!header.getServiceTo().isEmpty()) {
-			((TCPIPEncoder)enc).encodeMALString(getLocalNamePart(header.getURITo()));
+			((TCPIPEncoder)hdrEnc).encodeMALString(getLocalNamePart(header.getURITo()));
 		}
 		if (header.getPriority() != null) {
-			enc.encodeUInteger(header.getPriority());
+			hdrEnc.encodeUInteger(header.getPriority());
 		}
 		if (header.getTimestamp() != null) {
-			enc.encodeTime(header.getTimestamp());
+			hdrEnc.encodeTime(header.getTimestamp());
 		}
 		if (header.getNetworkZone() != null) {
-			enc.encodeIdentifier(header.getNetworkZone());
+			hdrEnc.encodeIdentifier(header.getNetworkZone());
 		}
 		if (header.getSessionName() != null) {
-			enc.encodeIdentifier(header.getSessionName());
+			hdrEnc.encodeIdentifier(header.getSessionName());
 		}
 		if (header.getDomain() != null && header.getDomain().size() > 0) {
 			// TODO: implement
 		}
 		if (header.getAuthenticationId() != null) {
-			enc.encodeBlob(header.getAuthenticationId());
-		}
-	}
-	
-	private void encodeBody(final Object element) throws MALException {
-		
-		if (element instanceof Element) {
-			enc.encodeElement((Element) element);
+			hdrEnc.encodeBlob(header.getAuthenticationId());
 		}
 	}
 	

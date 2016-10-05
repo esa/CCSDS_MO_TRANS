@@ -27,6 +27,8 @@ public class TCPIPMessageHeader extends GENMessageHeader {
 	
 	public int versionNumber = 1;
 	
+	private short encodingId = 0;
+	
 	private int bodyLength;
 	
 	private byte[] remainingEncodedData;
@@ -85,6 +87,14 @@ public class TCPIPMessageHeader extends GENMessageHeader {
 
 	public void setRemainingEncodedData(byte[] remainingEncodedData) {
 		this.remainingEncodedData = remainingEncodedData;
+	}
+
+	public short getEncodingId() {
+		return encodingId;
+	}
+
+	public void setEncodingId(short encodingId) {
+		this.encodingId = encodingId;
 	}
 
 	@Override

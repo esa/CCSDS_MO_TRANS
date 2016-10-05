@@ -2,21 +2,24 @@ package esa.mo.mal.encoder.tcpip;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.List;
 
 import org.ccsds.moims.mo.mal.MALException;
+import org.ccsds.moims.mo.mal.structures.Element;
 import org.ccsds.moims.mo.mal.structures.UInteger;
 
-import esa.mo.mal.encoder.binary.BinaryEncoder.BinaryStreamHolder;
 import esa.mo.mal.encoder.binary.fixed.FixedBinaryEncoder;
+import esa.mo.mal.encoder.binary.split.SplitBinaryEncoder;
+import esa.mo.mal.encoder.gen.GENEncoder;
 
 public class TCPIPEncoder extends FixedBinaryEncoder {
-	
+		
 	public TCPIPEncoder(final OutputStream os) {
 		super(new FixedStreamHolder(os));
 	}
 
-	protected TCPIPEncoder(StreamHolder os) {
-		super(os);
+	private TCPIPEncoder(StreamHolder sh) {
+		super(sh);
 	}
 	
 	/**
@@ -30,7 +33,7 @@ public class TCPIPEncoder extends FixedBinaryEncoder {
 	 */
 	public void encodeMALString(String val) throws MALException {
 
-		final long MAX_STRING_LENGTH = 2 * Integer.MAX_VALUE + 1;
+		long MAX_STRING_LENGTH = 2 * (long)Integer.MAX_VALUE + 1;
 		byte[] output = val.getBytes(UTF8_CHARSET);
 
 		if (output.length > MAX_STRING_LENGTH) {
@@ -58,6 +61,7 @@ public class TCPIPEncoder extends FixedBinaryEncoder {
 	}
 	
 	public void encodeMALShort(short val) throws MALException {
+		
 		try
 	    {
 	      outputStream.addUnsignedInt16(val);
@@ -68,7 +72,16 @@ public class TCPIPEncoder extends FixedBinaryEncoder {
 	    }
 	}
 	
+	public void encodeList(List<Element> elements) throws MALException {
+		
+		encodeUInteger(new UInteger(elements.size()));
+		for (Element element : elements) {
+			element.encode(this);
+		}
+	}
+	
 	public OutputStream getOutputStream() {
+		
 		return ((TCPIPStreamHolder)outputStream).getOutputStream();
 	}
 	

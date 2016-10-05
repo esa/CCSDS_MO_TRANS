@@ -58,9 +58,9 @@ public class TCPIPSplitBinaryElementInputStream extends GENElementInputStream {
 		header.setAreaVersion(hdrDec.decodeUOctet());
 
 		short parts = hdrDec.decodeUOctet().getValue();
-		header.setIsErrorMessage(((byte) parts >> 7) == 0x1);
-		header.setQoSlevel(QoSLevel.fromOrdinal((parts >> 4) & 0x6));
-		header.setSession(SessionType.fromOrdinal(parts & 0xf));
+		header.setIsErrorMessage((((parts & 0x80) >> 7) == 0x1));
+		header.setQoSlevel(QoSLevel.fromOrdinal(((parts & 0x70) >> 4)));
+		header.setSession(SessionType.fromOrdinal(parts & 0xF));
 		Long transactionId = ((TCPIPHeaderDecoder)hdrDec).decodeMALLong();
 		header.setTransactionId(transactionId);
 		

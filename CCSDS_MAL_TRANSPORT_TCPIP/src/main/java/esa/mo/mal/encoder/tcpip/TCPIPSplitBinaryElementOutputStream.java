@@ -1,9 +1,6 @@
 package esa.mo.mal.encoder.tcpip;
 
 import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.List;
-
 import esa.mo.mal.encoder.binary.split.SplitBinaryEncoder;
 import esa.mo.mal.encoder.gen.GENElementOutputStream;
 import esa.mo.mal.encoder.gen.GENEncoder;
@@ -11,9 +8,6 @@ import esa.mo.mal.transport.tcpip.TCPIPMessageHeader;
 
 import org.ccsds.moims.mo.mal.MALException;
 import org.ccsds.moims.mo.mal.encoding.MALEncodingContext;
-import org.ccsds.moims.mo.mal.structures.Element;
-import org.ccsds.moims.mo.mal.structures.Identifier;
-import org.ccsds.moims.mo.mal.structures.UInteger;
 import org.ccsds.moims.mo.mal.structures.UOctet;
 import org.ccsds.moims.mo.mal.structures.URI;
 
@@ -78,7 +72,9 @@ public class TCPIPSplitBinaryElementOutputStream extends GENElementOutputStream 
 		hdrEnc.encodeShort((short)header.getOperation().getValue());
 		hdrEnc.encodeUOctet(header.getAreaVersion());
 		
-		byte parts = (byte)((header.getIsErrorMessage() ? 0x1 : 0x0 ) | header.getQoSlevel().getOrdinal() << 4 | header.getSession().getOrdinal());
+		byte parts = (byte)(((header.getIsErrorMessage() ? 0x1 : 0x0 ) << 7) 
+				| (header.getQoSlevel().getOrdinal() << 4) 
+				| header.getSession().getOrdinal());
 
 		hdrEnc.encodeUOctet(new UOctet(parts));
 		((TCPIPHeaderEncoder)hdrEnc).encodeMALLong(header.getTransactionId());
@@ -95,7 +91,7 @@ public class TCPIPSplitBinaryElementOutputStream extends GENElementOutputStream 
 		// encode rest of header
 		if (!header.getServiceFrom().isEmpty()) {
 			// TODO ensure that urifrom is also correctly encoded in ScalAgent RID case
-			hdrEnc.encodeString(getLocalNamePart(header.getURIFrom()));
+			hdrEnc.encodeString(header.getURIFrom().toString());
 		}
 		if (!header.getServiceTo().isEmpty()) {
 			hdrEnc.encodeString(getLocalNamePart(header.getURITo()));

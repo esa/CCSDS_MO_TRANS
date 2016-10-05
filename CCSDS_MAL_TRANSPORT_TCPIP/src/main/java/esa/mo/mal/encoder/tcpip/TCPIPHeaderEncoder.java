@@ -97,7 +97,7 @@ public class TCPIPHeaderEncoder extends FixedBinaryEncoder {
 			encodeIdentifier(value);
 		} else {
 			// encode presence flag
-			encodeUInteger(new UInteger(0));
+			encodeBoolean(false);
 		}
 	}
 	

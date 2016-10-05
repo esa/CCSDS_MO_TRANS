@@ -1,7 +1,6 @@
 package esa.mo.mal.encoder.tcpip;
 
 import org.ccsds.moims.mo.mal.MALException;
-import org.ccsds.moims.mo.mal.structures.URI;
 
 import esa.mo.mal.transport.gen.GENMessage;
 import esa.mo.mal.transport.gen.GENReceptionHandler;
@@ -38,7 +37,6 @@ public class TCPIPMessageDecoderFactory implements GENIncomingMessageDecoderFact
 
 			GENTransport.PacketToString smsg = transport.new PacketToString(null);
 			GENMessage msg = transport.createMessage(packetInfo);
-			String serviceDelim = Character.toString(transport.getServiceDelim());
 			
 			if (msg != null) {
 				return new GENIncomingMessageHolder(msg.getHeader().getTransactionId(), msg, smsg);

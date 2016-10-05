@@ -27,16 +27,13 @@ import esa.mo.mal.transport.gen.GENTransport;
 import esa.mo.mal.transport.gen.sending.GENMessageSender;
 import esa.mo.mal.transport.gen.util.GENMessagePoller;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.Inet4Address;
 import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.rmi.server.UID;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -48,7 +45,6 @@ import org.ccsds.moims.mo.mal.MALException;
 import org.ccsds.moims.mo.mal.MALHelper;
 import org.ccsds.moims.mo.mal.MALStandardError;
 import org.ccsds.moims.mo.mal.broker.MALBrokerBinding;
-import org.ccsds.moims.mo.mal.encoding.MALElementInputStream;
 import org.ccsds.moims.mo.mal.structures.Blob;
 import org.ccsds.moims.mo.mal.structures.InteractionType;
 import org.ccsds.moims.mo.mal.structures.QoSLevel;
@@ -342,7 +338,7 @@ public class TCPIPTransport extends GENTransport
 
 			// create a message sender and receiver for the socket
 			Socket s = new Socket(ct.host, ct.port);
-			TCPIPTransportDataTransceiver trans = createDataTransceiver(s, serverHost, serverPort);
+			TCPIPTransportDataTransceiver trans = createDataTransceiver(s);
 		    System.out.println("transport.createMessageSender() SERVERSOCKET: " + ct.host + ":" + s.getLocalPort() + " (was " + ct.port + ")");
 		    
 		    RLOGGER.fine("Original message for sending: " + msg.toString());
@@ -414,10 +410,10 @@ public class TCPIPTransport extends GENTransport
    * @return the new transceiver
    * @throws IOException if there is an error
    */
-  protected TCPIPTransportDataTransceiver createDataTransceiver(Socket socket, String serverAddr, int serverPort) throws IOException
+  protected TCPIPTransportDataTransceiver createDataTransceiver(Socket socket) throws IOException
   {
 		System.out.println("TCPIPTransport.createDataTransceiver()");
-		return new TCPIPTransportDataTransceiver(socket, serverAddr, serverPort);
+		return new TCPIPTransportDataTransceiver(socket);
   }
 
   /**

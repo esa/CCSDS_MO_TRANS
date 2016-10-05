@@ -9,7 +9,6 @@ import esa.mo.mal.transport.tcpip.TCPIPMessageHeader;
 
 import org.ccsds.moims.mo.mal.MALException;
 import org.ccsds.moims.mo.mal.encoding.MALEncodingContext;
-import org.ccsds.moims.mo.mal.structures.Element;
 import org.ccsds.moims.mo.mal.structures.UOctet;
 import org.ccsds.moims.mo.mal.structures.URI;
 
@@ -32,7 +31,7 @@ public class TCPIPSplitBinaryElementOutputStream extends GENElementOutputStream 
 	
 	private GENEncoder createHeaderEncoder(OutputStream os) {
 		System.out.println("TCPIPSplitBinaryElementOutputStream.createHeaderEncoder()");
-		return new TCPIPEncoder(os);
+		return new TCPIPHeaderEncoder(os);
 	}
 
 	@Override
@@ -77,7 +76,7 @@ public class TCPIPSplitBinaryElementOutputStream extends GENElementOutputStream 
 		byte parts = (byte)((header.getIsErrorMessage() ? 0x1 : 0x0 ) | header.getQoSlevel().getOrdinal() << 4 | header.getSession().getOrdinal());
 
 		hdrEnc.encodeUOctet(new UOctet(parts));
-		((TCPIPEncoder)hdrEnc).encodeMALLong(header.getTransactionId());
+		((TCPIPHeaderEncoder)hdrEnc).encodeMALLong(header.getTransactionId());
 
 		// set flags
 		hdrEnc.encodeUOctet(getFlags(header));
@@ -90,10 +89,10 @@ public class TCPIPSplitBinaryElementOutputStream extends GENElementOutputStream 
 		
 		// encode rest of header
 		if (!header.getServiceFrom().isEmpty()) {
-			((TCPIPEncoder)hdrEnc).encodeMALString(getLocalNamePart(header.getURIFrom()));
+			((TCPIPHeaderEncoder)hdrEnc).encodeMALString(getLocalNamePart(header.getURIFrom()));
 		}
 		if (!header.getServiceTo().isEmpty()) {
-			((TCPIPEncoder)hdrEnc).encodeMALString(getLocalNamePart(header.getURITo()));
+			((TCPIPHeaderEncoder)hdrEnc).encodeMALString(getLocalNamePart(header.getURITo()));
 		}
 		if (header.getPriority() != null) {
 			hdrEnc.encodeUInteger(header.getPriority());

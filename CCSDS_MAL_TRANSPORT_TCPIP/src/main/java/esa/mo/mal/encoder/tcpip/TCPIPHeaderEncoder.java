@@ -9,16 +9,14 @@ import org.ccsds.moims.mo.mal.structures.Element;
 import org.ccsds.moims.mo.mal.structures.UInteger;
 
 import esa.mo.mal.encoder.binary.fixed.FixedBinaryEncoder;
-import esa.mo.mal.encoder.binary.split.SplitBinaryEncoder;
-import esa.mo.mal.encoder.gen.GENEncoder;
 
-public class TCPIPEncoder extends FixedBinaryEncoder {
+public class TCPIPHeaderEncoder extends FixedBinaryEncoder {
 		
-	public TCPIPEncoder(final OutputStream os) {
+	public TCPIPHeaderEncoder(final OutputStream os) {
 		super(new FixedStreamHolder(os));
 	}
 
-	private TCPIPEncoder(StreamHolder sh) {
+	private TCPIPHeaderEncoder(StreamHolder sh) {
 		super(sh);
 	}
 	

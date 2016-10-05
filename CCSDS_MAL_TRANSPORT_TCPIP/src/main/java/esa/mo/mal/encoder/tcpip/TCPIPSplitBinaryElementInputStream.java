@@ -17,7 +17,7 @@ public class TCPIPSplitBinaryElementInputStream extends GENElementInputStream {
 
 	public TCPIPSplitBinaryElementInputStream(final java.io.InputStream is) {
 		super(new SplitBinaryDecoder(is));
-		this.hdrDec = new TCPIPDecoder(is);
+		this.hdrDec = new TCPIPHeaderDecoder(is);
 	}
 	
 	protected TCPIPSplitBinaryElementInputStream(GENDecoder pdec) {
@@ -59,7 +59,7 @@ public class TCPIPSplitBinaryElementInputStream extends GENElementInputStream {
 		header.setIsErrorMessage(((byte) parts >> 7) == 0x1);
 		header.setQoSlevel(QoSLevel.fromOrdinal((parts >> 4) & 0x6));
 		header.setSession(SessionType.fromOrdinal(parts & 0xf));
-		Long transactionId = ((TCPIPDecoder)hdrDec).decodeMALLong();
+		Long transactionId = ((TCPIPHeaderDecoder)hdrDec).decodeMALLong();
 		header.setTransactionId(transactionId);
 		
 		short flags = hdrDec.decodeUOctet().getValue(); // flags

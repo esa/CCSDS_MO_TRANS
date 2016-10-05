@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.Arrays;
 import java.util.Map;
 import java.util.logging.Logger;
 
@@ -14,10 +13,6 @@ import org.ccsds.moims.mo.mal.MALInteractionException;
 import org.ccsds.moims.mo.mal.MALOperation;
 import org.ccsds.moims.mo.mal.encoding.MALElementOutputStream;
 import org.ccsds.moims.mo.mal.encoding.MALElementStreamFactory;
-import org.ccsds.moims.mo.mal.encoding.MALEncodingContext;
-
-import esa.mo.mal.encoder.binary.fixed.FixedBinaryElementOutputStream;
-import esa.mo.mal.encoder.tcpip.TCPIPEncoder;
 import esa.mo.mal.transport.gen.GENMessage;
 import esa.mo.mal.transport.gen.GENMessageHeader;
 
@@ -68,7 +63,7 @@ public class TCPIPMessage extends GENMessage {
 		
 		System.arraycopy(bodySizeBuf, 0, msgBuf, 19, 4);
 		
-		System.out.println("buffer: " + new String(msgBuf));	
+		System.out.println("buffer: sz: " + bodySize + ", buf: " + new String(msgBuf));	
 
 		try {
 			lowLevelOutputStream.write(msgBuf);

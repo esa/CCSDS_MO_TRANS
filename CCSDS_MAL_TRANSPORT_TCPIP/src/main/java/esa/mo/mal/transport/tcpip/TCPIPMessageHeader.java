@@ -25,6 +25,11 @@ import esa.mo.mal.transport.gen.GENMessageHeader;
 
 public class TCPIPMessageHeader extends GENMessageHeader {
 	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
 	public int versionNumber = 1;
 	
 	private short encodingId = 0;

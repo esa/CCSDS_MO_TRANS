@@ -46,19 +46,14 @@ public class TCPIPTransportDataTransceiver implements esa.mo.mal.transport.gen.u
 	protected final DataOutputStream socketWriteIf;
 	protected final DataInputStream socketReadIf;
 	
-	private final String serverHost;
-	private final int serverPort;
-	
 	/**
 	 * Constructor.
 	 *
 	 * @param socket the TCPIP socket.
 	 * @throws IOException if there is an error.
 	 */
-	public TCPIPTransportDataTransceiver(Socket socket, String serverHost, int serverPort) throws IOException {
+	public TCPIPTransportDataTransceiver(Socket socket) throws IOException {
 		this.socket = socket;
-		this.serverHost = serverHost;
-		this.serverPort = serverPort;
 		socketWriteIf = new DataOutputStream(socket.getOutputStream());
 		socketReadIf = new DataInputStream(socket.getInputStream());
 	}
@@ -87,7 +82,6 @@ public class TCPIPTransportDataTransceiver implements esa.mo.mal.transport.gen.u
 		// figure out length according to mal message mapping to determine byte arr length, then read the rest.
 		
 		final int headerSize = 23;
-		final int bodyLengthFieldSize = 4;
 		byte[] rawHeader = new byte[headerSize];
 		socketReadIf.read(rawHeader, 0, headerSize);
 		byte[] bodyLengthParam = Arrays.copyOfRange(rawHeader, 19, 23);

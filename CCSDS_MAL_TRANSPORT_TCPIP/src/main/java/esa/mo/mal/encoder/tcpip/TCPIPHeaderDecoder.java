@@ -1,22 +1,18 @@
 package esa.mo.mal.encoder.tcpip;
 
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
-
 import org.ccsds.moims.mo.mal.MALException;
 import org.ccsds.moims.mo.mal.structures.Element;
 
-import esa.mo.mal.encoder.binary.BinaryDecoder;
 import esa.mo.mal.encoder.binary.fixed.FixedBinaryDecoder;
 import esa.mo.mal.encoder.binary.split.SplitBinaryDecoder;
 import esa.mo.mal.encoder.gen.GENDecoder;
 
-public class TCPIPDecoder extends FixedBinaryDecoder {
+public class TCPIPHeaderDecoder extends FixedBinaryDecoder {
 	
 	private GENDecoder sbDec;
 
-	protected TCPIPDecoder(java.io.InputStream is) {
+	protected TCPIPHeaderDecoder(java.io.InputStream is) {
 		super(new TCPIPBufferHolder(is, null, 0, 0));
 		sbDec = new SplitBinaryDecoder(is);
 	}

@@ -4,6 +4,7 @@ import java.io.InputStream;
 import java.util.List;
 
 import org.ccsds.moims.mo.mal.MALException;
+import org.ccsds.moims.mo.mal.structures.Blob;
 import org.ccsds.moims.mo.mal.structures.Identifier;
 import org.ccsds.moims.mo.mal.structures.UInteger;
 
@@ -59,6 +60,18 @@ public class TCPIPHeaderDecoder extends FixedBinaryDecoder {
 	public Integer decodeInteger() throws MALException {
 		
 		return ((TCPIPBufferHolder)sourceBuffer).get32();
+	}
+
+	@Override
+	public Blob decodeBlob() throws MALException {
+		
+		int sz = (int)decodeUInteger().getValue();
+		
+		if (sz == 0) {
+			return null;
+		}
+		
+		return new Blob(sourceBuffer.directGetBytes(sz));
 	}
 	
 	/**

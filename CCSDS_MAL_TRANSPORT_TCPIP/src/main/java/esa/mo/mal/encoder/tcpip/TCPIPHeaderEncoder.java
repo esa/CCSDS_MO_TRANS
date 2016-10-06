@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.ccsds.moims.mo.mal.MALException;
 import org.ccsds.moims.mo.mal.MALListEncoder;
+import org.ccsds.moims.mo.mal.structures.Blob;
 import org.ccsds.moims.mo.mal.structures.Identifier;
 import org.ccsds.moims.mo.mal.structures.UInteger;
 
@@ -45,8 +46,6 @@ public class TCPIPHeaderEncoder extends FixedBinaryEncoder {
 		long MAX_STRING_LENGTH = 2 * (long) Integer.MAX_VALUE + 1;
 		byte[] output = val.getBytes(UTF8_CHARSET);
 		
-		System.out.println("Encode " + val + " length: " + output.length);
-
 		if (output.length > MAX_STRING_LENGTH) {
 			throw new MALException("The string length is greater than 2^32 -1 bytes! Please provide a shorter string.");
 		}
@@ -105,6 +104,20 @@ public class TCPIPHeaderEncoder extends FixedBinaryEncoder {
 	public void encodeIdentifier(final Identifier value) throws MALException {
 		
 		encodeString(value.getValue());
+	}
+	
+	@Override
+	public void encodeBlob(final Blob value) throws MALException {
+		
+		encodeUInteger(new UInteger(value.getLength()));
+		
+		if (value.getLength() > 0) {
+			try {
+				outputStream.addBytes(value.getValue());
+			} catch (IOException ex) {
+				throw new MALException(ENCODING_EXCEPTION_STR, ex);
+			}
+		}
 	}
 	
 	public OutputStream getOutputStream() {

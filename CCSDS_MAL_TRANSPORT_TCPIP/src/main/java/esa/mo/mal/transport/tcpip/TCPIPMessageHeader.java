@@ -42,6 +42,8 @@ public class TCPIPMessageHeader extends GENMessageHeader {
 	
 	private String serviceTo;
 	
+	public int decodedHeaderBytes = 0;
+	
 	public TCPIPMessageHeader() {}
 	
 	public TCPIPMessageHeader(URI uriFrom, URI uriTo) {

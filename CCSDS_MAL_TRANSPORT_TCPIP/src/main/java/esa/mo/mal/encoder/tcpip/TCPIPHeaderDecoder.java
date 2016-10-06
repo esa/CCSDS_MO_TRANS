@@ -74,6 +74,14 @@ public class TCPIPHeaderDecoder extends FixedBinaryDecoder {
 		return new Blob(sourceBuffer.directGetBytes(sz));
 	}
 	
+	public int getBufferOffset() {
+		return ((TCPIPBufferHolder)this.sourceBuffer).getOffset();
+	}
+	
+	public BufferHolder getBuffer() {
+		return this.sourceBuffer;
+	}
+	
 	/**
 	 * Internal class that implements the fixed length field decoding.
 	 */
@@ -124,6 +132,10 @@ public class TCPIPHeaderDecoder extends FixedBinaryDecoder {
 
 			final int i = shiftOffsetAndReturnPrevious(4);
 			return java.nio.ByteBuffer.wrap(getBuf(), i, 4).getInt() & 0xFFFFFFF;
+		}
+		
+		public int getOffset() {
+			return this.offset;
 		}
 	}
 }

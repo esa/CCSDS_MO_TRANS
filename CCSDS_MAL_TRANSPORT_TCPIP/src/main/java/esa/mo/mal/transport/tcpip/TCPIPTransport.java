@@ -20,6 +20,7 @@
  */
 package esa.mo.mal.transport.tcpip;
 
+import esa.mo.mal.encoder.binary.split.SplitBinaryStreamFactory;
 import esa.mo.mal.encoder.tcpip.TCPIPMessageDecoderFactory;
 import esa.mo.mal.transport.gen.GENEndpoint;
 import esa.mo.mal.transport.gen.GENMessage;
@@ -324,7 +325,23 @@ public class TCPIPTransport extends GENTransport
 		byte[] packetData = packetInfo.getPacketData();
 		TCPIPMessage msg = new TCPIPMessage(wrapBodyParts, header, qosProperties, packetData, getStreamFactory());
 		
-		return msg;
+		int decodedHeaderBytes = ((TCPIPMessageHeader)msg.getHeader()).decodedHeaderBytes;
+		int bodySize = ((TCPIPMessageHeader)msg.getHeader()).getBodyLength() + 23 - decodedHeaderBytes;
+		
+		byte[] bodyPacketData = new byte[bodySize];
+		
+		System.arraycopy(packetData, decodedHeaderBytes, bodyPacketData, 0, bodySize);
+		
+		System.out.println("\nBody: sz=" + bodyPacketData.length + " contents=");
+		for (byte b2 : bodyPacketData) {
+			System.out.print(Integer.toString(b2 & 0xFF, 10) + " ");
+		}
+		System.out.println();
+		
+		TCPIPMessage msg2 = new TCPIPMessage(wrapBodyParts, (TCPIPMessageHeader)msg.getHeader(), qosProperties,
+				bodyPacketData, new SplitBinaryStreamFactory());
+		
+		return msg2;
 	}
 
 	@Override

@@ -1,6 +1,7 @@
 package esa.mo.mal.encoder.tcpip;
 
 import java.io.OutputStream;
+
 import esa.mo.mal.encoder.binary.split.SplitBinaryEncoder;
 import esa.mo.mal.encoder.gen.GENElementOutputStream;
 import esa.mo.mal.encoder.gen.GENEncoder;
@@ -8,6 +9,7 @@ import esa.mo.mal.transport.tcpip.TCPIPMessageHeader;
 
 import org.ccsds.moims.mo.mal.MALException;
 import org.ccsds.moims.mo.mal.encoding.MALEncodingContext;
+import org.ccsds.moims.mo.mal.structures.Blob;
 import org.ccsds.moims.mo.mal.structures.UOctet;
 import org.ccsds.moims.mo.mal.structures.URI;
 
@@ -43,7 +45,7 @@ public class TCPIPSplitBinaryElementOutputStream extends GENElementOutputStream 
 			encodeHeader(element);
 		} else {
 			// body is encoded using default split binary encoder
-			super.writeElement(element, ctx);
+//			super.writeElement(element, ctx);
 		}				
 	}
 	
@@ -72,7 +74,7 @@ public class TCPIPSplitBinaryElementOutputStream extends GENElementOutputStream 
 		hdrEnc.encodeShort((short)header.getOperation().getValue());
 		hdrEnc.encodeUOctet(header.getAreaVersion());
 		
-		byte parts = (byte)(((header.getIsErrorMessage() ? 0x1 : 0x0 ) << 7) 
+		short parts = (short)(((header.getIsErrorMessage() ? 0x1 : 0x0 ) << 7) 
 				| (header.getQoSlevel().getOrdinal() << 4) 
 				| header.getSession().getOrdinal());
 

@@ -8,22 +8,23 @@ import org.ccsds.moims.mo.mal.structures.SessionType;
 import org.ccsds.moims.mo.mal.structures.URI;
 import org.ccsds.moims.mo.mal.structures.UShort;
 
-import esa.mo.mal.encoder.binary.split.SplitBinaryDecoder;
+import esa.mo.mal.encoder.binary.BinaryElementInputStream;
 import esa.mo.mal.encoder.gen.GENDecoder;
-import esa.mo.mal.encoder.gen.GENElementInputStream;
 import esa.mo.mal.transport.tcpip.TCPIPMessageHeader;
 
-public class TCPIPSplitBinaryElementInputStream extends GENElementInputStream {
+public class TCPIPSplitBinaryElementInputStream extends BinaryElementInputStream {
 	
 	private GENDecoder hdrDec;
 
 	public TCPIPSplitBinaryElementInputStream(final java.io.InputStream is) {
-		super(new SplitBinaryDecoder(is));
+		super(new TCPIPSplitBinaryDecoder(is));
 		this.hdrDec = new TCPIPHeaderDecoder(is);
+		System.out.println("TCPIPSplitBinaryElementInputStream constructor 1");
 	}
 	
-	protected TCPIPSplitBinaryElementInputStream(GENDecoder pdec) {
-		super(pdec);
+	protected TCPIPSplitBinaryElementInputStream(final byte[] src, final int offset) {
+		super(new TCPIPSplitBinaryDecoder(src, offset));
+		System.out.println("TCPIPSplitBinaryElementInputStream constructor 2");
 		// TODO Auto-generated constructor stub
 	}
 	
@@ -37,7 +38,14 @@ public class TCPIPSplitBinaryElementInputStream extends GENElementInputStream {
 			return decodeHeader(element);
 		} else {
 			// body is decoded using default split binary decoder
-			return super.readElement(element, ctx);
+			
+			// synchronise buffer reading offset as two decoders are used in parallel
+			int headerDecodingOffset = ((TCPIPHeaderDecoder)hdrDec).getBufferOffset();
+			((TCPIPSplitBinaryDecoder)dec).setBufferOffset(headerDecodingOffset);
+//			dec = new TCPIPSplitBinaryDecoder(((TCPIPHeaderDecoder)hdrDec).getBuffer());
+			
+//			return super.readElement(element, ctx);
+			return null;
 		}
 	}
 	
@@ -114,10 +122,14 @@ public class TCPIPSplitBinaryElementInputStream extends GENElementInputStream {
 		
 		header.setInteractionType(sduType);
 		header.setInteractionStage(sduType);
+		
+		header.decodedHeaderBytes = ((TCPIPHeaderDecoder)hdrDec).getBufferOffset();
 
 		System.out.println("Decoded header:");
 		System.out.println("---------------------------------------");
 		System.out.println(element.toString());
+		System.out.println("Decoded header bytes:");
+		System.out.println(header.decodedHeaderBytes);
 		System.out.println("---------------------------------------");		
 
 		return header;

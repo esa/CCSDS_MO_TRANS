@@ -7,18 +7,15 @@ import java.util.Map;
 import org.ccsds.moims.mo.mal.MALException;
 import org.ccsds.moims.mo.mal.encoding.MALElementInputStream;
 import org.ccsds.moims.mo.mal.encoding.MALElementOutputStream;
-import org.ccsds.moims.mo.mal.encoding.MALElementStreamFactory;
-import org.ccsds.moims.mo.mal.encoding.MALEncodingContext;
-import org.ccsds.moims.mo.mal.structures.Blob;
+import esa.mo.mal.encoder.binary.BinaryStreamFactory;
 
-public class TCPIPSplitBinaryStreamFactory extends MALElementStreamFactory {
+public class TCPIPSplitBinaryStreamFactory extends BinaryStreamFactory {
 
 	@Override
 	protected void init(String protocol, Map properties)
 			throws IllegalArgumentException, MALException {
 		System.out.println("TCPIPSplitBinaryStreamFactory.init()");
 		// TODO Auto-generated method stub
-		
 	}
 
 	@Override
@@ -29,11 +26,10 @@ public class TCPIPSplitBinaryStreamFactory extends MALElementStreamFactory {
 	}
 
 	@Override
-	public MALElementInputStream createInputStream(byte[] bytes, int offset)
-			throws IllegalArgumentException, MALException {
+	public MALElementInputStream createInputStream(byte[] bytes, int offset) {
 		System.out.println("TCPIPSplitBinaryStreamFactory.createInputStream(byte[], int)");
 		// TODO Auto-generated method stub
-		return null;
+		return new TCPIPSplitBinaryElementInputStream(bytes, offset);
 	}
 
 	@Override
@@ -41,14 +37,6 @@ public class TCPIPSplitBinaryStreamFactory extends MALElementStreamFactory {
 			throws IllegalArgumentException, MALException {
 		System.out.println("TCPIPSplitBinaryStreamFactory.createOutputStream(OutputStream)");
 		return new TCPIPSplitBinaryElementOutputStream(os);
-	}
-
-	@Override
-	public Blob encode(Object[] elements, MALEncodingContext ctx)
-			throws IllegalArgumentException, MALException {
-		System.out.println("TCPIPSplitBinaryStreamFactory.encode()");
-		// TODO Auto-generated method stub
-		return null;
 	}
 
 }

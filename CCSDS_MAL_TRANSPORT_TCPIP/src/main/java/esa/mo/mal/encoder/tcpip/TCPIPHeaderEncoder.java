@@ -122,11 +122,6 @@ public class TCPIPHeaderEncoder extends FixedBinaryEncoder {
 		}
 	}
 	
-	public OutputStream getOutputStream() {
-		
-		return ((TCPIPStreamHolder)outputStream).getOutputStream();
-	}
-	
 	public static class TCPIPStreamHolder extends FixedStreamHolder {
 		
 		public TCPIPStreamHolder(OutputStream outputStream) {
@@ -140,10 +135,6 @@ public class TCPIPHeaderEncoder extends FixedBinaryEncoder {
 				value >>>= 7;
 			}
 			outputStream.write(value & 0x7F);
-		}
-
-		public OutputStream getOutputStream() {
-			return this.outputStream;
 		}
 	}
 }

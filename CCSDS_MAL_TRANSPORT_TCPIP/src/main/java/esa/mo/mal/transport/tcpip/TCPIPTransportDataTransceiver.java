@@ -102,8 +102,11 @@ public class TCPIPTransportDataTransceiver implements esa.mo.mal.transport.gen.u
 		System.out.println("Reading from socket:");
 		System.out.println("---------------------------------------");
 		System.out.println("totalPacketData headerLength: " + rawHeader.length + ", BodyLength: " + bodyLength + ", bytesRead: " + (headerSize+bytesRead) + ", length: " + totalPacketData.length);
-		System.out.write(totalPacketData);
+		for (byte b2 : totalPacketData) {
+			System.out.print(Integer.toString(b2 & 0xFF, 10) + " ");
+		}
 		System.out.println("\n---------------------------------------");
+
 
 		String remoteHost = socket.getInetAddress().getCanonicalHostName();
 		int remotePort = socket.getPort();

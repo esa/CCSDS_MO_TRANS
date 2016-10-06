@@ -124,6 +124,6 @@ public class TCPIPSplitBinaryElementInputStream extends GENElementInputStream {
 	}
 	
 	private boolean isURI(String uri) {
-		return uri.matches("\bmaltcp://[-A-Za-z0-9+&@#/%?=~_()|!:,.;]*[-A-Za-z0-9+&@#/%=~_()|]");
+		return uri.startsWith("maltcp://");
 	}
 }

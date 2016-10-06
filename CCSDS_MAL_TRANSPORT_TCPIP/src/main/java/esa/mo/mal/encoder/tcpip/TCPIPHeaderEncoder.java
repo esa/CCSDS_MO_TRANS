@@ -109,11 +109,13 @@ public class TCPIPHeaderEncoder extends FixedBinaryEncoder {
 	@Override
 	public void encodeBlob(final Blob value) throws MALException {
 		
-		encodeUInteger(new UInteger(value.getLength()));
+		byte[] byteValue = value.getValue();
+		
+		encodeUInteger(new UInteger(byteValue.length));
 		
 		if (value.getLength() > 0) {
 			try {
-				outputStream.addBytes(value.getValue());
+				outputStream.addBytes(byteValue);
 			} catch (IOException ex) {
 				throw new MALException(ENCODING_EXCEPTION_STR, ex);
 			}

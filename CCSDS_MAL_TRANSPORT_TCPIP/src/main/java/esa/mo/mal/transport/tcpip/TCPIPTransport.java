@@ -283,7 +283,7 @@ public class TCPIPTransport extends GENTransport
 
 	@Override
 	protected String createTransportAddress() throws MALException {
-		System.out.println("TCPIPTransport.createTransportAddress()");
+
 		String addr;
 		if (serverHost == null) {
 			// this is a pure client
@@ -293,12 +293,14 @@ public class TCPIPTransport extends GENTransport
 			// will not try
 			// to connect to it, it is used as an identifier for the MAL in the
 			// URI.
-			addr = getDefaultHost() + PORT_DELIMITER + getRandomClientId();
+			addr = getDefaultHost() + PORT_DELIMITER + getClientPort();
 		} else {
 			// this a server (and potentially a client)
 			addr = serverHost + PORT_DELIMITER + serverPort;
 		}
-		System.out.println("I'm using address " + addr);
+
+		RLOGGER.fine("Transport address created is " + addr);
+		
 		return addr;
 	}  
 
@@ -349,30 +351,20 @@ public class TCPIPTransport extends GENTransport
 			String remoteRootURI) throws MALException,
 			MALTransmitErrorException {
 		System.out.println("TCPIPTransport.createMessageSender()");
-		try {
-			
-			ConnectionTuple ct = getConnectionParts(remoteRootURI);
+		try {			
 
 			URI from = msg.getHeader().getURIFrom();
 			ConnectionTuple fromCt = getConnectionParts(from.toString());
+			ConnectionTuple toCt = getConnectionParts(remoteRootURI);
 
 			// create a message sender and receiver for the socket
 			Socket s = TCPIPConnectionPoolManager.INSTANCE.get(SOCKET_TYPE.LOCAL, fromCt.host, fromCt.port, "", -1);
-			s.connect(new InetSocketAddress(ct.host, ct.port));
+			s.connect(new InetSocketAddress(toCt.host, toCt.port));
 			TCPIPTransportDataTransceiver trans = createDataTransceiver(s);
-		    System.out.println("transport.createMessageSender() SERVERSOCKET: " + ct.host + ":" + s.getLocalPort() + " (was " + ct.port + ")");
+		    System.out.println("transport.createMessageSender() SERVERSOCKET: " + toCt.host + ":" + s.getLocalPort() + " (was " + toCt.port + ")");
 		    
 		    RLOGGER.fine("Original message for sending: " + msg.toString());
-			
-			// update message uriFrom
-			
-			String newFrom = protocol + protocolDelim + fromCt.host + PORT_DELIMITER + s.getLocalPort();
-			String service = getRoutingPart(from.toString());
-			if (!service.isEmpty()) {
-				newFrom += serviceDelim + service;
-			}
-//			msg.getHeader().setURIFrom(new URI(newFrom));
-
+		    
 			// create also a data reader thread for this socket in order to read
 			// messages from it
 			// no need to register this as it will automatically terminate when
@@ -441,11 +433,10 @@ public class TCPIPTransport extends GENTransport
    * @return The transport specific address part.
    * @throws MALException On error
    */
-  private String getDefaultHost() throws MALException
-  {
-		System.out.println("TCPIPTransport.getDefaultHost()");
+	private String getDefaultHost() throws MALException {
+		
 		try {
-			// Build RMI url string
+			// Build url string
 			final InetAddress addr = Inet4Address.getLocalHost();
 			final StringBuilder hostAddress = new StringBuilder();
 			if (addr instanceof Inet6Address) {
@@ -461,21 +452,26 @@ public class TCPIPTransport extends GENTransport
 		} catch (UnknownHostException ex) {
 			throw new MALException("Could not determine local host address", ex);
 		}
-  }
+	}
 
 	/**
-	 *
-	 * @return the random, host unique, id
+	 * Get a client port by first creating a socket. The socket is bound to an ephemeral port
+	 * which is returned so that it can be used by this client. The socket is stored in the
+	 * connection pool manager for later use.
+	 * @return the unique port, bound to an existing client socket
 	 */
-	private int getRandomClientId() {
+	private int getClientPort() {
 		
 		// pre-allocate a socket
 		Socket s = new Socket();
 		try {
-			s.bind(null);
+			s.bind(null);			
 			TCPIPConnectionPoolManager.INSTANCE.put(SOCKET_TYPE.LOCAL, s);
+			
+			RLOGGER.fine("Created a client socket at port " + s.getLocalPort());
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
+
+			RLOGGER.warning("Failed to create a client socket! " + e.getMessage());
 			e.printStackTrace();
 		}
 		return s.getLocalPort();

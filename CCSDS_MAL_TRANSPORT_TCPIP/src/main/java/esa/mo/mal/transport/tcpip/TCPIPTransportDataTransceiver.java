@@ -108,9 +108,9 @@ public class TCPIPTransportDataTransceiver implements esa.mo.mal.transport.gen.u
 		System.out.println("\n---------------------------------------");
 
 
-		String remoteHost = socket.getInetAddress().getCanonicalHostName();
+		String remoteHost = socket.getInetAddress().getHostAddress();
 		int remotePort = socket.getPort();
-		String localHost = socket.getLocalAddress().getCanonicalHostName();
+		String localHost = socket.getLocalAddress().getHostAddress();
 		int localPort = socket.getLocalPort();
 		System.out.println("Remote addr: " + remoteHost + ":" + remotePort);
 		

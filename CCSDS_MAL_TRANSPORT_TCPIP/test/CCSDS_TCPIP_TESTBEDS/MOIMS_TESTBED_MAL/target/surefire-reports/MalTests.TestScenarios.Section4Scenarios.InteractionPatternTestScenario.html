@@ -1,0 +1,15 @@
+<html><head><title>MalTests.TestScenarios.Section4Scenarios.InteractionPatternTestScenario</title><meta http-equiv='Content-Type' content='text/html;charset=utf-8'/><link rel='stylesheet' type='text/css' href='css/fitnesse.css'/><script src='javascript/jquery-1.7.2.min.js' type='text/javascript'></script><script src='javascript/fitnesse.js' type='text/javascript'></script></head><body><header><h2>MalTests.TestScenarios.Section4Scenarios.InteractionPatternTestScenario</h2></header><article><br/><br/><div class="collapsible invisible"><ul><li><a href='#' class='expandall'>Expand</a></li><li><a href='#' class='collapseall'>Collapse</a></li></ul>
+	<p class="title">Hidden</p>
+	<div><span class="meta">variable defined: TEST_SYSTEM=slim</span>
+<br/></div>
+</div>
+<h2>IP test scenario</h2>
+Two test cases are defined:<br/><ul>
+	<li>The first one tests every interaction pattern except the Pub/Sub pattern.</li>
+	<li>The second one is dedicated to the Pub/Sub pattern which is different as it does not involve the provider in the same way and it is more complex. Several aspects of the Pub/Sub pattern need to be tested. One test procedure is done for each of them.</li>
+</ul>
+Pub/Sub tests are to be done with a private and a shared broker.<br/><br/>Two constraints are required in order to check the IP state charts:<br/><ul>
+	<li>no message loss</li>
+	<li>FIFO message ordering is required</li>
+</ul>
+<br/><i>As a consequence, the Best Effort QoS can only be used if the specific transport layer ensures in the context of the test bed that messages are delivered exactly once and according to a FIFO ordering.</i><br/><br/></article></body></html>

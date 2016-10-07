@@ -1,0 +1,4 @@
+#Created: Fri Oct 07 14:38:28 UTC 2016
+#Fri Oct 07 14:38:28 UTC 2016
+broker=maltcp\://172.28.16.23\:61617/IPTestFromArea2InternalBroker
+uri=maltcp\://172.28.16.23\:61617/IPTestFromArea2

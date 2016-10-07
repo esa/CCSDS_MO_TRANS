@@ -1,0 +1,66 @@
+<html><head><title>MalTests.TestScenarios.Section4Scenarios.InteractionPatternTestScenario.AllExceptPubSubTestCase</title><meta http-equiv='Content-Type' content='text/html;charset=utf-8'/><link rel='stylesheet' type='text/css' href='css/fitnesse.css'/><script src='javascript/jquery-1.7.2.min.js' type='text/javascript'></script><script src='javascript/fitnesse.js' type='text/javascript'></script></head><body><header><h2>MalTests.TestScenarios.Section4Scenarios.InteractionPatternTestScenario.AllExceptPubSubTestCase</h2></header><article><br/><br/><div class="collapsible invisible"><ul><li><a href='#' class='expandall'>Expand</a></li><li><a href='#' class='collapseall'>Collapse</a></li></ul>
+	<p class="title">Hidden</p>
+	<div><span class="meta">variable defined: TEST_SYSTEM=slim</span>
+<br/><br/></div>
+</div>
+<h3>Test case: all patterns except Pub/Sub</h3>
+The consumer initiates the patterns by calling the following operations provided by the service IPTest:<br/><ul>
+	<li>send</li>
+	<li>submit</li>
+	<li>request</li>
+	<li>invoke</li>
+	<li>progress</li>
+</ul>
+Those operations shall be called once for each QoS level and session type. It is not necessary to test each combination of QoS and session. One call for each QoS level and session type is enough.<br/><br/>The following parameters are used to make the calls:<br/><table>
+	<tr>
+		<td colspan="2">comment</td>
+	</tr>
+	<tr>
+		<td>authenticationId</td>
+		<td>{0x00, 0x01}</td>
+	</tr>
+	<tr>
+		<td>qos</td>
+		<td>Best Effort, Assured, Queued, Timely</td>
+	</tr>
+	<tr>
+		<td>priority</td>
+		<td>1</td>
+	</tr>
+	<tr>
+		<td>domain</td>
+		<td>{"Test", "Domain"}</td>
+	</tr>
+	<tr>
+		<td>networkZone</td>
+		<td>"TestNetwork"</td>
+	</tr>
+	<tr>
+		<td>session</td>
+		<td>Live, Simulation, Replay</td>
+	</tr>
+	<tr>
+		<td>session name</td>
+		<td><table class="hash_table">
+	<tr class="hash_row">
+		<td class="hash_key">Live</td>
+		<td class="hash_value">"LIVE"</td>
+	</tr>
+	<tr class="hash_row">
+		<td class="hash_key">Replay</td>
+		<td class="hash_value">"R1"</td>
+	</tr>
+	<tr class="hash_row">
+		<td class="hash_key">Simulation</td>
+		<td class="hash_value">"S1"</td>
+	</tr>
+</table></td>
+	</tr>
+</table>
+<br/>The consumer has to execute the following test procedure for every possible header values (QoS and session fields) and every possible transitions. The name of the procedure is built from the parameters:<br/><ul>
+	<li>ip: name of the tested IP</li>
+	<li>qos: QoS level to be used</li>
+	<li>session: session type to be used</li>
+	<li>transition list id: identifier of the IPTestTransitionList that is expected by the consumer (see table above).</li>
+</ul>
+<br/></article></body></html>

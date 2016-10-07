@@ -32,8 +32,10 @@ import java.io.IOException;
 import java.net.Inet4Address;
 import java.net.Inet6Address;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -109,8 +111,6 @@ public class TCPIPTransport extends GENTransport
   private static final char PORT_DELIMITER = ':';
   
   private static final char SERVICE_DELIMITER = '/';
-  
-  private HashMap<String, Socket> socketConnections;
 
   /**
    * The server port that the TCP transport listens for incoming connections
@@ -353,23 +353,25 @@ public class TCPIPTransport extends GENTransport
 			
 			ConnectionTuple ct = getConnectionParts(remoteRootURI);
 
+			URI from = msg.getHeader().getURIFrom();
+			ConnectionTuple fromCt = getConnectionParts(from.toString());
+
 			// create a message sender and receiver for the socket
-			Socket s = new Socket(ct.host, ct.port);
+			Socket s = TCPIPConnectionPoolManager.INSTANCE.get(SOCKET_TYPE.LOCAL, fromCt.host, fromCt.port, "", -1);
+			s.connect(new InetSocketAddress(ct.host, ct.port));
 			TCPIPTransportDataTransceiver trans = createDataTransceiver(s);
 		    System.out.println("transport.createMessageSender() SERVERSOCKET: " + ct.host + ":" + s.getLocalPort() + " (was " + ct.port + ")");
 		    
 		    RLOGGER.fine("Original message for sending: " + msg.toString());
 			
 			// update message uriFrom
-			URI from = msg.getHeader().getURIFrom();
-			ConnectionTuple fromCt = getConnectionParts(from.toString());
 			
 			String newFrom = protocol + protocolDelim + fromCt.host + PORT_DELIMITER + s.getLocalPort();
 			String service = getRoutingPart(from.toString());
 			if (!service.isEmpty()) {
 				newFrom += serviceDelim + service;
 			}
-			msg.getHeader().setURIFrom(new URI(newFrom));
+//			msg.getHeader().setURIFrom(new URI(newFrom));
 
 			// create also a data reader thread for this socket in order to read
 			// messages from it
@@ -462,14 +464,21 @@ public class TCPIPTransport extends GENTransport
   }
 
 	/**
-	 * This method returns a random Id to be used for differentiating different
-	 * MAL instances in the same host.
 	 *
 	 * @return the random, host unique, id
 	 */
-	private String getRandomClientId() {
-//		return new UID().toString().replaceAll("[^0-9]", "");
-		return "-1";
+	private int getRandomClientId() {
+		
+		// pre-allocate a socket
+		Socket s = new Socket();
+		try {
+			s.bind(null);
+			TCPIPConnectionPoolManager.INSTANCE.put(SOCKET_TYPE.LOCAL, s);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return s.getLocalPort();
 	}
   
 	public char getServiceDelim() {

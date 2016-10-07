@@ -113,7 +113,7 @@ public class TCPIPSplitBinaryElementOutputStream extends GENElementOutputStream 
 		if (header.getDomain() != null && header.getDomain().size() > 0) {
 			header.getDomain().encode(hdrEnc);
 		}
-		if (header.getAuthenticationId() != null) {
+		if (header.getAuthenticationId().getLength() > 0) {
 			hdrEnc.encodeBlob(header.getAuthenticationId());
 		}
 	}
@@ -142,7 +142,7 @@ public class TCPIPSplitBinaryElementOutputStream extends GENElementOutputStream 
 		if (header.getDomain() != null && header.getDomain().size() > 0) {
 			result |= (0x1 << 1);
 		}
-		if (header.getAuthenticationId() != null) {
+		if (header.getAuthenticationId().getLength() > 0) {
 			result |= 0x1;
 		}
 		

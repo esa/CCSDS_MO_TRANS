@@ -143,53 +143,43 @@ public class TCPIPTransport extends GENTransport
    * @param properties The QoS properties.
    * @throws MALException On error.
    */
-  public TCPIPTransport(final String protocol, final char serviceDelim, final boolean supportsRouting, final MALTransportFactory factory, final java.util.Map properties) throws MALException
-  {
-    super(protocol, serviceDelim, supportsRouting, false, factory, properties);
-        
-	System.out.println("TCPIPTransport (constructor)");
+	public TCPIPTransport(final String protocol, final char serviceDelim,
+			final boolean supportsRouting, final MALTransportFactory factory,
+			final java.util.Map properties) throws MALException {
+		super(protocol, serviceDelim, supportsRouting, false, factory,
+				properties);
 
-    // decode configuration
-    if (properties != null)
-    {
-      // host / ip adress
-      if (properties.containsKey("org.ccsds.moims.mo.mal.transport.tcpip.host"))
-      {
-        this.serverHost = (String) properties.get("org.ccsds.moims.mo.mal.transport.tcpip.host");
-      }
-      else
-      {
-        this.serverHost = null; // this is only a client
-      }
+		System.out.println("TCPIPTransport (constructor)");
 
-      // port
-      if (properties.containsKey("org.ccsds.moims.mo.mal.transport.tcpip.port"))
-      {
-        this.serverPort = Integer.parseInt((String) properties.get("org.ccsds.moims.mo.mal.transport.tcpip.port"));
-      }
-      else
-      {
-        if (serverHost != null)
-        {
-          //this is a server, use default port
-          this.serverPort = 61616;
-        }
-        else
-        {
-          //this is a client
-          this.serverPort = 0; //0 means this is a client
-        }
-      }
-    }
-    else
-    {
-      // default values
-      this.serverPort = 0; //0 means this is a client
-      this.serverHost = null; //null means this is a client
-    }
+		// decode configuration
+		if (properties != null) {
+			// host / ip adress
+			if (properties.containsKey("org.ccsds.moims.mo.mal.transport.tcpip.host")) {
+				this.serverHost = (String) properties.get("org.ccsds.moims.mo.mal.transport.tcpip.host");
+			} else {
+				this.serverHost = null; // this is only a client
+			}
 
-    RLOGGER.log(Level.INFO, "TCPIP Wrapping body parts set to  : {0}", this.wrapBodyParts);
-  }
+			// port
+			if (properties.containsKey("org.ccsds.moims.mo.mal.transport.tcpip.port")) {
+				this.serverPort = Integer.parseInt((String) properties.get("org.ccsds.moims.mo.mal.transport.tcpip.port"));
+			} else {
+				if (serverHost != null) {
+					// this is a server, use default port
+					this.serverPort = 61616;
+				} else {
+					// this is a client
+					this.serverPort = 0; // 0 means this is a client
+				}
+			}
+		} else {
+			// default values
+			this.serverPort = 0; // 0 means this is a client
+			this.serverHost = null; // null means this is a client
+		}
+
+		RLOGGER.log(Level.INFO, "TCPIP Wrapping body parts set to  : {0}", this.wrapBodyParts);
+	}
 
   @Override
   public void init() throws MALException
@@ -295,7 +285,7 @@ public class TCPIPTransport extends GENTransport
 			// URI.
 			addr = getDefaultHost() + PORT_DELIMITER + getClientPort();
 		} else {
-			// this a server (and potentially a client)
+			// this a server (and potentially a client)			
 			addr = serverHost + PORT_DELIMITER + serverPort;
 		}
 

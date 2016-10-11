@@ -114,7 +114,7 @@ public class TCPIPEndpoint extends GENEndpoint {
 	}
 	  
 	public GENMessageHeader createMessageHeader(final URI uriFrom,
-			final Blob authenticationId, final URI uriTo, final Time timestamp,
+			Blob authenticationId, final URI uriTo, final Time timestamp,
 			final QoSLevel qosLevel, final UInteger priority,
 			final IdentifierList domain, final Identifier networkZone,
 			final SessionType session, final Identifier sessionName,

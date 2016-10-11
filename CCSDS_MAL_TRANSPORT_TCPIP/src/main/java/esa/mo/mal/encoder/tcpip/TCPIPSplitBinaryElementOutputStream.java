@@ -77,6 +77,8 @@ public class TCPIPSplitBinaryElementOutputStream extends GENElementOutputStream 
 		short parts = (short)(((header.getIsErrorMessage() ? 0x1 : 0x0 ) << 7) 
 				| (header.getQoSlevel().getOrdinal() << 4) 
 				| header.getSession().getOrdinal());
+		
+		System.out.println("QOS ENCODING: qos=" + header.getQoSlevel().getOrdinal() + " parts=" + parts);
 
 		hdrEnc.encodeUOctet(new UOctet(parts));
 		((TCPIPHeaderEncoder)hdrEnc).encodeMALLong(header.getTransactionId());

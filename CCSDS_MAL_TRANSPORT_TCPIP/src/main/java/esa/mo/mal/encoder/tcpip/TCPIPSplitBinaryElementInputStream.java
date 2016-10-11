@@ -71,6 +71,7 @@ public class TCPIPSplitBinaryElementInputStream extends BinaryElementInputStream
 		header.setSession(SessionType.fromOrdinal(parts & 0xF));
 		Long transactionId = ((TCPIPHeaderDecoder)hdrDec).decodeMALLong();
 		header.setTransactionId(transactionId);
+		System.out.println("QOS DECODING: qos=" + header.getQoSlevel().getOrdinal() + " parts=" + parts);
 		
 		short flags = hdrDec.decodeUOctet().getValue(); // flags
 		boolean sourceIdFlag = (((flags & 0x80) >> 7) == 0x1);

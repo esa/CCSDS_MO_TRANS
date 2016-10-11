@@ -14,7 +14,6 @@ import org.ccsds.moims.mo.mal.MALOperation;
 import org.ccsds.moims.mo.mal.encoding.MALElementOutputStream;
 import org.ccsds.moims.mo.mal.encoding.MALElementStreamFactory;
 
-import esa.mo.mal.encoder.binary.split.SplitBinaryElementOutputStream;
 import esa.mo.mal.encoder.binary.split.SplitBinaryStreamFactory;
 import esa.mo.mal.transport.gen.GENMessage;
 import esa.mo.mal.transport.gen.GENMessageHeader;
@@ -46,6 +45,7 @@ public class TCPIPMessage extends GENMessage {
 			final OutputStream lowLevelOutputStream, final boolean writeHeader)
 			throws MALException {
 		System.out.println("TCPIPMessage.encodeMessage()");
+		System.out.println("TCPIPMessageHeader: " + this.getHeader().toString());
 		System.out.println("TCPIPMessageBody: " + this.getBody().toString());
 
 		// encode header and body using TCPIPEncoder class

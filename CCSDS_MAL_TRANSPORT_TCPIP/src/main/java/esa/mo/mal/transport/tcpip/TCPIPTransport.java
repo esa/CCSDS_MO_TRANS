@@ -35,10 +35,8 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.SocketAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -88,10 +86,10 @@ import org.ccsds.moims.mo.mal.transport.MALTransportFactory;
  *
  * URIs:
  *
- * The TCPIP Transport, generates URIs, in the form of : {@code tcpip://<host>:<port or client ID>-<service id>}
- * There are two categories of URIs Client URIs, which are in the form of {@code tcpip://<host>:<clientId>-<serviceId>} , where
- * the client id is a unique identifier for the client on its host, for example : 4783fbc147ab7aa56e7fff and ServerURIs,
- * which are in the form of {@code tcpip://<host>:<port>-<serviceId>} and clients can actively connect to.
+ * The TCPIP Transport, generates URIs, in the form of : {@code maltcp://<host>:<port or client ID>-<service id>}
+ * There are two categories of URIs Client URIs, which are in the form of {@code maltcp://<host>:<clientId>-<serviceId>} , where
+ * the client id is a unique port for the client on its host, and ServerURIs,
+ * which are in the form of {@code maltcp://<host>:<port>-<serviceId>} and clients can actively connect to.
  *
  * If a MAL instance does not offer any services then all of its endpoints get a Client URI. If a MAL instance offers at
  * least one service then all of its endpoints get a Server URI. A service provider communicates with a service consumer
@@ -226,13 +224,15 @@ public class TCPIPTransport extends GENTransport
 		return null;
   }
 
-  @Override
-  public boolean isSupportedInteractionType(final InteractionType type)
-  {
-		System.out.println("TCPIPTransport.isSupportedInteractionType()");
-		// Supports all IPs except Pub Sub
+  	/**
+  	 * The MAL TCPIP binding supports SEND, SUBMIT, REQUEST, INVOKE and PROGRESS.
+  	 * PUBSUB is not supported. A MAL implementation layer has to support PUBSUB
+  	 * itself.
+  	 */
+	@Override
+	public boolean isSupportedInteractionType(final InteractionType type) {
 		return InteractionType.PUBSUB.getOrdinal() != type.getOrdinal();
-  }
+	}
 
   @Override
   public boolean isSupportedQoSLevel(final QoSLevel qos)
@@ -266,7 +266,7 @@ public class TCPIPTransport extends GENTransport
 	@Override
 	protected GENEndpoint internalCreateEndpoint(final String localName,
 			final String routingName, final Map properties) throws MALException {
-		System.out.println("TCPIPTransport.internalCreateEndpoint()");
+		System.out.println("TCPIPTransport.internalCreateEndpoint() with uri: " + uriBase);
 		
 		return new TCPIPEndpoint(this, localName, routingName, uriBase + routingName, wrapBodyParts);
 	}
@@ -289,7 +289,7 @@ public class TCPIPTransport extends GENTransport
 			addr = serverHost + PORT_DELIMITER + serverPort;
 		}
 
-		RLOGGER.fine("Transport address created is " + addr);
+		RLOGGER.info("Transport address created is " + addr);
 		
 		return addr;
 	}  
@@ -323,11 +323,21 @@ public class TCPIPTransport extends GENTransport
 		byte[] bodyPacketData = new byte[bodySize];
 		
 		System.arraycopy(packetData, decodedHeaderBytes, bodyPacketData, 0, bodySize);
-		
-		System.out.println("\nBody: sz=" + bodyPacketData.length + " contents=");
+
+		System.out.println("TCPIPTransport.createMessage() Header results:");
+		System.out.println(msg.getHeader().toString());
+		System.out.println("TCPIPTransport.createMessage() TRYING TO DECODE BODY");
+		System.out.println("---------------------------------------");
+		System.out.println("TCPIPTransport.createMessage() Total msg in bytes:");
+		for (byte b2 : packetData) {
+			System.out.print(Integer.toString(b2 & 0xFF, 10) + " ");
+		}
+		System.out.println("\nDecoded header bytes: " + decodedHeaderBytes);
+		System.out.println("Body: sz=" + bodyPacketData.length + " contents=");
 		for (byte b2 : bodyPacketData) {
 			System.out.print(Integer.toString(b2 & 0xFF, 10) + " ");
 		}
+		System.out.println("\n---------------------------------------");
 		System.out.println();
 		
 		TCPIPMessage msg2 = new TCPIPMessage(wrapBodyParts, (TCPIPMessageHeader)msg.getHeader(), qosProperties,
@@ -351,8 +361,11 @@ public class TCPIPTransport extends GENTransport
 			Socket s = TCPIPConnectionPoolManager.INSTANCE.get(SOCKET_TYPE.LOCAL, fromCt.host, fromCt.port, "", -1);
 			s.connect(new InetSocketAddress(toCt.host, toCt.port));
 			TCPIPTransportDataTransceiver trans = createDataTransceiver(s);
-		    System.out.println("transport.createMessageSender() SERVERSOCKET: " + toCt.host + ":" + s.getLocalPort() + " (was " + toCt.port + ")");
-		    
+		    System.out.println("transport.createMessageSender() SERVERSOCKET: "
+		    		+ fromCt.host + ":" + s.getLocalPort() + " (was " + fromCt.port + ")");
+			System.out.println("ConnectionPool @ transport.createMessageSender():");
+			System.out.println(TCPIPConnectionPoolManager.INSTANCE.toString());
+					    
 		    RLOGGER.fine("Original message for sending: " + msg.toString());
 		    
 			// create also a data reader thread for this socket in order to read
@@ -414,7 +427,7 @@ public class TCPIPTransport extends GENTransport
   protected TCPIPTransportDataTransceiver createDataTransceiver(Socket socket) throws IOException
   {
 		System.out.println("TCPIPTransport.createDataTransceiver()");
-		return new TCPIPTransportDataTransceiver(socket);
+		return new TCPIPTransportDataTransceiver(socket, serverPort);
   }
 
   /**
@@ -453,17 +466,7 @@ public class TCPIPTransport extends GENTransport
 	private int getClientPort() {
 		
 		// pre-allocate a socket
-		Socket s = new Socket();
-		try {
-			s.bind(null);			
-			TCPIPConnectionPoolManager.INSTANCE.put(SOCKET_TYPE.LOCAL, s);
-			
-			RLOGGER.fine("Created a client socket at port " + s.getLocalPort());
-		} catch (IOException e) {
-
-			RLOGGER.warning("Failed to create a client socket! " + e.getMessage());
-			e.printStackTrace();
-		}
+		Socket s = TCPIPConnectionPoolManager.INSTANCE.get(SOCKET_TYPE.LOCAL, "", 0, "", -1);
 		return s.getLocalPort();
 	}
   

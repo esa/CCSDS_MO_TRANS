@@ -115,7 +115,7 @@ public class TCPIPHeaderEncoder extends FixedBinaryEncoder {
 		
 		if (value.getLength() > 0) {
 			try {
-				outputStream.addBytes(byteValue);
+				outputStream.directAdd(byteValue);
 			} catch (IOException ex) {
 				throw new MALException(ENCODING_EXCEPTION_STR, ex);
 			}

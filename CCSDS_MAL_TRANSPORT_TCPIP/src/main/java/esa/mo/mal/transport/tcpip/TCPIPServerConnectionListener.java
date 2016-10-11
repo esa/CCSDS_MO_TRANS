@@ -77,7 +77,7 @@ public class TCPIPServerConnectionListener extends Thread
 			try {
 				// wait for connection
 				Socket socket = serverSocket.accept();
-
+				
 				// handle socket in separate thread
 				TCPIPTransportDataTransceiver tc = transport.createDataTransceiver(socket);
 
@@ -100,5 +100,13 @@ public class TCPIPServerConnectionListener extends Thread
 		}
 
 		pollerThreads.clear();
+		
+//		System.out.println("Closing server socket...");
+//		
+//		try {
+//			serverSocket.close();
+//		} catch (IOException e) {
+//			RLOGGER.log(Level.WARNING, "Error while closing connection", e);
+//		}
   }
 }

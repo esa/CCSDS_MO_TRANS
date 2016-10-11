@@ -45,6 +45,7 @@ public class TCPIPTransportDataTransceiver implements esa.mo.mal.transport.gen.u
 	protected final Socket socket;
 	protected final DataOutputStream socketWriteIf;
 	protected final DataInputStream socketReadIf;
+	protected final int serverPort;
 	
 	/**
 	 * Constructor.
@@ -52,15 +53,12 @@ public class TCPIPTransportDataTransceiver implements esa.mo.mal.transport.gen.u
 	 * @param socket the TCPIP socket.
 	 * @throws IOException if there is an error.
 	 */
-	public TCPIPTransportDataTransceiver(Socket socket) throws IOException {
+	public TCPIPTransportDataTransceiver(Socket socket, int serverPort) throws IOException {
 		this.socket = socket;
+		this.serverPort = serverPort;
 		socketWriteIf = new DataOutputStream(socket.getOutputStream());
 		socketReadIf = new DataInputStream(socket.getInputStream());
 	}
-	
-//	public TCPIPTransportDataTransceiver(String host, int port) {
-//		this.socket = new Socket(host, port);
-//	}
 
 	@Override
 	public void sendEncodedMessage(GENOutgoingMessageHolder packetData) throws IOException {
@@ -94,9 +92,11 @@ public class TCPIPTransportDataTransceiver implements esa.mo.mal.transport.gen.u
 		// merge header and body
 		// TODO: replace by system.arraycopy.
 	    byte[] totalPacketData = new byte[headerSize + bodyLength];
-	    for (int i = 0; i < headerSize + bodyLength; i++) {
-	    	totalPacketData[i] = (i < headerSize ? rawHeader[i] : bodyData[i-headerSize]);
-	    }
+//	    for (int i = 0; i < headerSize + bodyLength; i++) {
+//	    	totalPacketData[i] = (i < headerSize ? rawHeader[i] : bodyData[i-headerSize]);
+//	    }
+	    System.arraycopy(rawHeader, 0, totalPacketData, 0, headerSize);
+	    System.arraycopy(bodyData, 0, totalPacketData, headerSize, bodyLength);
 	    
 		System.out.println("TCPIPTransportDataTransciever.readEncodedMessage()");
 		System.out.println("Reading from socket:");
@@ -112,10 +112,17 @@ public class TCPIPTransportDataTransceiver implements esa.mo.mal.transport.gen.u
 		int remotePort = socket.getPort();
 		String localHost = socket.getLocalAddress().getHostAddress();
 		int localPort = socket.getLocalPort();
+		if (serverPort > 0) {
+			localPort = serverPort;
+		}
+		System.out.println("Local addr: " + localHost + ":" + localPort);
 		System.out.println("Remote addr: " + remoteHost + ":" + remotePort);
 		
 		URI from = new URI("maltcp://" + remoteHost + ":" + remotePort);
 		URI to = new URI("maltcp://" + localHost + ":" + localPort);
+		
+		System.out.println("ConnectionPool @ TCPIPTransportDataTransciever.readEncodedMessage():");
+		System.out.println(TCPIPConnectionPoolManager.INSTANCE.toString());
 		
 		return new TCPIPPacketInfoHolder(totalPacketData, from, to);
   }

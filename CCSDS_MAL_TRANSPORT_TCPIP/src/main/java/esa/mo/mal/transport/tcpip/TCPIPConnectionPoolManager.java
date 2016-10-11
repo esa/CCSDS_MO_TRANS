@@ -1,6 +1,7 @@
 package esa.mo.mal.transport.tcpip;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
@@ -52,7 +53,7 @@ public enum TCPIPConnectionPoolManager {
 		if (type == SOCKET_TYPE.LOCAL) {
 			s = localSockets.get(hash);
 			if (s == null) {
-				s = createSocket();
+				s = createSocket(localPort);
 				RLOGGER.warning("The socket doesn't exist yet! Creating a new one.");
 			}
 		} else if (type == SOCKET_TYPE.REMOTE) {
@@ -67,26 +68,42 @@ public enum TCPIPConnectionPoolManager {
 	public int getSocketHash(SOCKET_TYPE type, String localHost, int localPort, String remoteHost, int remotePort) {
 		
 		if (type == SOCKET_TYPE.LOCAL) {
-			return Integer.toString(localPort).hashCode();
+			return localPort;
 		}
 		
 		return (localHost+localPort+remoteHost+remotePort).hashCode();		
 	}
 	
-	public Socket createSocket() {
+	public Socket createSocket(int localPort) {
 		
 		Socket s = new Socket();
 		try {
-			s.bind(null);			
-			put(SOCKET_TYPE.LOCAL, s);
+			s.bind(new InetSocketAddress(localPort));
 			
 			RLOGGER.fine("Created a socket at port " + s.getLocalPort());
 		} catch (IOException e) {
-
-			RLOGGER.warning("Failed to create a socket! " + e.getMessage());
-			e.printStackTrace();
-		}
+			try {
+				s.bind(null);
+			} catch (IOException e1) {
+				RLOGGER.warning("Failed to create a socket! " + e.getMessage());
+				e1.printStackTrace();
+			}
+			
+			RLOGGER.warning("Failed to create a socket at port " + localPort + "! " + e.getMessage());
+		}			
+		put(SOCKET_TYPE.LOCAL, s);
 		
 		return s;
+	}
+	
+	public String toString() {
+		
+		StringBuffer result = new StringBuffer();
+		result.append("LocalSockets:\n");
+		for (int hash : localSockets.keySet()) {
+			result.append(hash + ": " + localSockets.get(hash) + "\n");
+		}
+		
+		return result.toString();
 	}
 }

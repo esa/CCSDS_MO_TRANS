@@ -358,7 +358,7 @@ public class TCPIPTransport extends GENTransport
 			ConnectionTuple toCt = getConnectionParts(remoteRootURI);
 
 			// create a message sender and receiver for the socket
-			Socket s = TCPIPConnectionPoolManager.INSTANCE.get(SOCKET_TYPE.LOCAL, fromCt.host, fromCt.port, "", -1);
+			Socket s = TCPIPConnectionPoolManager.INSTANCE.get(fromCt.host, fromCt.port, "", -1);
 			s.connect(new InetSocketAddress(toCt.host, toCt.port));
 			TCPIPTransportDataTransceiver trans = createDataTransceiver(s);
 		    System.out.println("transport.createMessageSender() SERVERSOCKET: "
@@ -466,7 +466,7 @@ public class TCPIPTransport extends GENTransport
 	private int getClientPort() {
 		
 		// pre-allocate a socket
-		Socket s = TCPIPConnectionPoolManager.INSTANCE.get(SOCKET_TYPE.LOCAL, "", 0, "", -1);
+		Socket s = TCPIPConnectionPoolManager.INSTANCE.getAny();
 		return s.getLocalPort();
 	}
   

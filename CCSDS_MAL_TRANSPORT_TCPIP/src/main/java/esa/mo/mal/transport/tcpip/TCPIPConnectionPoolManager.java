@@ -7,11 +7,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
 
-enum SOCKET_TYPE {
-	LOCAL,
-	REMOTE
-};
-
 public enum TCPIPConnectionPoolManager {
 	INSTANCE;
 	
@@ -20,10 +15,9 @@ public enum TCPIPConnectionPoolManager {
 	 */
 	public static final java.util.logging.Logger RLOGGER = Logger.getLogger("org.ccsds.moims.mo.mal.transport.tcpip");
 
-	private Map<Integer, Socket> localSockets = new HashMap<Integer, Socket>();
-	private Map<Integer, Socket> remoteSockets = new HashMap<Integer, Socket>();
+	private Map<Integer, Socket> connections = new HashMap<Integer, Socket>();
 	
-	public void put(SOCKET_TYPE type, Socket s) {
+	public void put(Socket s) {
 		
 		String remoteHost = "";
 		int remotePort = -1;
@@ -33,45 +27,35 @@ public enum TCPIPConnectionPoolManager {
 		}
 		String localHost = s.getLocalAddress().getCanonicalHostName();
 		int localPort = s.getLocalPort();
-		int hash = getSocketHash(type, localHost, localPort, remoteHost, remotePort);
+		int hash = getSocketHash(localHost, localPort, remoteHost, remotePort);
 		
 		System.out.println("ConnectionPool: put -> hash: " + hash);
 		
-		if (type == SOCKET_TYPE.LOCAL) {
-			localSockets.put(hash, s);
-		} else if (type == SOCKET_TYPE.REMOTE) {
-			remoteSockets.put(hash, s);
-		}
+		connections.put(hash, s);
 	}
 	
-	public Socket get(SOCKET_TYPE type, String localHost, int localPort, String remoteHost, int remotePort) {
+	public Socket getAny() {
+		return get("", 0, "", 0);
+	}
+	
+	public Socket get(String localHost, int localPort, String remoteHost, int remotePort) {
 		
 		Socket s = null;
-		int hash = getSocketHash(type, localHost, localPort, remoteHost, remotePort);
+		int hash = getSocketHash(localHost, localPort, remoteHost, remotePort);
 		System.out.println("ConnectionPool: get -> hash: " + hash);
 		
-		if (type == SOCKET_TYPE.LOCAL) {
-			s = localSockets.get(hash);
-			if (s == null) {
-				s = createSocket(localPort);
-				RLOGGER.warning("The socket doesn't exist yet! Creating a new one.");
-			}
-		} else if (type == SOCKET_TYPE.REMOTE) {
-			s = remoteSockets.get(hash);
-		} else {	
-			RLOGGER.warning("The socket type provided doesn't exist! Use either 'LOCAL' or 'REMOTE'.");
+		s = connections.get(hash);
+		if (s == null) {
+			s = createSocket(localPort);
+			RLOGGER.warning("The socket doesn't exist yet! Creating a new one.");
 		}
 
 		return s;
 	}
 	
-	public int getSocketHash(SOCKET_TYPE type, String localHost, int localPort, String remoteHost, int remotePort) {
+	public int getSocketHash(String localHost, int localPort, String remoteHost, int remotePort) {
 		
-		if (type == SOCKET_TYPE.LOCAL) {
-			return localPort;
-		}
-		
-		return (localHost+localPort+remoteHost+remotePort).hashCode();		
+		return Integer.toString(localPort).hashCode();
 	}
 	
 	public Socket createSocket(int localPort) {
@@ -91,7 +75,7 @@ public enum TCPIPConnectionPoolManager {
 			
 			RLOGGER.warning("Failed to create a socket at port " + localPort + "! " + e.getMessage());
 		}			
-		put(SOCKET_TYPE.LOCAL, s);
+		put(s);
 		
 		return s;
 	}
@@ -100,8 +84,8 @@ public enum TCPIPConnectionPoolManager {
 		
 		StringBuffer result = new StringBuffer();
 		result.append("LocalSockets:\n");
-		for (int hash : localSockets.keySet()) {
-			result.append(hash + ": " + localSockets.get(hash) + "\n");
+		for (int hash : connections.keySet()) {
+			result.append(hash + ": " + connections.get(hash) + "\n");
 		}
 		
 		return result.toString();

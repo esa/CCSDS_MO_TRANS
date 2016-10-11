@@ -1,31 +1,35 @@
 package esa.mo.mal.encoder.tcpip;
 
 import java.io.OutputStream;
+import java.util.logging.Logger;
 
 import esa.mo.mal.encoder.binary.split.SplitBinaryEncoder;
 import esa.mo.mal.encoder.gen.GENElementOutputStream;
 import esa.mo.mal.encoder.gen.GENEncoder;
 import esa.mo.mal.transport.tcpip.TCPIPMessageHeader;
+import esa.mo.mal.transport.tcpip.TCPIPTransportFactoryImpl;
 
 import org.ccsds.moims.mo.mal.MALException;
 import org.ccsds.moims.mo.mal.encoding.MALEncodingContext;
-import org.ccsds.moims.mo.mal.structures.Blob;
 import org.ccsds.moims.mo.mal.structures.UOctet;
 import org.ccsds.moims.mo.mal.structures.URI;
 
 public class TCPIPSplitBinaryElementOutputStream extends GENElementOutputStream {
+	
+	/**
+	 * Logger
+	 */
+	public static final java.util.logging.Logger RLOGGER = Logger .getLogger("org.ccsds.moims.mo.mal.encoding.tcpip");
 	
 	private GENEncoder hdrEnc;
 
 	public TCPIPSplitBinaryElementOutputStream(OutputStream os) {
 		super(os);
 		this.hdrEnc = createHeaderEncoder(os);
-		// TODO Auto-generated constructor stub
 	}
 
 	@Override
 	protected GENEncoder createEncoder(OutputStream os) {
-		// TODO Auto-generated method stub
 		System.out.println("TCPIPSplitBinaryElementOutputStream.createEncoder()");
 		return new SplitBinaryEncoder(os);
 	}
@@ -43,10 +47,7 @@ public class TCPIPSplitBinaryElementOutputStream extends GENElementOutputStream 
 		if (element == ctx.getHeader()) {
 			// header is encoded using tcpip custom encoder
 			encodeHeader(element);
-		} else {
-			// body is encoded using default split binary encoder
-//			super.writeElement(element, ctx);
-		}				
+		}			
 	}
 	
 	private void encodeHeader(final Object element) throws MALException {
@@ -89,12 +90,10 @@ public class TCPIPSplitBinaryElementOutputStream extends GENElementOutputStream 
 		hdrEnc.encodeUOctet(new UOctet(header.getEncodingId()));
 		
 		// preset body length. Allocate four bytes.
-		// TODO: set bodyLength after encoding whole message
 		hdrEnc.encodeInteger(0);
 		
 		// encode rest of header
 		if (!header.getServiceFrom().isEmpty()) {
-			// TODO ensure that urifrom is also correctly encoded in ScalAgent RID case
 			hdrEnc.encodeString(header.getURIFrom().toString());
 		}
 		if (!header.getServiceTo().isEmpty()) {
@@ -154,11 +153,10 @@ public class TCPIPSplitBinaryElementOutputStream extends GENElementOutputStream 
 	private String getLocalNamePart(URI uri) {
 		
 		if (uri == null) {
-			// TODO: log warning
 			return "";
 		}
 
-		char serviceDelim = '/'; // TODO: retrieve from TCPIPTransport instance
+		char serviceDelim = TCPIPTransportFactoryImpl.SERVICE_DELIMITER;
 
 		int idx = uri.toString().lastIndexOf(serviceDelim);
 		if (uri.toString().length() > idx) {

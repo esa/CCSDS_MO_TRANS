@@ -25,7 +25,6 @@ public class TCPIPSplitBinaryElementInputStream extends BinaryElementInputStream
 	protected TCPIPSplitBinaryElementInputStream(final byte[] src, final int offset) {
 		super(new TCPIPSplitBinaryDecoder(src, offset));
 		System.out.println("TCPIPSplitBinaryElementInputStream constructor 2");
-		// TODO Auto-generated constructor stub
 	}
 	
 	@Override
@@ -39,12 +38,10 @@ public class TCPIPSplitBinaryElementInputStream extends BinaryElementInputStream
 		} else {
 			// body is decoded using default split binary decoder
 			
-			// synchronise buffer reading offset as two decoders are used in parallel
+			// Synchronize buffer reading offset as two decoders are used in parallel
 			int headerDecodingOffset = ((TCPIPHeaderDecoder)hdrDec).getBufferOffset();
 			((TCPIPSplitBinaryDecoder)dec).setBufferOffset(headerDecodingOffset);
-//			dec = new TCPIPSplitBinaryDecoder(((TCPIPHeaderDecoder)hdrDec).getBuffer());
 			
-//			return super.readElement(element, ctx);
 			return null;
 		}
 	}

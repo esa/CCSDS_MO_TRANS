@@ -15,7 +15,6 @@ public class TCPIPSplitBinaryStreamFactory extends BinaryStreamFactory {
 	protected void init(String protocol, Map properties)
 			throws IllegalArgumentException, MALException {
 		System.out.println("TCPIPSplitBinaryStreamFactory.init()");
-		// TODO Auto-generated method stub
 	}
 
 	@Override
@@ -28,7 +27,6 @@ public class TCPIPSplitBinaryStreamFactory extends BinaryStreamFactory {
 	@Override
 	public MALElementInputStream createInputStream(byte[] bytes, int offset) {
 		System.out.println("TCPIPSplitBinaryStreamFactory.createInputStream(byte[], int)");
-		// TODO Auto-generated method stub
 		return new TCPIPSplitBinaryElementInputStream(bytes, offset);
 	}
 

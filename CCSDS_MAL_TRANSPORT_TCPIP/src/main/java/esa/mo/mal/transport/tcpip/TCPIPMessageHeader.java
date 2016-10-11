@@ -1,5 +1,8 @@
 package esa.mo.mal.transport.tcpip;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import org.ccsds.moims.mo.mal.MALDecoder;
 import org.ccsds.moims.mo.mal.MALEncoder;
 import org.ccsds.moims.mo.mal.MALException;
@@ -24,6 +27,12 @@ import org.ccsds.moims.mo.mal.structures.UShort;
 import esa.mo.mal.transport.gen.GENMessageHeader;
 
 public class TCPIPMessageHeader extends GENMessageHeader {
+	
+	/**
+	 * Logger
+	 */
+	public static final java.util.logging.Logger RLOGGER = Logger.getLogger("org.ccsds.moims.mo.mal.transport.tcpip");
+
 	
 	/**
 	 * 
@@ -253,10 +262,9 @@ public class TCPIPMessageHeader extends GENMessageHeader {
 			return MALPubSubOperation.PUBLISH_DEREGISTER_ACK_STAGE;
 		}
 
-		// TODO logger for TCPIPMessageHeader
-		// LOGGER.log(Level.WARNING,
-		// "SPPMessageHeader: Unknown sdu value recieved during decoding of {0}",
-		// sduType);
+		RLOGGER.log(Level.WARNING, 
+				"SPPMessageHeader: Unknown sdu value recieved during decoding of {0}", sduType);
+		 
 		return null;
 	}
 	
@@ -316,14 +324,6 @@ public class TCPIPMessageHeader extends GENMessageHeader {
 		str.append('}');
 
 		return str.toString();
-	}
-	
-	public UOctet getFlags() {
-		
-		// TODO implement flag encoding
-		byte result = 0x0;
-		
-		return new UOctet(result);
 	}
 
 }

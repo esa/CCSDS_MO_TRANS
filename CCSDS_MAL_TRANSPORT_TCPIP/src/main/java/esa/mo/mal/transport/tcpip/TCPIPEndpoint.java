@@ -43,7 +43,6 @@ public class TCPIPEndpoint extends GENEndpoint {
 		try {
 			return new TCPIPMessage(false, hdr, qosProperties, null, transport.getStreamFactory(), body);
 		} catch (MALInteractionException e) {
-			// TODO Auto-generated catch block
 			throw new MALException("Error creating message", e);
 		}
 
@@ -108,7 +107,6 @@ public class TCPIPEndpoint extends GENEndpoint {
 		try {
 			return new TCPIPMessage(false, hdr, qosProperties, op, transport.getStreamFactory(), body);
 		} catch (MALInteractionException e) {
-			// TODO Auto-generated catch block
 			throw new MALException("Error creating message", e);
 		}
 	}

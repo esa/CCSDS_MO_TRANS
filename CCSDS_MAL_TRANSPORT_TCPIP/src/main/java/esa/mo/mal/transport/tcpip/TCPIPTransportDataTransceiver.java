@@ -90,11 +90,7 @@ public class TCPIPTransportDataTransceiver implements esa.mo.mal.transport.gen.u
 		int bytesRead = socketReadIf.read(bodyData);
 	
 		// merge header and body
-		// TODO: replace by system.arraycopy.
 	    byte[] totalPacketData = new byte[headerSize + bodyLength];
-//	    for (int i = 0; i < headerSize + bodyLength; i++) {
-//	    	totalPacketData[i] = (i < headerSize ? rawHeader[i] : bodyData[i-headerSize]);
-//	    }
 	    System.arraycopy(rawHeader, 0, totalPacketData, 0, headerSize);
 	    System.arraycopy(bodyData, 0, totalPacketData, headerSize, bodyLength);
 	    

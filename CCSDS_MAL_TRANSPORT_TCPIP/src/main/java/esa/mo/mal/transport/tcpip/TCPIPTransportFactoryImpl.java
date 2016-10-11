@@ -37,7 +37,7 @@ public class TCPIPTransportFactoryImpl extends MALTransportFactory
   /**
    * Service delimiter
    */
-  private static final char SERVICE_DELIMITER = '/';
+  public static final char SERVICE_DELIMITER = '/';
 
   /**
    * Constructor.

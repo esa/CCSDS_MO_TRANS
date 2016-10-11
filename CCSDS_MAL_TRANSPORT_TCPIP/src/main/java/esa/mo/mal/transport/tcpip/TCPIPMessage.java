@@ -29,7 +29,6 @@ public class TCPIPMessage extends GENMessage {
 			GENMessageHeader header, Map qosProperties, byte[] packet,
 			MALElementStreamFactory encFactory) throws MALException {
 		super(wrapBodyParts, true, header, qosProperties, packet, encFactory);
-		// TODO Auto-generated constructor stub
 		System.out.println("TCPIPMessage (constructor 1)");		
 	}
 	
@@ -73,7 +72,6 @@ public class TCPIPMessage extends GENMessage {
 		
 		System.arraycopy(bodySizeBuf, 0, hdrBuf, 19, 4);
 		
-//		System.out.println("buffer: sz: " + bodySize + ", buf: " + new String(hdrBuf));	
 		System.out.println("Header: sz=" + hdrBuf.length + " contents=");
 		for (byte b2 : hdrBuf) {
 			System.out.print(Integer.toString(b2 & 0xFF, 10) + " ");
@@ -90,8 +88,8 @@ public class TCPIPMessage extends GENMessage {
 				lowLevelOutputStream.write(bodyBuf);
 			}
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			RLOGGER.warning("An IOException was thrown during message encoding! " + e.getMessage());
+			throw new MALException(e.getMessage());
 		}
 	}
 	

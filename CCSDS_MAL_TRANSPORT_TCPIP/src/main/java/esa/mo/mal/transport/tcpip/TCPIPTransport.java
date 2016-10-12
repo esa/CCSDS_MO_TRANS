@@ -62,12 +62,8 @@ import org.ccsds.moims.mo.mal.transport.MALTransportFactory;
  *
  * The following properties configure the transport:
  *
- * org.ccsds.moims.mo.mal.transport.tcpip.wrap org.ccsds.moims.mo.mal.transport.tcpip.debug 
+ * org.ccsds.moims.mo.mal.transport.tcpip.debug 
  * 		== debug mode , affects logging 
- * org.ccsds.moims.mo.mal.transport.tcpip.numconnections 
- * 		== number of connections to a different MAL (either server / client) 
- * org.ccsds.moims.mo.mal.transport.tcpip.inputprocessors 
- * 		== number of threads processing in parallel raw MAL messages 
  * org.ccsds.moims.mo.mal.transport.tcpip.host 
  * 		== adapter (host / IP Address) that the transport will use for incoming connections. 
  * 		In case of a pure client (i.e. not offering any services) this property should be omitted. 
@@ -179,6 +175,26 @@ public class TCPIPTransport extends GENTransport {
 					// this is a client
 					this.serverPort = 0; // 0 means this is a client
 				}
+			}
+			
+			// debug mode
+			if (properties.containsKey("org.ccsds.moims.mo.mal.transport.tcpip.debug")) {
+				String level = properties.get("org.ccsds.moims.mo.mal.transport.tcpip.debug").toString();
+				try {
+					Level parsedLevel = Level.parse(level);
+					RLOGGER.setLevel(parsedLevel);
+					RLOGGER.finest("Finest");
+					RLOGGER.fine("fine");
+					RLOGGER.info("info");
+					RLOGGER.warning("warning");
+					RLOGGER.severe("severe");
+				} catch(IllegalArgumentException ex) {
+					RLOGGER.log(Level.WARNING, "The debug level supplied by the parameter"
+							+ "org.ccsds.moims.mo.mal.transport.tcpip.debug does not exist!"
+							+ "Please provide a java-logging compatible debug level.");
+				}
+			} else {
+				
 			}
 		} else {
 			// default values

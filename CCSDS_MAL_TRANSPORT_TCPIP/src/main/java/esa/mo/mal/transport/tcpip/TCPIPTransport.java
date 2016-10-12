@@ -26,8 +26,10 @@ import esa.mo.mal.transport.gen.GENEndpoint;
 import esa.mo.mal.transport.gen.GENMessage;
 import esa.mo.mal.transport.gen.GENTransport;
 import esa.mo.mal.transport.gen.sending.GENMessageSender;
+import esa.mo.mal.transport.gen.sending.GENOutgoingMessageHolder;
 import esa.mo.mal.transport.gen.util.GENMessagePoller;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.Inet4Address;
 import java.net.Inet6Address;
@@ -60,18 +62,20 @@ import org.ccsds.moims.mo.mal.transport.MALTransportFactory;
  *
  * The following properties configure the transport:
  *
- * org.ccsds.moims.mo.mal.transport.tcpip.wrap org.ccsds.moims.mo.mal.transport.tcpip.debug == debug mode , affects
- * logging org.ccsds.moims.mo.mal.transport.tcpip.numconnections == number of connections to a different MAL (either
- * server / client) org.ccsds.moims.mo.mal.transport.tcpip.inputprocessors == number of threads processing in parallel
- * raw MAL messages org.ccsds.moims.mo.mal.transport.tcpip.host == adapter (host / IP Address) that the transport will
- * use for incoming connections. In case of a pure client (i.e. not offering any services) this property should be
- * omitted. org.ccsds.moims.mo.mal.transport.tcpip.port == port that the transport listens to. In case this is a pure
- * client, this property should be omitted.
+ * org.ccsds.moims.mo.mal.transport.tcpip.wrap org.ccsds.moims.mo.mal.transport.tcpip.debug 
+ * 		== debug mode , affects logging 
+ * org.ccsds.moims.mo.mal.transport.tcpip.numconnections 
+ * 		== number of connections to a different MAL (either server / client) 
+ * org.ccsds.moims.mo.mal.transport.tcpip.inputprocessors 
+ * 		== number of threads processing in parallel raw MAL messages 
+ * org.ccsds.moims.mo.mal.transport.tcpip.host 
+ * 		== adapter (host / IP Address) that the transport will use for incoming connections. 
+ * 		In case of a pure client (i.e. not offering any services) this property should be omitted. 
+ * org.ccsds.moims.mo.mal.transport.tcpip.port 
+ * 		== port that the transport listens to. In case this is a pure client, this property should be omitted.
  *
- * The general logic is the following : The transport at first initialises the server listen port (if this is a server,
- * offering services).
- *
- * On receiving a request to send a MAL Message the transport tries to find if it has allocated some recourses
+ * The general logic is the following: The transport at first initializes the server listen port (if this is a server,
+ * offering services). On receiving a request to send a MAL Message the transport tries to find if it has allocated some recourses
  * associated with the target URI (has already the means to exchange data with it) and if not, it creates
  * -numconnections- connections to the target server. If a client has already opened a connection to a server the server
  * will re-use that communication channel to send back data to the client.
@@ -86,66 +90,72 @@ import org.ccsds.moims.mo.mal.transport.MALTransportFactory;
  *
  * URIs:
  *
- * The TCPIP Transport, generates URIs, in the form of : {@code maltcp://<host>:<port or client ID>-<service id>}
- * There are two categories of URIs Client URIs, which are in the form of {@code maltcp://<host>:<clientId>-<serviceId>} , where
- * the client id is a unique port for the client on its host, and ServerURIs,
- * which are in the form of {@code maltcp://<host>:<port>-<serviceId>} and clients can actively connect to.
+ * The TCPIP Transport generates URIs in the form of: {@code maltcp://<host>:<port or client ID>/<service id>}
  *
  * If a MAL instance does not offer any services then all of its endpoints get a Client URI. If a MAL instance offers at
  * least one service then all of its endpoints get a Server URI. A service provider communicates with a service consumer
  * with the communication channel that the service consumer initiated (uses bidirectional TCP/IP communication).
  *
  */
-public class TCPIPTransport extends GENTransport
-{
-  /**
-   * Logger
-   */
-  public static final java.util.logging.Logger RLOGGER = Logger.getLogger("org.ccsds.moims.mo.mal.transport.tcpip");
+public class TCPIPTransport extends GENTransport {
+	
+	/**
+	 * Logger
+	 */
+	public static final java.util.logging.Logger RLOGGER = Logger.getLogger("org.ccsds.moims.mo.mal.transport.tcpip");
 
-  /**
-   * Port delimiter
-   */
-  private static final char PORT_DELIMITER = ':';
-  
-  private static final char SERVICE_DELIMITER = '/';
+	/**
+	 * Port delimiter
+	 */
+	private static final char PORT_DELIMITER = ':';
+	
+	/**
+	 * Service delimiter
+	 */
+	private static final char SERVICE_DELIMITER = '/';
 
-  /**
-   * The server port that the TCP transport listens for incoming connections
-   */
-  private final int serverPort;
+	/**
+	 * The server port that the TCP transport listens for incoming connections
+	 */
+	private final int serverPort;
 
-  /**
-   * Server host, this can be one of the IP Addresses / hostnames of the host.
-   */
-  private final String serverHost;
-  
-  /**
-   * Holds the server connection listener
-   */
-  private TCPIPServerConnectionListener serverConnectionListener = null;
+	/**
+	 * Server host, this can be one of the IP Addresses / hostnames of the host.
+	 */
+	private final String serverHost;
 
-  /**
-   * Holds the list of data poller threads
-   */
-  private final List<GENMessagePoller> pollerThreads = new ArrayList<GENMessagePoller>();
+	/**
+	 * Holds the server connection listener
+	 */
+	private TCPIPServerConnectionListener serverConnectionListener = null;
 
-  /*
-   * Constructor.
-   *
-   * @param protocol The protocol string.
-   * @param serviceDelim The delimiter to use for separating the URL
-   * @param supportsRouting True if routing is supported by the naming convention
-   * @param wrapBodyParts True is body parts should be wrapped in BLOBs
-   * @param factory The factory that created us.
-   * @param properties The QoS properties.
-   * @throws MALException On error.
-   */
+	/**
+	 * Holds the list of data poller threads
+	 */
+	private final List<GENMessagePoller> pollerThreads = new ArrayList<GENMessagePoller>();
+
+	/**
+	 * Constructor.
+	 *
+	 * @param protocol
+	 *            The protocol string.
+	 * @param serviceDelim
+	 *            The delimiter to use for separating the URL
+	 * @param supportsRouting
+	 *            True if routing is supported by the naming convention
+	 * @param wrapBodyParts
+	 *            True is body parts should be wrapped in BLOBs
+	 * @param factory
+	 *            The factory that created us.
+	 * @param properties
+	 *            The QoS properties.
+	 * @throws MALException
+	 *             On error.
+	 */
 	public TCPIPTransport(final String protocol, final char serviceDelim,
 			final boolean supportsRouting, final MALTransportFactory factory,
 			final java.util.Map properties) throws MALException {
-		super(protocol, serviceDelim, supportsRouting, false, factory,
-				properties);
+		super(protocol, serviceDelim, supportsRouting, false, factory, properties);
 
 		System.out.println("TCPIPTransport (constructor)");
 
@@ -179,9 +189,11 @@ public class TCPIPTransport extends GENTransport
 		RLOGGER.log(Level.INFO, "TCPIP Wrapping body parts set to  : {0}", this.wrapBodyParts);
 	}
 
-  @Override
-  public void init() throws MALException
-  {
+	/**
+	 * Initialize a server socket, if this is a provider
+	 */
+	@Override
+	public void init() throws MALException {
 		super.init();
 		System.out.println("TCPIPTransport.init()");
 
@@ -201,52 +213,70 @@ public class TCPIPTransport extends GENTransport
 				}
 
 				RLOGGER.log(Level.INFO, "Started TCPIP Server Transport on port {0}", serverPort);
+			} catch (java.net.BindException ex) {
+				String errorMsg = "The server socket cannot be created, because another process is already using this socket!"
+						+ "\nEnsure that you are instantiating a MAL provider with a unique configuration file and a unique port set. "
+						+ "Also, check that the port which you set in your configuration file, is not used by other processes.";
+				RLOGGER.severe(errorMsg);
+				throw new MALException(errorMsg);
 			} catch (Exception ex) {
 				throw new MALException("Error initialising TCP Server", ex);
 			}
 		}
 
-  }
+	}
 
-  @Override
-  public MALBrokerBinding createBroker(final String localName, final Blob authenticationId, final QoSLevel[] expectedQos, final UInteger priorityLevelNumber, final Map defaultQoSProperties) throws MALException
-  {
+	@Override
+	public MALBrokerBinding createBroker(final String localName,
+			final Blob authenticationId, final QoSLevel[] expectedQos,
+			final UInteger priorityLevelNumber, final Map defaultQoSProperties)
+			throws MALException {
 		System.out.println("TCPIPTransport.createBroker()");
 		// not support by TCPIP transport
 		return null;
-  }
+	}
 
-  @Override
-  public MALBrokerBinding createBroker(final MALEndpoint endpoint, final Blob authenticationId, final QoSLevel[] qosLevels, final UInteger priorities, final Map properties) throws MALException
-  {
+	@Override
+	public MALBrokerBinding createBroker(final MALEndpoint endpoint,
+			final Blob authenticationId, final QoSLevel[] qosLevels,
+			final UInteger priorities, final Map properties)
+			throws MALException {
 		System.out.println("TCPIPTransport.createBroker() 2");
 		// not support by TCPIP transport
 		return null;
-  }
+	}
 
-  	/**
-  	 * The MAL TCPIP binding supports SEND, SUBMIT, REQUEST, INVOKE and PROGRESS.
-  	 * PUBSUB is not supported. A MAL implementation layer has to support PUBSUB
-  	 * itself.
-  	 */
+	/**
+	 * The MAL TCPIP binding supports SEND, SUBMIT, REQUEST, INVOKE and
+	 * PROGRESS. PUBSUB is not supported. A MAL implementation layer has to
+	 * support PUBSUB itself.
+	 */
 	@Override
 	public boolean isSupportedInteractionType(final InteractionType type) {
 		return InteractionType.PUBSUB.getOrdinal() != type.getOrdinal();
 	}
 
-  @Override
-  public boolean isSupportedQoSLevel(final QoSLevel qos)
-  {
-		System.out.println("TCPIPTransport.isSupportedQoSLevel()");
-		// The transport only supports BESTEFFORT in reality but this is only a
-		// test transport so we say it supports all
+	/**
+	 * The MAL TCPIP binding supports all QoS levels.
+	 */
+	@Override
+	public boolean isSupportedQoSLevel(final QoSLevel qos) {
 		return true;
-  }
+	}
 
+	/**
+	 * Close all pollers and socket connections and then close the transport
+	 * itself.
+	 */
 	@Override
 	public void close() throws MALException {
-		System.out.println("TCPIPTransport.close()");
+
+		RLOGGER.info("Closing TCPIPTransport...");
+		
 		synchronized (this) {
+			
+			TCPIPConnectionPoolManager.INSTANCE.close();
+			
 			for (GENMessagePoller entry : pollerThreads) {
 				entry.close();
 			}
@@ -259,10 +289,56 @@ public class TCPIPTransport extends GENTransport
 		synchronized (this) {
 			if (null != serverConnectionListener) {
 				serverConnectionListener.interrupt();
+
 			}
 		}
 	}
+	
+	/**
+	 * Internal method for encoding the message.
+	 *
+	 * @param destinationRootURI
+	 *            The destination root URI.
+	 * @param destinationURI
+	 *            The complete destination URI.
+	 * @param multiSendHandle
+	 *            Handle for multi send messages.
+	 * @param lastForHandle
+	 *            true if last message in a multi send.
+	 * @param targetURI
+	 *            The target URI.
+	 * @param msg
+	 *            The message to send.
+	 * @return The message holder for the outgoing message.
+	 * @throws Exception
+	 *             if an error.
+	 */
+	@Override
+	protected GENOutgoingMessageHolder internalEncodeMessage(
+			final String destinationRootURI, final String destinationURI,
+			final Object multiSendHandle, final boolean lastForHandle,
+			final String targetURI, final GENMessage msg) throws Exception {
+
+		try {
+			// try to encode the TCPIP Message
+			final ByteArrayOutputStream lowLevelOutputStream = new ByteArrayOutputStream();
+			((TCPIPMessage) msg).encodeMessage(getStreamFactory(), lowLevelOutputStream);
+			byte[] data = lowLevelOutputStream.toByteArray();
+
+			// message is encoded!
+			LOGGER.log(Level.FINE, "GEN Sending data to {0} : {1}", new Object[] { targetURI, new PacketToString(data) });
+
+			return new GENOutgoingMessageHolder(destinationRootURI, destinationURI, multiSendHandle, lastForHandle, msg, data);
+		} catch (MALException ex) {
+			LOGGER.log(Level.SEVERE, "GEN could not encode message!", ex);
+			throw new MALTransmitErrorException(msg.getHeader(), new MALStandardError(MALHelper.BAD_ENCODING_ERROR_NUMBER, null), null);
+		}
+	}
   
+	/**
+	 * Create an endpoint. This endpoint has an url assigned, which is made of
+	 * the base url plus the service identifier.
+	 */
 	@Override
 	protected GENEndpoint internalCreateEndpoint(final String localName,
 			final String routingName, final Map properties) throws MALException {
@@ -271,18 +347,21 @@ public class TCPIPTransport extends GENTransport
 		return new TCPIPEndpoint(this, localName, routingName, uriBase + routingName, wrapBodyParts);
 	}
 
+	/**
+	 * Create a transport address.
+	 * 
+	 * If this is a pure client, create a new client socket. The local port that
+	 * is automatically assigned to this socket (the ephemeral socket) will be
+	 * used as the port number for this client.
+	 * 
+	 * If this is a provider, the host and port as defined in the configuration
+	 * file are used.
+	 */
 	@Override
 	protected String createTransportAddress() throws MALException {
 
 		String addr;
 		if (serverHost == null) {
-			// this is a pure client
-			// in this case we get the IP Address of the host and provide a
-			// unique id as the port.
-			// the actual IP and port information does not matter as the server
-			// will not try
-			// to connect to it, it is used as an identifier for the MAL in the
-			// URI.
 			addr = getDefaultHost() + PORT_DELIMITER + getClientPort();
 		} else {
 			// this a server (and potentially a client)			
@@ -295,7 +374,15 @@ public class TCPIPTransport extends GENTransport
 	}  
 
 	/**
-	 * Called for received messages
+	 * Called for received messages.
+	 * 
+	 * The URI from and URI to parameters for the message header are set according to the address
+	 * information. Later, during decoding, the full URL is formed from the information in the message
+	 * header.
+	 * 
+	 * The raw message data is split up in a packet, describing the header, and a packet for the body.
+	 * These are each decoded separately; the header is decoded using an implementation that follows the
+	 * MAL TCPIP Transport Binding specification. The body is decoded using a split binary decoder.
 	 */
 	public GENMessage createMessage(final TCPIPPacketInfoHolder packetInfo) throws MALException {
 		System.out.println("TCPIPTransport.createMessage() for decoding");
@@ -320,10 +407,11 @@ public class TCPIPTransport extends GENTransport
 		int decodedHeaderBytes = ((TCPIPMessageHeader)msg.getHeader()).decodedHeaderBytes;
 		int bodySize = ((TCPIPMessageHeader)msg.getHeader()).getBodyLength() + 23 - decodedHeaderBytes;
 		
+		// copy body to separate packet
 		byte[] bodyPacketData = new byte[bodySize];
-		
 		System.arraycopy(packetData, decodedHeaderBytes, bodyPacketData, 0, bodySize);
 
+		// debug information
 		System.out.println("TCPIPTransport.createMessage() Header results:");
 		System.out.println(msg.getHeader().toString());
 		System.out.println("TCPIPTransport.createMessage() TRYING TO DECODE BODY");
@@ -340,12 +428,23 @@ public class TCPIPTransport extends GENTransport
 		System.out.println("\n---------------------------------------");
 		System.out.println();
 		
+		// decode the body
 		TCPIPMessage msg2 = new TCPIPMessage(wrapBodyParts, (TCPIPMessageHeader)msg.getHeader(), qosProperties,
 				bodyPacketData, new SplitBinaryStreamFactory());
 		
 		return msg2;
 	}
 
+	/**
+	 * Create a message sender which will send out the message passed to this
+	 * method. If no socket exists yet on the port defined by the destination
+	 * port of the message, a new socket will be created and stored in the
+	 * connection pool.
+	 * 
+	 * Create also a data reader thread for this socket in order to read
+	 * messages from it no need to register this as it will automatically
+	 * terminate when the underlying connection is terminated.
+	 */
 	@Override
 	protected GENMessageSender createMessageSender(GENMessage msg,
 			String remoteRootURI) throws MALException,
@@ -358,7 +457,7 @@ public class TCPIPTransport extends GENTransport
 			ConnectionTuple toCt = getConnectionParts(remoteRootURI);
 
 			// create a message sender and receiver for the socket
-			Socket s = TCPIPConnectionPoolManager.INSTANCE.get(fromCt.host, fromCt.port, "", -1);
+			Socket s = TCPIPConnectionPoolManager.INSTANCE.get(fromCt.port);
 			s.connect(new InetSocketAddress(toCt.host, toCt.port));
 			TCPIPTransportDataTransceiver trans = createDataTransceiver(s);
 		    System.out.println("transport.createMessageSender() SERVERSOCKET: "
@@ -368,10 +467,6 @@ public class TCPIPTransport extends GENTransport
 					    
 		    RLOGGER.fine("Original message for sending: " + msg.toString());
 		    
-			// create also a data reader thread for this socket in order to read
-			// messages from it
-			// no need to register this as it will automatically terminate when
-			// the underlying connection is terminated.
 			GENMessagePoller rcvr = new GENMessagePoller<TCPIPPacketInfoHolder>(this, trans,
 					trans, new TCPIPMessageDecoderFactory());
 			rcvr.setRemoteURI(remoteRootURI);
@@ -474,6 +569,13 @@ public class TCPIPTransport extends GENTransport
 		return this.serviceDelim;
 	}
 	
+	/**
+	 * Get a tuple from a URI which contains the host and port information.
+	 * 
+	 * @param addr
+	 * @return
+	 * @throws MALException
+	 */
 	private ConnectionTuple getConnectionParts(String addr) throws MALException {
 		
 		// decode address
@@ -497,6 +599,11 @@ public class TCPIPTransport extends GENTransport
 		return new ConnectionTuple(host, port);
 	}
 	
+	/**
+	 * A container class storing the host and port of some address.
+	 * @author Rian van Gijlswijk <r.vangijlswijk@telespazio-vega.de>
+	 *
+	 */
 	public static class ConnectionTuple {
 		public String host;
 		public int port;

@@ -28,20 +28,20 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.Arrays;
-import java.util.logging.Logger;
+import java.util.logging.Level;
 
 import org.ccsds.moims.mo.mal.structures.URI;
 
+import static esa.mo.mal.transport.tcpip.TCPIPTransport.RLOGGER;
+
 /**
- * This class implements the low level data (MAL Message) transport protocol. In order to differentiate messages with
- * each other, the protocol has a very simple format: |size|message|
- *
- * If the protocol uses a different message encoding this class can be replaced in the TCPIPTransport.
- *
+ * This class implements the low level data (MAL Message) transport protocol. The messages are encoded according to the
+ * MAL TCPIP Transport Binding specification.
+ * 
+ * This class manages both the transmitting and receiving of messages.
  */
 public class TCPIPTransportDataTransceiver implements esa.mo.mal.transport.gen.util.GENMessagePoller.GENMessageReceiver<TCPIPPacketInfoHolder>, GENMessageSender {
-	
-	public static final java.util.logging.Logger RLOGGER = Logger .getLogger("org.ccsds.moims.mo.mal.transport.tcpip");
+
 	protected final Socket socket;
 	protected final DataOutputStream socketWriteIf;
 	protected final DataInputStream socketReadIf;
@@ -60,6 +60,11 @@ public class TCPIPTransportDataTransceiver implements esa.mo.mal.transport.gen.u
 		socketReadIf = new DataInputStream(socket.getInputStream());
 	}
 
+	/**
+	 * Send an encoded message out over the socket
+	 * @param packetData
+	 * 				The encoded message to send
+	 */
 	@Override
 	public void sendEncodedMessage(GENOutgoingMessageHolder packetData) throws IOException {
 		
@@ -74,20 +79,43 @@ public class TCPIPTransportDataTransceiver implements esa.mo.mal.transport.gen.u
 		socketWriteIf.flush();
 	}
 
+	/**
+	 * Read an encoded message from the socket. The message is read into a byte
+	 * array. The encoded message header contains the length of the
+	 * variable-size body of the message. Therefore, this information is already
+	 * extracted. The resulting length is used to extract a body message from
+	 * the socket stream.
+	 * 
+	 * If this TCPIP transport instance is also a provider, it has initiated a
+	 * server socket with a configuration-defined port. The incoming socket
+	 * cannot have the same port, as it is not the same socket. Hence, the port
+	 * of the URI-to parameter in the message is modified such that it equals
+	 * the port of the server socket after the message is received. This ensures
+	 * that the communication supports several sockets, one for provider-side
+	 * and one for client-side, while still being compliant with the MAL
+	 * restriction that every client/provider has exactly one unique address.
+	 */
 	@Override
 	public TCPIPPacketInfoHolder readEncodedMessage() throws IOException {
-
-		// figure out length according to mal message mapping to determine byte arr length, then read the rest.
 		
+		// get information
+		String remoteHost = socket.getInetAddress().getHostAddress();
+		int remotePort = socket.getPort();
+		String localHost = socket.getLocalAddress().getHostAddress();
+		int localPort = socket.getLocalPort();
+
+		// figure out length according to mal message mapping to determine byte arr length, then read the rest.		
 		final int headerSize = 23;
 		byte[] rawHeader = new byte[headerSize];
-		socketReadIf.read(rawHeader, 0, headerSize);
+		
+		int bytesRead = socketReadIf.read(rawHeader, 0, headerSize);
+		
 		byte[] bodyLengthParam = Arrays.copyOfRange(rawHeader, 19, 23);
 		int bodyLength = byteArrayToInt(bodyLengthParam);
 		
 		// read body
 	    byte[] bodyData = new byte[bodyLength];
-		int bytesRead = socketReadIf.read(bodyData);
+		socketReadIf.readFully(bodyData);
 	
 		// merge header and body
 	    byte[] totalPacketData = new byte[headerSize + bodyLength];
@@ -97,17 +125,13 @@ public class TCPIPTransportDataTransceiver implements esa.mo.mal.transport.gen.u
 		System.out.println("TCPIPTransportDataTransciever.readEncodedMessage()");
 		System.out.println("Reading from socket:");
 		System.out.println("---------------------------------------");
-		System.out.println("totalPacketData headerLength: " + rawHeader.length + ", BodyLength: " + bodyLength + ", bytesRead: " + (headerSize+bytesRead) + ", length: " + totalPacketData.length);
+		System.out.println("totalPacketData headerLength: " + rawHeader.length + ", BodyLength: " + bodyLength + ", length: " + totalPacketData.length);
 		for (byte b2 : totalPacketData) {
 			System.out.print(Integer.toString(b2 & 0xFF, 10) + " ");
 		}
 		System.out.println("\n---------------------------------------");
-
-
-		String remoteHost = socket.getInetAddress().getHostAddress();
-		int remotePort = socket.getPort();
-		String localHost = socket.getLocalAddress().getHostAddress();
-		int localPort = socket.getLocalPort();
+		
+		// if this is also a provider, update the localport to equal the port of the server socket.
 		if (serverPort > 0) {
 			localPort = serverPort;
 		}
@@ -117,29 +141,35 @@ public class TCPIPTransportDataTransceiver implements esa.mo.mal.transport.gen.u
 		URI from = new URI("maltcp://" + remoteHost + ":" + remotePort);
 		URI to = new URI("maltcp://" + localHost + ":" + localPort);
 		
-		System.out.println("ConnectionPool @ TCPIPTransportDataTransciever.readEncodedMessage():");
-		System.out.println(TCPIPConnectionPoolManager.INSTANCE.toString());
-		
 		return new TCPIPPacketInfoHolder(totalPacketData, from, to);
-  }
+	}
 
-  @Override
-  public void close()
-  {
-    try
-    {
-      socket.close();
-    }
-    catch (IOException e)
-    {
-      // ignore
-    }
-  }
+	/**
+	 * Close the socket
+	 */
+	@Override
+	public void close() {
+		
+		RLOGGER.log(Level.FINE, "Closing client connection at port {0}", socket.getLocalPort());
+		
+		try {
+			socket.close();
+		} catch (IOException e) {
+			RLOGGER.warning("An exception occured while trying to close the socket! "
+					+ e.getMessage());
+			e.printStackTrace();
+		}
+	}
   
-  public static int byteArrayToInt(byte[] b) {
-      return   b[3] & 0xFF |
-              (b[2] & 0xFF) << 8 |
-              (b[1] & 0xFF) << 16 |
-              (b[0] & 0xFF) << 24;
-  }
+	/**
+	 * Convert a 4-byte byte array to an integer.
+	 * 
+	 * @param b
+	 * 		The byte array to convert
+	 * @return int
+	 */
+	public static int byteArrayToInt(byte[] b) {
+		return b[3] & 0xFF | (b[2] & 0xFF) << 8 | (b[1] & 0xFF) << 16
+				| (b[0] & 0xFF) << 24;
+	}
 }

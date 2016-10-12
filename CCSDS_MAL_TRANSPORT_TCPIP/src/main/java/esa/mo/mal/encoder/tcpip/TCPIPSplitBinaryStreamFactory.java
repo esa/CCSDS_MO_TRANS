@@ -9,6 +9,13 @@ import org.ccsds.moims.mo.mal.encoding.MALElementInputStream;
 import org.ccsds.moims.mo.mal.encoding.MALElementOutputStream;
 import esa.mo.mal.encoder.binary.BinaryStreamFactory;
 
+/**
+ * A factory implementation for the generation of input and output stream classes,
+ * which manage decoding and encoding, respectively.
+ * 
+ * @author Rian van Gijlswijk <r.vangijlswijk@telespazio-vega.de>
+ *
+ */
 public class TCPIPSplitBinaryStreamFactory extends BinaryStreamFactory {
 
 	@Override

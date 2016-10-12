@@ -1,7 +1,6 @@
 package esa.mo.mal.transport.tcpip;
 
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import org.ccsds.moims.mo.mal.MALDecoder;
 import org.ccsds.moims.mo.mal.MALEncoder;
@@ -26,14 +25,10 @@ import org.ccsds.moims.mo.mal.structures.UShort;
 
 import esa.mo.mal.transport.gen.GENMessageHeader;
 
-public class TCPIPMessageHeader extends GENMessageHeader {
-	
-	/**
-	 * Logger
-	 */
-	public static final java.util.logging.Logger RLOGGER = Logger.getLogger("org.ccsds.moims.mo.mal.transport.tcpip");
+import static esa.mo.mal.transport.tcpip.TCPIPTransport.RLOGGER;
 
-	
+public class TCPIPMessageHeader extends GENMessageHeader {
+		
 	/**
 	 * 
 	 */

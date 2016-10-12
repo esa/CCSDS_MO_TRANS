@@ -6,7 +6,6 @@ import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Map;
-import java.util.logging.Logger;
 
 import org.ccsds.moims.mo.mal.MALException;
 import org.ccsds.moims.mo.mal.MALInteractionException;
@@ -18,12 +17,16 @@ import esa.mo.mal.encoder.binary.split.SplitBinaryStreamFactory;
 import esa.mo.mal.transport.gen.GENMessage;
 import esa.mo.mal.transport.gen.GENMessageHeader;
 
+import static esa.mo.mal.transport.tcpip.TCPIPTransport.RLOGGER;
+
+/**
+ * This TCPIP implementation of MAL Message provides encoding methods for
+ * encoding the MAL Message according to the TCPIP Transport Binding red book.
+ * 
+ * @author Rian van Gijlswijk <r.vangijlswijk@telespazio-vega.de>
+ *
+ */
 public class TCPIPMessage extends GENMessage {
-	
-	/**
-	 * Logger
-	 */
-	public static final java.util.logging.Logger RLOGGER = Logger.getLogger("org.ccsds.moims.mo.mal.transport.tcpip");
 
 	public TCPIPMessage(boolean wrapBodyParts,
 			GENMessageHeader header, Map qosProperties, byte[] packet,
@@ -38,10 +41,25 @@ public class TCPIPMessage extends GENMessage {
 		System.out.println("TCPIPMessage (constructor 2)");		
 	}
 	
-	@Override
-	public void encodeMessage(final MALElementStreamFactory streamFactory,
-			final MALElementOutputStream enc,
-			final OutputStream lowLevelOutputStream, final boolean writeHeader)
+	/**
+	 * Encode a MAL Message.
+	 * 
+	 * Header and body are encoded separately, each with their own separate
+	 * stream Factory. This is done because the header needs to be encoded
+	 * according to the specifications in the TCPIP Transport Binding red book,
+	 * but the body needs to be split encoded. The current implementation of
+	 * split encoding in the MAL API provides an adequate implementation which
+	 * is compliant with the red book specifications.
+	 * 
+	 * @param headerStreamFactory
+	 *            the stream factory to use for header encoding
+	 * @param lowLevelOutputStream
+	 *            the stream onto which both the encoded head and body will be written
+	 * @throws MALException
+	 *             if encoding failed
+	 */
+	public void encodeMessage(final MALElementStreamFactory headerStreamFactory,
+			final OutputStream lowLevelOutputStream)
 			throws MALException {
 		System.out.println("TCPIPMessage.encodeMessage()");
 		System.out.println("TCPIPMessageHeader: " + this.getHeader().toString());
@@ -50,11 +68,11 @@ public class TCPIPMessage extends GENMessage {
 		// encode header and body using TCPIPEncoder class
 		ByteArrayOutputStream hdrBaos = new ByteArrayOutputStream();
 		ByteArrayOutputStream bodyBaos = new ByteArrayOutputStream();
-		MALElementOutputStream headerEncoder = streamFactory.createOutputStream(hdrBaos);
+		MALElementOutputStream headerEncoder = headerStreamFactory.createOutputStream(hdrBaos);
 		MALElementStreamFactory bodyStreamFactory = new SplitBinaryStreamFactory();
 		MALElementOutputStream bodyEncoder = bodyStreamFactory.createOutputStream(bodyBaos);
 
-		super.encodeMessage(streamFactory, headerEncoder, hdrBaos, true);
+		super.encodeMessage(headerStreamFactory, headerEncoder, hdrBaos, true);
 		super.encodeMessage(bodyStreamFactory, bodyEncoder, bodyBaos, false);
 		
 		int hdrSize = hdrBaos.size();

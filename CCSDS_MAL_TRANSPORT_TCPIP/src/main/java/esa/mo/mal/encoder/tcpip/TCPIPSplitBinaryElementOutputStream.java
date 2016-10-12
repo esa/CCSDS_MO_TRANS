@@ -14,6 +14,12 @@ import org.ccsds.moims.mo.mal.encoding.MALEncodingContext;
 import org.ccsds.moims.mo.mal.structures.UOctet;
 import org.ccsds.moims.mo.mal.structures.URI;
 
+/**
+ * Encode a TCPIP Message
+ * 
+ * @author Rian van Gijlswijk <r.vangijlswijk@telespazio-vega.de>
+ *
+ */
 public class TCPIPSplitBinaryElementOutputStream extends GENElementOutputStream {
 	
 	/**
@@ -28,17 +34,32 @@ public class TCPIPSplitBinaryElementOutputStream extends GENElementOutputStream 
 		this.hdrEnc = createHeaderEncoder(os);
 	}
 
+	/**
+	 * Create a split binary encoder for the body
+	 */
 	@Override
 	protected GENEncoder createEncoder(OutputStream os) {
 		System.out.println("TCPIPSplitBinaryElementOutputStream.createEncoder()");
 		return new SplitBinaryEncoder(os);
 	}
 	
+	/**
+	 * Create an encoder for the header.
+	 * 
+	 * @param os
+	 *            Outputstream
+	 * @return
+	 */
 	private GENEncoder createHeaderEncoder(OutputStream os) {
 		System.out.println("TCPIPSplitBinaryElementOutputStream.createHeaderEncoder()");
 		return new TCPIPHeaderEncoder(os);
 	}
 
+	/**
+	 * Encode an element. Only encode the header, the body is encoded
+	 * automatically by the MAL framework using the body encoder provided by
+	 * this class.
+	 */
 	@Override
 	public void writeElement(final Object element, final MALEncodingContext ctx)
 			throws MALException {
@@ -50,6 +71,12 @@ public class TCPIPSplitBinaryElementOutputStream extends GENElementOutputStream 
 		}			
 	}
 	
+	/**
+	 * Encode the header
+	 * 
+	 * @param element
+	 * @throws MALException
+	 */
 	private void encodeHeader(final Object element) throws MALException {
 		
 		if (!(element instanceof TCPIPMessageHeader)) {
@@ -119,6 +146,12 @@ public class TCPIPSplitBinaryElementOutputStream extends GENElementOutputStream 
 		}
 	}
 	
+	/**
+	 * Set a byte which flags the optional fields that are set in the header.
+	 * 
+	 * @param header
+	 * @return
+	 */
 	private UOctet getFlags(TCPIPMessageHeader header) {
 		
 		short result = 0;
@@ -150,6 +183,12 @@ public class TCPIPSplitBinaryElementOutputStream extends GENElementOutputStream 
 		return new UOctet(result);
 	}
 	
+	/**
+	 * Retrieve the service identifier from a URI
+	 * 
+	 * @param uri
+	 * @return
+	 */
 	private String getLocalNamePart(URI uri) {
 		
 		if (uri == null) {

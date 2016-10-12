@@ -10,6 +10,11 @@ import org.ccsds.moims.mo.mal.structures.UInteger;
 
 import esa.mo.mal.encoder.binary.fixed.FixedBinaryDecoder;
 
+/**
+ * TCPIP Header decoder
+ * @author Rian van Gijlswijk <r.vangijlswijk@telespazio-vega.de>
+ *
+ */
 public class TCPIPHeaderDecoder extends FixedBinaryDecoder {
 	
 	protected TCPIPHeaderDecoder(java.io.InputStream is) {
@@ -113,6 +118,9 @@ public class TCPIPHeaderDecoder extends FixedBinaryDecoder {
 			return null;
 		}
 		
+		/**
+		 * Decode an unsigned int using a split-binary approach
+		 */
 		@Override
 		public int getUnsignedInt() throws MALException {
 			

@@ -40,32 +40,36 @@ import java.util.List;
  * created socket to a dedicated manager thread.
  *
  */
-public class TCPIPServerConnectionListener extends Thread
-{
-  private final TCPIPTransport transport;
-  private final ServerSocket serverSocket;
+public class TCPIPServerConnectionListener extends Thread {
+	private final TCPIPTransport transport;
+	private final ServerSocket serverSocket;
 
-  /**
-   * Holds the list of data poller threads
-   */
-  private final List<Thread> pollerThreads = new ArrayList<Thread>();
+	/**
+	 * Holds the list of data poller threads
+	 */
+	private final List<Thread> pollerThreads = new ArrayList<Thread>();
 
-  /**
-   * Constructor.
-   *
-   * @param transport The parent TCPIP transport.
-   * @param serverSocket The server TCPIP socket.
-   */
-  public TCPIPServerConnectionListener(TCPIPTransport transport, ServerSocket serverSocket)
-  {
-    this.transport = transport;
-    this.serverSocket = serverSocket;
-    setName(getClass().getName() + " - Main Server Socket Thread");
-  }
+	/**
+	 * Constructor.
+	 *
+	 * @param transport
+	 *            The parent TCPIP transport.
+	 * @param serverSocket
+	 *            The server TCPIP socket.
+	 */
+	public TCPIPServerConnectionListener(TCPIPTransport transport, ServerSocket serverSocket) {
+		this.transport = transport;
+		this.serverSocket = serverSocket;
+		setName(getClass().getName() + " - Main Server Socket Thread");
+	}
 
-  @Override
-  public void run()
-  {
+	/**
+	 * Run and accept new incoming sockets. Each incoming socket is assigned a
+	 * data transceiver, which submits outgoing messages and reads incoming
+	 * messages to and from the socket respectively.
+	 */
+	@Override
+	public void run() {
 		try {
 			serverSocket.setSoTimeout(1000);
 		} catch (IOException e) {
@@ -78,16 +82,17 @@ public class TCPIPServerConnectionListener extends Thread
 				// wait for connection
 				Socket socket = serverSocket.accept();
 				
+				RLOGGER.log(Level.INFO, "Socket accepted at port {0}", socket.getPort());
+
 				// handle socket in separate thread
 				TCPIPTransportDataTransceiver tc = transport.createDataTransceiver(socket);
 
 				GENMessagePoller poller = new GENMessagePoller<TCPIPPacketInfoHolder>(
-						transport, tc, tc,
-						new TCPIPMessageDecoderFactory());
+						transport, tc, tc, new TCPIPMessageDecoderFactory());
 				pollerThreads.add(poller);
 				poller.start();
 			} catch (java.net.SocketTimeoutException ex) {
-				// this is ok, we just loop back around
+				// No socket accepted within timeout. Try again until we accept a socket.
 			} catch (IOException e) {
 				RLOGGER.log(Level.WARNING, "Error while accepting connection", e);
 			}
@@ -100,13 +105,20 @@ public class TCPIPServerConnectionListener extends Thread
 		}
 
 		pollerThreads.clear();
+	}
+	
+	/**
+	 * Close the server socket for this connection listener.
+	 */
+	public void close() {
+
+		RLOGGER.info("Closing server socket...");
+
+		try {
+			serverSocket.close();
+		} catch (IOException e) {
+			RLOGGER.log(Level.WARNING, "Error while closing server socket", e);
+		}
 		
-//		System.out.println("Closing server socket...");
-//		
-//		try {
-//			serverSocket.close();
-//		} catch (IOException e) {
-//			RLOGGER.log(Level.WARNING, "Error while closing connection", e);
-//		}
-  }
+	}
 }

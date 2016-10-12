@@ -11,11 +11,16 @@ import esa.mo.mal.transport.gen.receivers.GENIncomingMessageHolder;
 import esa.mo.mal.transport.tcpip.TCPIPPacketInfoHolder;
 import esa.mo.mal.transport.tcpip.TCPIPTransport;
 
+/**
+ * 
+ * @author Rian van Gijlswijk <r.vangijlswijk@telespazio-vega.de>
+ *
+ */
 public class TCPIPMessageDecoderFactory implements GENIncomingMessageDecoderFactory<TCPIPPacketInfoHolder>{
 
 	@Override
 	public GENIncomingMessageDecoder createDecoder(GENTransport transport,
-			GENReceptionHandler receptionHandler, TCPIPPacketInfoHolder packetInfo) {
+			GENReceptionHandler receptionHandler, TCPIPPacketInfoHolder packetInfo) {			
 		return new TCPIPMessageDecoder((TCPIPTransport) transport, packetInfo);
 	}
 	

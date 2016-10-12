@@ -4,6 +4,14 @@ import java.io.InputStream;
 
 import esa.mo.mal.encoder.binary.split.SplitBinaryDecoder;
 
+/**
+ * A split binary decoder for decoding the message body of TCPIP Messages.
+ * Allows retrieving how many bytes have been read so far. This information
+ * is used 
+ *  
+ * @author Rian van Gijlswijk <r.vangijlswijk@telespazio-vega.de>
+ *
+ */
 public class TCPIPSplitBinaryDecoder extends SplitBinaryDecoder {
 	
 	public TCPIPSplitBinaryDecoder(BufferHolder bh) {
@@ -18,6 +26,14 @@ public class TCPIPSplitBinaryDecoder extends SplitBinaryDecoder {
 		super(src, offset);
 	}
 	
+	/**
+	 * Retrieve how many bytes have been read from the buffer so far. This 
+	 * information is used to determine boundary between the variable-size 
+	 * header part, containing optional fields, and the message body.
+	 * 
+	 * @return int
+ * 				buffer offset pointer
+	 */
 	public int getBufferOffset() {
 		return ((TCPIPSplitBufferHolder)this.sourceBuffer).getOffset();
 	}

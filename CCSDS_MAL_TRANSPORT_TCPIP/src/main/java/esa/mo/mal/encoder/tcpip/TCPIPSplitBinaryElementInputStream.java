@@ -12,6 +12,14 @@ import esa.mo.mal.encoder.binary.BinaryElementInputStream;
 import esa.mo.mal.encoder.gen.GENDecoder;
 import esa.mo.mal.transport.tcpip.TCPIPMessageHeader;
 
+/**
+ * Manage the decoding of an incoming TCPIP Message. Separate decoders are used for 
+ * the message header and body. The header uses a custom implementation according to
+ * MAL TCPIP Transport Binding specifications, and the body is split binary decoded.
+ * 
+ * @author Rian van Gijlswijk <r.vangijlswijk@telespazio-vega.de>
+ *
+ */
 public class TCPIPSplitBinaryElementInputStream extends BinaryElementInputStream {
 	
 	private GENDecoder hdrDec;
@@ -27,6 +35,9 @@ public class TCPIPSplitBinaryElementInputStream extends BinaryElementInputStream
 		System.out.println("TCPIPSplitBinaryElementInputStream constructor 2");
 	}
 	
+	/**
+	 * Read an element
+	 */
 	@Override
 	public Object readElement(final Object element, final MALEncodingContext ctx)
 			throws IllegalArgumentException, MALException {
@@ -46,6 +57,14 @@ public class TCPIPSplitBinaryElementInputStream extends BinaryElementInputStream
 		}
 	}
 	
+	/**
+	 * Decode the header
+	 * 
+	 * @param element
+	 *            The header to decode
+	 * @return The decoded header
+	 * @throws MALException
+	 */
 	private Object decodeHeader(final Object element) throws MALException {
 		
 		if (!(element instanceof TCPIPMessageHeader)) {
@@ -123,6 +142,7 @@ public class TCPIPSplitBinaryElementInputStream extends BinaryElementInputStream
 		
 		header.decodedHeaderBytes = ((TCPIPHeaderDecoder)hdrDec).getBufferOffset();
 
+		// debug information
 		System.out.println("Decoded header:");
 		System.out.println("---------------------------------------");
 		System.out.println(element.toString());
@@ -133,6 +153,12 @@ public class TCPIPSplitBinaryElementInputStream extends BinaryElementInputStream
 		return header;
 	}
 	
+	/**
+	 * Is @param a URI?
+	 * 
+	 * @param uri
+	 * @return
+	 */
 	private boolean isURI(String uri) {
 		return uri.startsWith("maltcp://");
 	}

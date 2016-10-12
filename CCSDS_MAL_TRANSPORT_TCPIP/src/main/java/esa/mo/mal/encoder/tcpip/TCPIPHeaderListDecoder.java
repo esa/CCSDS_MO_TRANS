@@ -5,6 +5,12 @@ import java.util.List;
 import org.ccsds.moims.mo.mal.MALException;
 import org.ccsds.moims.mo.mal.MALListDecoder;
 
+/**
+ * Decode a list of elements
+ * 
+ * @author Rian van Gijlswijk <r.vangijlswijk@telespazio-vega.de>
+ *
+ */
 public class TCPIPHeaderListDecoder extends TCPIPHeaderDecoder implements MALListDecoder {
 	
 	private final int size;

@@ -12,6 +12,12 @@ import org.ccsds.moims.mo.mal.structures.UInteger;
 
 import esa.mo.mal.encoder.binary.fixed.FixedBinaryEncoder;
 
+/**
+ * TCPIP Message header encoder
+ * 
+ * @author Rian van Gijlswijk <r.vangijlswijk@telespazio-vega.de>
+ *
+ */
 public class TCPIPHeaderEncoder extends FixedBinaryEncoder {
 		
 	public TCPIPHeaderEncoder(final OutputStream os) {
@@ -58,6 +64,12 @@ public class TCPIPHeaderEncoder extends FixedBinaryEncoder {
 		}
 	}
 	
+	/**
+	 * Encode a long
+	 * 
+	 * @param val
+	 * @throws MALException
+	 */
 	public void encodeMALLong(Long val) throws MALException {
 		
 		try {
@@ -67,6 +79,11 @@ public class TCPIPHeaderEncoder extends FixedBinaryEncoder {
 		}
 	}
 	
+	/**
+	 * Encode a short
+	 * @param val
+	 * @throws MALException
+	 */
 	public void encodeMALShort(short val) throws MALException {
 		
 		try {
@@ -76,6 +93,9 @@ public class TCPIPHeaderEncoder extends FixedBinaryEncoder {
 		}
 	}
 	
+	/**
+	 * Encode an unsigned integer using split-binary encoding for a 4-byte variable sized int
+	 */
 	@Override
 	public void encodeUInteger(final UInteger value) throws MALException {
 		
@@ -86,6 +106,9 @@ public class TCPIPHeaderEncoder extends FixedBinaryEncoder {
 		}
 	}
 
+	/**
+	 * Encode a nullable identifier
+	 */
 	@Override
 	public void encodeNullableIdentifier(final Identifier value) throws MALException {
 		
@@ -100,12 +123,18 @@ public class TCPIPHeaderEncoder extends FixedBinaryEncoder {
 		}
 	}
 	
+	/**
+	 * Encode an identifier
+	 */
 	@Override
 	public void encodeIdentifier(final Identifier value) throws MALException {
 		
 		encodeString(value.getValue());
 	}
 	
+	/**
+	 * Encode a blob
+	 */
 	@Override
 	public void encodeBlob(final Blob value) throws MALException {
 		
@@ -128,6 +157,12 @@ public class TCPIPHeaderEncoder extends FixedBinaryEncoder {
 			super(outputStream);
 		}
 		
+		/**
+		 * Encode a varint using a split binary encoding algorithm
+		 * 
+		 * @param value
+		 * @throws IOException
+		 */
 		public void addUnsignedVarint4(int value) throws IOException {
 			
 			while ((value & 0xFFFFFF80) != 0L) {

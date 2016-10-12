@@ -13,6 +13,13 @@ import org.ccsds.moims.mo.mal.structures.*;
 import org.ccsds.moims.mo.mal.transport.MALEncodedBody;
 import org.ccsds.moims.mo.mal.transport.MALMessage;
 
+/**
+ * TCPIP Transport binding MAL endpoint implementation. Creates messages and
+ * generates the correct message header.
+ * 
+ * @author Rian van Gijlswijk <r.vangijlswijk@telespazio-vega.de>
+ *
+ */
 public class TCPIPEndpoint extends GENEndpoint {
 
 	public TCPIPEndpoint(GENTransport transport, String localName,
@@ -111,6 +118,12 @@ public class TCPIPEndpoint extends GENEndpoint {
 		}
 	}
 	  
+	/**
+	 * Create a message header with all header properties set. The serviceFrom and serviceTo
+	 * parameters will be explicitly set in the header, so that they include only the routing
+	 * part of their respective urls. The routing part is the part of an URL that comes after
+	 * the service delimiter: maltcp://host:port/routingpart
+	 */
 	public GENMessageHeader createMessageHeader(final URI uriFrom,
 			Blob authenticationId, final URI uriTo, final Time timestamp,
 			final QoSLevel qosLevel, final UInteger priority,

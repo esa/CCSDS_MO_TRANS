@@ -5,43 +5,72 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Logger;
 
+import static esa.mo.mal.transport.tcpip.TCPIPTransport.RLOGGER;
+
+/**
+ * The TCPIP Connection pool manager keeps a list of client sockets, uniquely identified by port.
+ * 
+ * This class handles the creation, retrieval and destruction of client sockets. Each time a client
+ * requests a new socket to some provider, it requests it from here. The connection pool manager 
+ * either returns the socket if it already exists, or creates a new socket, adds it to the list of
+ * sockets and returns the socket to the client.
+ * 
+ * The connection pool manager supports the creation of both sockets without a predefined port, and
+ * sockets with a predefined port. In the former case, a random ephemeral port number is assigned.
+ * In the latter case, a socket is created with a predefined port. If this doesn't work because the
+ * port already exists, the manager creates a socket with an ephemeral port number.
+ * 
+ * @author Rian van Gijlswijk <r.vangijlswijk@telespazio-vega.de>
+ */
 public enum TCPIPConnectionPoolManager {
 	INSTANCE;
-	
-	/**
-	 * Logger
-	 */
-	public static final java.util.logging.Logger RLOGGER = Logger.getLogger("org.ccsds.moims.mo.mal.transport.tcpip");
 
+	/**
+	 * The internal list of sockets. Each socket is identified by a hash, which is
+	 * made purely from the port number.
+	 */
 	private Map<Integer, Socket> connections = new HashMap<Integer, Socket>();
 	
-	public void put(Socket s) {
+	/**
+	 * Put a new socket into the list of connections
+	 * 
+	 * @param socket
+	 *            The socket to store
+	 */
+	public void put(Socket socket) {
 		
-		String remoteHost = "";
-		int remotePort = -1;
-		if (s.getInetAddress() != null) {
-			remoteHost = s.getInetAddress().getCanonicalHostName();
-			remotePort = s.getPort();
-		}
-		String localHost = s.getLocalAddress().getCanonicalHostName();
-		int localPort = s.getLocalPort();
-		int hash = getSocketHash(localHost, localPort, remoteHost, remotePort);
+		int hash = getSocketHash(socket.getLocalPort());
 		
 		System.out.println("ConnectionPool: put -> hash: " + hash);
 		
-		connections.put(hash, s);
+		connections.put(hash, socket);
 	}
 	
+	/**
+	 * Returns a new socket with an ephemeral port number.
+	 * @return Socket
+	 */
 	public Socket getAny() {
-		return get("", 0, "", 0);
+		return get(0);
 	}
 	
-	public Socket get(String localHost, int localPort, String remoteHost, int remotePort) {
+	/**
+	 * Returns a socket bound to a specific port. If this socket doesn't exist,
+	 * this method will try once to create a socket on the same port. If that is
+	 * not possible, a socket with an ephemeral port number will be created and
+	 * returned.
+	 * 
+	 * @param localPort
+	 *            The port number of the socket to return. Returns a socket with
+	 *            an ephemeral port number if the localPort is occupied or not
+	 *            existant.
+	 * @return Socket instance
+	 */
+	public Socket get(int localPort) {
 		
 		Socket s = null;
-		int hash = getSocketHash(localHost, localPort, remoteHost, remotePort);
+		int hash = getSocketHash(localPort);
 		System.out.println("ConnectionPool: get -> hash: " + hash);
 		
 		s = connections.get(hash);
@@ -53,11 +82,30 @@ public enum TCPIPConnectionPoolManager {
 		return s;
 	}
 	
-	public int getSocketHash(String localHost, int localPort, String remoteHost, int remotePort) {
+	/**
+	 * Get a unique hash, based on a port number. Each socket is identified by a
+	 * hash, which is made purely from the port number. Any instance of the MAL
+	 * transport TCPIP binding always only runs on one machine, and on any one
+	 * machine each port number is unique. Hence, the hash is unique.
+	 * 
+	 * @param localPort
+	 *            The port to get the hash for
+	 * @return String hash
+	 */
+	public int getSocketHash(int localPort) {
 		
 		return Integer.toString(localPort).hashCode();
 	}
 	
+	/**
+	 * Create a socket at a predefined port. If this is not possible, because
+	 * the port is occupied or otherwise unavailable, this method tries to
+	 * create a socket with an ephemeral port number exactly once.
+	 * 
+	 * @param localPort
+	 *            The port number to create the socket at
+	 * @return Socket instance
+	 */
 	public Socket createSocket(int localPort) {
 		
 		Socket s = new Socket();
@@ -80,6 +128,27 @@ public enum TCPIPConnectionPoolManager {
 		return s;
 	}
 	
+	/**
+	 * Close all sockets and remove them from the connections pool
+	 */
+	public void close() {
+
+		RLOGGER.info("Closing client sockets...");
+		
+		for (int hash : connections.keySet()) {
+			try {
+				connections.get(hash).close();
+				connections.remove(hash);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	/**
+	 * Return a string representation of the current connection pool
+	 */
 	public String toString() {
 		
 		StringBuffer result = new StringBuffer();

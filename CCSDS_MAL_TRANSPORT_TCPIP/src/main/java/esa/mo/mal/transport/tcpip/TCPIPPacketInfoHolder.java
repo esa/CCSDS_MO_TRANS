@@ -2,10 +2,28 @@ package esa.mo.mal.transport.tcpip;
 
 import org.ccsds.moims.mo.mal.structures.URI;
 
+/**
+ * A container class which keeps the raw packet data of an incoming message, as
+ * well as the TCP/IP address of both the source and the destination.
+ * 
+ * @author Rian van Gijlswijk <r.vangijlswijk@telespazio-vega.de>
+ *
+ */
 public class TCPIPPacketInfoHolder {
 	
+	/**
+	 * The raw packet data of an incoming message
+	 */
 	private byte[] packetData;
+	
+	/**
+	 * The TCP/IP address of the source
+	 */
 	private URI tcpipFrom;
+	
+	/**
+	 * The TCP/IP address of the destination
+	 */
 	private URI tcpipTo;
 	
 	public TCPIPPacketInfoHolder(byte[] packetData, URI from, URI to) {

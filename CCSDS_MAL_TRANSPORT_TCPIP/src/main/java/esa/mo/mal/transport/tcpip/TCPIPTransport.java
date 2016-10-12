@@ -179,19 +179,17 @@ public class TCPIPTransport extends GENTransport {
 			
 			// debug mode
 			if (properties.containsKey("org.ccsds.moims.mo.mal.transport.tcpip.debug")) {
-				String level = properties.get("org.ccsds.moims.mo.mal.transport.tcpip.debug").toString();
-				try {
-					Level parsedLevel = Level.parse(level);
-					RLOGGER.setLevel(parsedLevel);
-					RLOGGER.finest("Finest");
-					RLOGGER.fine("fine");
-					RLOGGER.info("info");
-					RLOGGER.warning("warning");
-					RLOGGER.severe("severe");
-				} catch(IllegalArgumentException ex) {
-					RLOGGER.log(Level.WARNING, "The debug level supplied by the parameter"
-							+ "org.ccsds.moims.mo.mal.transport.tcpip.debug does not exist!"
-							+ "Please provide a java-logging compatible debug level.");
+				Object level = properties.get("org.ccsds.moims.mo.mal.transport.tcpip.debug");
+				
+				if (level != null) {
+					try {
+						Level parsedLevel = Level.parse(level.toString());
+						RLOGGER.setLevel(parsedLevel);
+					} catch(IllegalArgumentException ex) {
+						RLOGGER.log(Level.WARNING, "The debug level supplied by the parameter"
+								+ "org.ccsds.moims.mo.mal.transport.tcpip.debug does not exist!"
+								+ "Please provide a java-logging compatible debug level.");
+					}
 				}
 			} else {
 				

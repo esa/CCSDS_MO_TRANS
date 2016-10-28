@@ -25,6 +25,7 @@ import esa.mo.mal.transport.gen.sending.GENOutgoingMessageHolder;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.Arrays;
@@ -94,6 +95,7 @@ public class TCPIPTransportDataTransceiver implements esa.mo.mal.transport.gen.u
 	 * that the communication supports several sockets, one for provider-side
 	 * and one for client-side, while still being compliant with the MAL
 	 * restriction that every client/provider has exactly one unique address.
+	 * @throws InterruptedException 
 	 */
 	@Override
 	public TCPIPPacketInfoHolder readEncodedMessage() throws IOException {
@@ -108,14 +110,29 @@ public class TCPIPTransportDataTransceiver implements esa.mo.mal.transport.gen.u
 		final int headerSize = 23;
 		byte[] rawHeader = new byte[headerSize];
 		
-		int bytesRead = socketReadIf.read(rawHeader, 0, headerSize);
+		try{
+			int bytesRead = socketReadIf.read(rawHeader, 0, headerSize);
+			if (bytesRead < 1) {
+				return null;
+			}
+		} catch (NullPointerException headerReadNullPointer) {
+			TCPIPTransport.RLOGGER.warning("NullpointerException occured while reading header! " + headerReadNullPointer.getMessage());
+		} catch (IndexOutOfBoundsException headerReadOutOfBounds) {
+			TCPIPTransport.RLOGGER.warning("IndexOutOfBoundsException occured while reading header! " + headerReadOutOfBounds.getMessage());			
+		}
 		
 		byte[] bodyLengthParam = Arrays.copyOfRange(rawHeader, 19, 23);
 		int bodyLength = byteArrayToInt(bodyLengthParam);
 		
 		// read body
 	    byte[] bodyData = new byte[bodyLength];
-		socketReadIf.readFully(bodyData);
+	    try {
+	    	socketReadIf.readFully(bodyData);
+	    } catch (EOFException bodyReadEof) {
+	    	TCPIPTransport.RLOGGER.warning("EOF reached for input stream! " + bodyReadEof.getMessage());
+	    } catch (IOException bodyReadIo) {
+	    	TCPIPTransport.RLOGGER.warning("Socket connection closed while reading!");
+	    }
 	
 		// merge header and body
 	    byte[] totalPacketData = new byte[headerSize + bodyLength];

@@ -1,0 +1,299 @@
+package esa.mo.mal.encoder.tcpip;
+
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.List;
+
+import org.ccsds.moims.mo.mal.MALException;
+import org.ccsds.moims.mo.mal.MALListEncoder;
+import org.ccsds.moims.mo.mal.structures.Blob;
+import org.ccsds.moims.mo.mal.structures.Identifier;
+import org.ccsds.moims.mo.mal.structures.UInteger;
+import org.ccsds.moims.mo.mal.structures.URI;
+
+import esa.mo.mal.encoder.binary.split.SplitBinaryEncoder;
+
+/**
+ * The TCPIPSplitBinaryEncoder modifies the string length encoding of the
+ * default SplitBinaryEncoder implementation in the MAL API.
+ * 
+ * In this implementation, string lengths are encoded as a 4-octet unsigned
+ * varint, as specified in standard CCSDS 524.2-R-1. Other encodings are left to
+ * the default BinaryEncoder implementation, on which the SplitBinaryEncoder
+ * heavily depends.
+ * 
+ * @author rvangijlswijk <r.vangijlswijk@telespazio-vega.de>
+ * 
+ */
+/*public static final org.ccsds.moims.mo.mal.MALSubmitOperation TESTMULTIPLENOTIFY_OP 
+= new org.ccsds.moims.mo.mal.MALSubmitOperation(TESTMULTIPLENOTIFY_OP_NUMBER, 
+	new org.ccsds.moims.mo.mal.structures.Identifier("testMultipleNotify"), 
+	false, 
+	new org.ccsds.moims.mo.mal.structures.UShort(102), 
+	new org.ccsds.moims.mo.mal.MALOperationStage(new org.ccsds.moims.mo.mal.structures.UOctet((short) 1),
+	new Long[] {org.ccsds.moims.mo.malprototype.iptest.structures.TestPublishUpdate.SHORT_FORM}, 
+	new Long[] {}));
+
+*/
+public class TCPIPSplitBinaryEncoder extends SplitBinaryEncoder {
+
+	static long MAX_STRING_LENGTH = 2 * (long) Integer.MAX_VALUE + 1;
+
+	/**
+	 * Constructor.
+	 *
+	 * @param os
+	 *            Output stream to write to.
+	 */
+	public TCPIPSplitBinaryEncoder(final OutputStream os) {
+		super(new TCPIPSplitBinaryStreamHolder(os));
+	}
+
+	protected TCPIPSplitBinaryEncoder(final StreamHolder os) {
+		super(os);
+	}
+	
+	@Override
+	public MALListEncoder createListEncoder(List list) throws IllegalArgumentException, MALException {
+
+		// encode number of elements
+		try {
+			((TCPIPSplitBinaryStreamHolder) outputStream).addUnsignedVarint4(list.size());
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			throw new MALException(ENCODING_EXCEPTION_STR, e);
+		}
+
+		return this;
+	}
+
+	/**
+	 * A MAL string is encoded as follows: - String Length: UInteger -
+	 * Character: UTF-8, variable size, multiple of octet The field 'string
+	 * length' shall be assigned with the number of octets required to encode
+	 * the character of the string
+	 * 
+	 * @param val
+	 *            The string to encode
+	 * @throws MALException
+	 *             if the string to encode is too large
+	 */
+	@Override
+	public void encodeString(String val) throws MALException {
+
+//		long MAX_STRING_LENGTH = 2 * (long) Integer.MAX_VALUE + 1;
+//		byte[] output = val.getBytes(UTF8_CHARSET);
+//
+//		if (output.length > MAX_STRING_LENGTH) {
+//			throw new MALException(
+//					"The string length is greater than 2^32 -1 bytes! Please provide a shorter string.");
+//		}
+//
+////		encodeUInteger(new UInteger(output.length));
+//		try {
+//			((TCPIPSplitBinaryStreamHolder) outputStream).addUnsignedVarint4(output.length);
+//			outputStream.directAdd(output);
+//		} catch (IOException ex) {
+//			throw new MALException(ENCODING_EXCEPTION_STR, ex);
+//		}
+		
+		byte[] output = val.getBytes(UTF8_CHARSET);
+
+		try {
+			((TCPIPSplitBinaryStreamHolder) outputStream).addUnsignedVarint4(output.length);
+		} catch (IOException e) {
+			throw new MALException(ENCODING_EXCEPTION_STR, e);
+		}
+		
+		System.out.println("TCPIPSplitBinaryEncoder.encodeString(" + val + ") sz=" + output.length);
+
+		if (val.length() > 0) {
+			try {
+				outputStream.directAdd(output);
+			} catch (IOException ex) {
+				throw new MALException(ENCODING_EXCEPTION_STR, ex);
+			}
+		}
+	}
+	
+	@Override
+	public void encodeNullableString(String value) throws MALException {
+		
+		try {
+			if (value != null) {
+				// encode presence flag
+				outputStream.addNotNull();
+				// encode element as String
+				encodeString(value);
+			} else {
+				// encode presence flag
+				outputStream.addIsNull();
+				
+			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+//	/**
+//	 * Encode an identifier
+//	 */
+//	@Override
+//	public void encodeIdentifier(final Identifier value) throws MALException {
+//
+//		encodeString(value.getValue());
+//	}
+//	
+//	@Override
+//	public void encodeNullableIdentifier(final Identifier value) throws MALException {
+//		
+//		try {
+//			if (value != null) {
+//				// encode presence flag
+//				outputStream.addNotNull();
+//				// encode element as String
+//				encodeIdentifier(value);
+//			} else {
+//				// encode presence flag
+//				outputStream.addIsNull();
+//				
+//			}
+//		} catch (IOException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+//	}
+//
+//	@Override
+//	public void encodeNullableURI(final URI value) throws MALException {
+//
+//		try {
+//			if (value != null) {
+//				// encode presence flag
+//				outputStream.addNotNull();
+//				// encode element as String
+//				encodeURI(value);
+//			} else {
+//				// encode presence flag
+//				outputStream.addIsNull();
+//				
+//			}
+//		} catch (IOException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+//	}
+
+
+//	/**
+//	 * Encode an unsigned integer using split-binary encoding for a 4-byte
+//	 * variable sized int
+//	 */
+//	@Override
+//	public void encodeUInteger(final UInteger value) throws MALException {
+//
+//		try {
+//			((TCPIPSplitBinaryStreamHolder) outputStream).addUnsignedVarint4((int) value.getValue());
+//		} catch (IOException ex) {
+//			throw new MALException(ENCODING_EXCEPTION_STR, ex);
+//		}
+//	}
+
+	/**
+	 * Encode a blob
+	 */
+	@Override
+	public void encodeBlob(final Blob value) throws MALException {
+
+		byte[] byteValue = value.getValue();
+
+		try {
+			((TCPIPSplitBinaryStreamHolder) outputStream).addUnsignedVarint4(byteValue.length);
+//			outputStream.addUnsignedInt(byteValue.length);
+		System.out.println("Blob encode sz=" + byteValue.length);
+		
+
+			if (byteValue.length > 0) {
+					outputStream.directAdd(byteValue);
+			}
+		} catch (IOException ex) {
+			throw new MALException(ENCODING_EXCEPTION_STR, ex);
+		}
+		
+	}
+
+	@Override
+	public void encodeNullableBlob(final Blob value) throws MALException {
+
+		try {
+			if (value != null) {
+				// encode presence flag
+				outputStream.addNotNull();
+				// encode element as String
+				encodeBlob(value);
+			} else {
+				// encode presence flag
+				outputStream.addIsNull();
+				
+			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+	public static class TCPIPSplitBinaryStreamHolder extends SplitStreamHolder {
+
+		public TCPIPSplitBinaryStreamHolder(final OutputStream outputStream) {
+			super(outputStream);
+		}
+
+//		 TODO: This fails in Testbed, works only if string length is stored as signed
+//		 integer. Sometimes, length == -1? According to specs, must be stored
+//		 as unsigned however
+//		@Override
+//		public void addString(String value) throws IOException {
+//
+//			if (value == null) {
+//				addUnsignedVarint4(0);
+//				System.out
+//						.println("TCPIPSplitBinaryEncoder.addString: null Value!");
+//
+//			} else {
+//
+//				byte[] output = value.getBytes(UTF8_CHARSET);
+//				int sz = output.length;
+//
+//				System.out.println("TCPIPSplitBinaryEncoder.addString: output.length="+ output.length+ " str length="+ value.length());
+//
+//				if (sz < 0) {
+//					sz = 0;
+//				}
+//
+//				addUnsignedVarint4(sz);
+//
+//				if (sz > 0) {
+//					directAdd(output);
+//				}
+//			}
+//		}
+
+		/**
+		 * Encode a varint using a split binary encoding algorithm
+		 *
+		 * @param value
+		 * @throws IOException
+		 */
+		public void addUnsignedVarint4(int value) throws IOException {
+
+			while ((value & 0xFFFFFF80) != 0L) {
+				directAdd((byte) ((value & 0x7F) | 0x80));
+				value >>>= 7;
+			}
+			directAdd((byte) (value & 0x7F));
+		}
+	}
+
+}
+

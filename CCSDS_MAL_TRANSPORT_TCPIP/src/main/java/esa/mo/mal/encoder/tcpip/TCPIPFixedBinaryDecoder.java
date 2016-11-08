@@ -15,18 +15,22 @@ import esa.mo.mal.encoder.binary.fixed.FixedBinaryDecoder;
  * @author Rian van Gijlswijk <r.vangijlswijk@telespazio-vega.de>
  *
  */
-public class TCPIPHeaderDecoder extends FixedBinaryDecoder {
+public class TCPIPFixedBinaryDecoder extends FixedBinaryDecoder {
 	
-	protected TCPIPHeaderDecoder(java.io.InputStream is) {
+	protected TCPIPFixedBinaryDecoder(java.io.InputStream is) {
 		super(new TCPIPBufferHolder(is, null, 0, 0));
 	}
 	
-	public TCPIPHeaderDecoder(final BufferHolder srcBuffer) {
+	public TCPIPFixedBinaryDecoder(final BufferHolder srcBuffer) {
 		super(srcBuffer);
 	}
 	
+	public TCPIPFixedBinaryDecoder(byte[] buf, int offset) {
+		super(new TCPIPBufferHolder(null, buf, offset, 0));
+	}
+
 	public org.ccsds.moims.mo.mal.MALListDecoder createListDecoder(final List list) throws MALException {
-		return new TCPIPHeaderListDecoder(list, sourceBuffer);
+		return new TCPIPFixedBinaryListDecoder(list, sourceBuffer);
 	}
 
 	@Override

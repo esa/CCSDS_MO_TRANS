@@ -11,12 +11,12 @@ import org.ccsds.moims.mo.mal.MALListDecoder;
  * @author Rian van Gijlswijk <r.vangijlswijk@telespazio-vega.de>
  *
  */
-public class TCPIPHeaderListDecoder extends TCPIPHeaderDecoder implements MALListDecoder {
+public class TCPIPFixedBinaryListDecoder extends TCPIPFixedBinaryDecoder implements MALListDecoder {
 	
 	private final int size;
 	private final List list;
 
-	protected TCPIPHeaderListDecoder(List list, final BufferHolder srcBuffer) throws MALException {
+	protected TCPIPFixedBinaryListDecoder(List list, final BufferHolder srcBuffer) throws MALException {
 		super(srcBuffer);
 		
 		this.list = list;

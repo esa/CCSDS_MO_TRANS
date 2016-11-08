@@ -7,8 +7,7 @@ import java.util.Map;
 import org.ccsds.moims.mo.mal.MALException;
 import org.ccsds.moims.mo.mal.encoding.MALElementInputStream;
 import org.ccsds.moims.mo.mal.encoding.MALElementOutputStream;
-
-import esa.mo.mal.encoder.binary.split.SplitBinaryStreamFactory;
+import esa.mo.mal.encoder.binary.BinaryStreamFactory;
 
 /**
  * A factory implementation for the generation of input and output stream classes,
@@ -17,26 +16,28 @@ import esa.mo.mal.encoder.binary.split.SplitBinaryStreamFactory;
  * @author Rian van Gijlswijk <r.vangijlswijk@telespazio-vega.de>
  *
  */
-public class TCPIPSplitBinaryStreamFactory extends SplitBinaryStreamFactory {
+public class TCPIPFixedBinaryStreamFactory extends BinaryStreamFactory {
+
+	@Override
+	protected void init(String protocol, Map properties)
+			throws IllegalArgumentException, MALException {
+	}
 
 	@Override
 	public MALElementInputStream createInputStream(InputStream is)
 			throws IllegalArgumentException, MALException {
-		System.out.println("TCPIPSplitBinaryStreamFactory.createInputStream(InputStream)");
-		return new TCPIPSplitBinaryElementInputStream(is);
+		return new TCPIPFixedBinaryElementInputStream(is);
 	}
 
 	@Override
 	public MALElementInputStream createInputStream(byte[] bytes, int offset) {
-		System.out.println("TCPIPSplitBinaryStreamFactory.createInputStream(byte[], int)");
-		return new TCPIPSplitBinaryElementInputStream(bytes, offset);
+		return new TCPIPFixedBinaryElementInputStream(bytes, offset);
 	}
 
 	@Override
 	public MALElementOutputStream createOutputStream(OutputStream os)
 			throws IllegalArgumentException, MALException {
-		System.out.println("TCPIPSplitBinaryStreamFactory.createOutputStream(OutputStream)");
-		return new TCPIPSplitBinaryElementOutputStream(os);
+		return new TCPIPFixedBinaryElementOutputStream(os);
 	}
 
 }

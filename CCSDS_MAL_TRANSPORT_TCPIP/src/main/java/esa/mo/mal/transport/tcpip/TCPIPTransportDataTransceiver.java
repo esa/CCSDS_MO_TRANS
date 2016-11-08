@@ -28,6 +28,7 @@ import java.io.DataOutputStream;
 import java.io.EOFException;
 import java.io.IOException;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.Arrays;
 import java.util.logging.Level;
 
@@ -119,6 +120,9 @@ public class TCPIPTransportDataTransceiver implements esa.mo.mal.transport.gen.u
 			TCPIPTransport.RLOGGER.warning("NullpointerException occured while reading header! " + headerReadNullPointer.getMessage());
 		} catch (IndexOutOfBoundsException headerReadOutOfBounds) {
 			TCPIPTransport.RLOGGER.warning("IndexOutOfBoundsException occured while reading header! " + headerReadOutOfBounds.getMessage());			
+		} catch (SocketException socketExc) {
+//			TCPIPTransport.RLOGGER.warning("SocketException occured while reading header! " + socketExc.getMessage());			
+			return null;
 		}
 		
 		byte[] bodyLengthParam = Arrays.copyOfRange(rawHeader, 19, 23);

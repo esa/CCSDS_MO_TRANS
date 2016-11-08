@@ -22,6 +22,7 @@ package esa.mo.mal.transport.tcpip;
 
 import esa.mo.mal.encoder.binary.split.SplitBinaryStreamFactory;
 import esa.mo.mal.encoder.tcpip.TCPIPMessageDecoderFactory;
+import esa.mo.mal.encoder.tcpip.TCPIPSplitBinaryStreamFactory;
 import esa.mo.mal.transport.gen.GENEndpoint;
 import esa.mo.mal.transport.gen.GENMessage;
 import esa.mo.mal.transport.gen.GENTransport;
@@ -128,10 +129,10 @@ public class TCPIPTransport extends GENTransport {
 	/**
 	 * Holds the list of data poller threads
 	 */
-	private final List<GENMessagePoller> pollerThreads = new ArrayList<GENMessagePoller>();
+	private final List<GENMessagePoller> messagePollerThreadPool = new ArrayList<GENMessagePoller>();
 
 	/**
-	 * Constructor.
+	 * Constructor. Configures host/port and debug settings.
 	 *
 	 * @param protocol
 	 *            The protocol string.
@@ -148,6 +149,7 @@ public class TCPIPTransport extends GENTransport {
 	 * @throws MALException
 	 *             On error.
 	 */
+	@SuppressWarnings("rawtypes")
 	public TCPIPTransport(final String protocol, final char serviceDelim,
 			final boolean supportsRouting, final MALTransportFactory factory,
 			final java.util.Map properties) throws MALException {
@@ -191,8 +193,6 @@ public class TCPIPTransport extends GENTransport {
 								+ "Please provide a java-logging compatible debug level.");
 					}
 				}
-			} else {
-				
 			}
 		} else {
 			// default values
@@ -291,11 +291,11 @@ public class TCPIPTransport extends GENTransport {
 			
 			TCPIPConnectionPoolManager.INSTANCE.close();
 			
-			for (GENMessagePoller entry : pollerThreads) {
+			for (GENMessagePoller entry : messagePollerThreadPool) {
 				entry.close();
 			}
 
-			pollerThreads.clear();
+			messagePollerThreadPool.clear();
 		}
 
 		super.close();
@@ -440,13 +440,15 @@ public class TCPIPTransport extends GENTransport {
 			System.out.print(Integer.toString(b2 & 0xFF, 10) + " ");
 		}
 		System.out.println("\n---------------------------------------");
-		System.out.println();
 		
 		// decode the body
-		TCPIPMessage msg2 = new TCPIPMessage(wrapBodyParts, (TCPIPMessageHeader)msg.getHeader(), qosProperties,
-				bodyPacketData, new SplitBinaryStreamFactory());
+		TCPIPMessage messageWithBody = new TCPIPMessage(wrapBodyParts, (TCPIPMessageHeader)msg.getHeader(), qosProperties,
+				bodyPacketData, new TCPIPSplitBinaryStreamFactory());
 		
-		return msg2;
+		System.out.println("DECODED BODY: " + messageWithBody.bodytoString());
+		System.out.println();
+		
+		return messageWithBody;
 	}
 
 	/**
@@ -474,47 +476,33 @@ public class TCPIPTransport extends GENTransport {
 			Socket s = TCPIPConnectionPoolManager.INSTANCE.get(fromCt.port);
 			s.connect(new InetSocketAddress(toCt.host, toCt.port));
 			TCPIPTransportDataTransceiver trans = createDataTransceiver(s);
-		    System.out.println("transport.createMessageSender() SERVERSOCKET: "
-		    		+ fromCt.host + ":" + s.getLocalPort() + " (was " + fromCt.port + ")");
-			System.out.println("ConnectionPool @ transport.createMessageSender():");
-			System.out.println(TCPIPConnectionPoolManager.INSTANCE.toString());
-					    
+						    
 		    RLOGGER.fine("Original message for sending: " + msg.toString());
 		    
-			GENMessagePoller rcvr = new GENMessagePoller<TCPIPPacketInfoHolder>(this, trans,
+			GENMessagePoller messageReceiver = new GENMessagePoller<TCPIPPacketInfoHolder>(this, trans,
 					trans, new TCPIPMessageDecoderFactory());
-			rcvr.setRemoteURI(remoteRootURI);
-			rcvr.start();
+			messageReceiver.setRemoteURI(remoteRootURI);
+			messageReceiver.start();
 
-			pollerThreads.add(rcvr);
+			messagePollerThreadPool.add(messageReceiver);
 
 			return trans;
+			
 		} catch (NumberFormatException nfe) {
-			LOGGER.log(Level.WARNING,
-					"Have no means to communicate with client URI : {0}",
-					remoteRootURI);
-			throw new MALException(
-					"Have no means to communicate with client URI : "
-							+ remoteRootURI);
+			LOGGER.log(Level.WARNING, "Have no means to communicate with client URI : {0}", remoteRootURI);
+			throw new MALException("Have no means to communicate with client URI : " + remoteRootURI);
 		} catch (UnknownHostException e) {
-			LOGGER.log(Level.WARNING, "TCPIP could not find host :{0}",
-					remoteRootURI);
-			LOGGER.log(Level.FINE, "TCPIP could not find host :"
-					+ remoteRootURI, e);
+			LOGGER.log(Level.WARNING, "TCPIP could not find host :{0}", remoteRootURI);
+			LOGGER.log(Level.FINE, "TCPIP could not find host  :" + remoteRootURI, e);
 			throw new MALTransmitErrorException(msg.getHeader(),
-					new MALStandardError(
-							MALHelper.DESTINATION_UNKNOWN_ERROR_NUMBER, null),
-					null);
+					new MALStandardError(MALHelper.DESTINATION_UNKNOWN_ERROR_NUMBER, null), null);
 		} catch (java.net.ConnectException e) {
-			LOGGER.log(Level.WARNING, "TCPIP could not connect to :{0}",
-					remoteRootURI);
-			LOGGER.log(Level.FINE, "TCPIP could not connect to :"
-					+ remoteRootURI, e);
+			LOGGER.log(Level.WARNING, "TCPIP could not connect to : {0}", remoteRootURI);
+			LOGGER.log(Level.FINE, "TCPIP could not connect to : " + remoteRootURI, e);
 			throw new MALTransmitErrorException(
 					msg.getHeader(),
 					new MALStandardError(
-							MALHelper.DESTINATION_TRANSIENT_ERROR_NUMBER, null),
-					null);
+							MALHelper.DESTINATION_TRANSIENT_ERROR_NUMBER, null), null);
 		} catch (IOException e) {
 			// there was a communication problem, we need to clean up the
 			// objects we created in the meanwhile

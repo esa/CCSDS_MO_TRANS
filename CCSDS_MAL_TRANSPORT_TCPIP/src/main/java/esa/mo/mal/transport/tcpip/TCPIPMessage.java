@@ -14,9 +14,9 @@ import org.ccsds.moims.mo.mal.encoding.MALElementOutputStream;
 import org.ccsds.moims.mo.mal.encoding.MALElementStreamFactory;
 
 import esa.mo.mal.encoder.binary.split.SplitBinaryStreamFactory;
+import esa.mo.mal.encoder.tcpip.TCPIPSplitBinaryStreamFactory;
 import esa.mo.mal.transport.gen.GENMessage;
 import esa.mo.mal.transport.gen.GENMessageHeader;
-
 import static esa.mo.mal.transport.tcpip.TCPIPTransport.RLOGGER;
 
 /**
@@ -61,15 +61,16 @@ public class TCPIPMessage extends GENMessage {
 	public void encodeMessage(final MALElementStreamFactory headerStreamFactory,
 			final OutputStream lowLevelOutputStream)
 			throws MALException {
+		
 		System.out.println("TCPIPMessage.encodeMessage()");
 		System.out.println("TCPIPMessageHeader: " + this.getHeader().toString());
-		System.out.println("TCPIPMessageBody: " + this.getBody().toString());
+		System.out.println("TCPIPMessageBody: " + this.bodytoString());
 
 		// encode header and body using TCPIPEncoder class
 		ByteArrayOutputStream hdrBaos = new ByteArrayOutputStream();
 		ByteArrayOutputStream bodyBaos = new ByteArrayOutputStream();
 		MALElementOutputStream headerEncoder = headerStreamFactory.createOutputStream(hdrBaos);
-		MALElementStreamFactory bodyStreamFactory = new SplitBinaryStreamFactory();
+		MALElementStreamFactory bodyStreamFactory = new TCPIPSplitBinaryStreamFactory();
 		MALElementOutputStream bodyEncoder = bodyStreamFactory.createOutputStream(bodyBaos);
 
 		super.encodeMessage(headerStreamFactory, headerEncoder, hdrBaos, true);
@@ -116,5 +117,24 @@ public class TCPIPMessage extends GENMessage {
 			+ header.getURIFrom() 
 			+ "URITo:" + header.getURITo()
 			+ "}";		
+	}
+	
+	public String bodytoString() {
+		
+		if (this.body != null) {
+			String output = "";
+			output += this.body.getClass().getCanonicalName();
+			for (int i=0; i < this.body.getElementCount(); i++) {
+				try {
+					if (this.body.getBodyElement(i, null) != null) {
+						output += " | " + this.body.getBodyElement(i, null).toString();
+					}
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+			return output;
+		}
+		return " --no body--";
 	}
 }

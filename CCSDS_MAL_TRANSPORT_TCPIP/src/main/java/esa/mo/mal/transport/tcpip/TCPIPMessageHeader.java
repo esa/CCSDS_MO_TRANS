@@ -36,7 +36,7 @@ public class TCPIPMessageHeader extends GENMessageHeader {
 
 	public int versionNumber = 1;
 	
-	private short encodingId = 42;
+	private short encodingId = 0;
 	
 	private int bodyLength;
 	

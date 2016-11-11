@@ -13,7 +13,6 @@ import org.ccsds.moims.mo.mal.MALOperation;
 import org.ccsds.moims.mo.mal.encoding.MALElementOutputStream;
 import org.ccsds.moims.mo.mal.encoding.MALElementStreamFactory;
 
-import esa.mo.mal.encoder.binary.split.SplitBinaryStreamFactory;
 import esa.mo.mal.encoder.tcpip.TCPIPSplitBinaryStreamFactory;
 import esa.mo.mal.transport.gen.GENMessage;
 import esa.mo.mal.transport.gen.GENMessageHeader;

@@ -4,6 +4,8 @@ import java.util.List;
 
 import org.ccsds.moims.mo.mal.MALException;
 import org.ccsds.moims.mo.mal.MALListDecoder;
+import static esa.mo.mal.transport.tcpip.TCPIPTransport.RLOGGER;
+
 
 /**
  * Decode a list of elements

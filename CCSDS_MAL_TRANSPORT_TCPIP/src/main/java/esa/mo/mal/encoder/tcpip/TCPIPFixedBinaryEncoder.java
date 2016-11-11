@@ -11,6 +11,8 @@ import org.ccsds.moims.mo.mal.structures.Identifier;
 import org.ccsds.moims.mo.mal.structures.UInteger;
 
 import esa.mo.mal.encoder.binary.fixed.FixedBinaryEncoder;
+import static esa.mo.mal.transport.tcpip.TCPIPTransport.RLOGGER;
+
 
 /**
  * TCPIP Message header encoder

@@ -10,6 +10,8 @@ import org.ccsds.moims.mo.mal.structures.UInteger;
 
 import esa.mo.mal.encoder.binary.fixed.FixedBinaryDecoder;
 
+import static esa.mo.mal.transport.tcpip.TCPIPTransport.RLOGGER;
+
 /**
  * TCPIP Header decoder
  * @author Rian van Gijlswijk <r.vangijlswijk@telespazio-vega.de>
@@ -55,7 +57,7 @@ public class TCPIPFixedBinaryDecoder extends FixedBinaryDecoder {
 		// decode presence flag
 		boolean isNotNull = decodeBoolean();
 		
-		System.out.println("Decoding identifier. Is null: " + !isNotNull);
+		RLOGGER.info("Decoding identifier. Is null: " + !isNotNull);
 		
 		// decode one element, or add null if presence flag indicates no element
 		if (isNotNull) {
@@ -115,7 +117,7 @@ public class TCPIPFixedBinaryDecoder extends FixedBinaryDecoder {
 
 				final String s = new String(buf, offset, (int) len, UTF8_CHARSET);
 				offset += len;
-				System.out.println(" val " + s);
+				RLOGGER.info(" val " + s);
 				return s;
 			}
 			

@@ -10,6 +10,7 @@ import esa.mo.mal.transport.gen.receivers.GENIncomingMessageDecoderFactory;
 import esa.mo.mal.transport.gen.receivers.GENIncomingMessageHolder;
 import esa.mo.mal.transport.tcpip.TCPIPPacketInfoHolder;
 import esa.mo.mal.transport.tcpip.TCPIPTransport;
+import static esa.mo.mal.transport.tcpip.TCPIPTransport.RLOGGER; 
 
 /**
  * 

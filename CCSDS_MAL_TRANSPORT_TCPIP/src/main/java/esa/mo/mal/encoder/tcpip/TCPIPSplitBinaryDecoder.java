@@ -25,7 +25,14 @@ import java.math.BigInteger;
 import org.ccsds.moims.mo.mal.MALException;
 import org.ccsds.moims.mo.mal.structures.Blob;
 import org.ccsds.moims.mo.mal.structures.FineTime;
+import org.ccsds.moims.mo.mal.structures.Identifier;
 import org.ccsds.moims.mo.mal.structures.Time;
+import org.ccsds.moims.mo.mal.structures.ULong;
+import org.ccsds.moims.mo.mal.structures.UOctet;
+import org.ccsds.moims.mo.mal.structures.URI;
+
+import static esa.mo.mal.transport.tcpip.TCPIPTransport.RLOGGER; 
+
 
 /**
  * Implements the MALDecoder interface for a split binary encoding.
@@ -38,7 +45,7 @@ public class TCPIPSplitBinaryDecoder extends esa.mo.mal.encoder.binary.BinaryDec
 	 *            Byte array to read from.
 	 */
 	public TCPIPSplitBinaryDecoder(final byte[] src) {
-		super(new SplitBufferHolder(null, src, 0, src.length));
+		super(new TCPIPSplitBufferHolder(null, src, 0, src.length));
 	}
 
 	/**
@@ -48,7 +55,7 @@ public class TCPIPSplitBinaryDecoder extends esa.mo.mal.encoder.binary.BinaryDec
 	 *            Input stream to read from.
 	 */
 	public TCPIPSplitBinaryDecoder(final java.io.InputStream is) {
-		super(new SplitBufferHolder(is, null, 0, 0));
+		super(new TCPIPSplitBufferHolder(is, null, 0, 0));
 	}
 
 	/**
@@ -60,7 +67,7 @@ public class TCPIPSplitBinaryDecoder extends esa.mo.mal.encoder.binary.BinaryDec
 	 *            index in array to start reading from.
 	 */
 	public TCPIPSplitBinaryDecoder(final byte[] src, final int offset) {
-		super(new SplitBufferHolder(null, src, offset, src.length));
+		super(new TCPIPSplitBufferHolder(null, src, offset, src.length));
 	}
 
 	/**
@@ -81,20 +88,32 @@ public class TCPIPSplitBinaryDecoder extends esa.mo.mal.encoder.binary.BinaryDec
 
 	@Override
 	public Boolean decodeBoolean() throws MALException {
+		System.out.println("TCPIPSplitBinaryEncoder.decodeBoolean is called");
 		return sourceBuffer.getBool();
 	}
 
 	@Override
 	public Boolean decodeNullableBoolean() throws MALException {
-		if (sourceBuffer.getBool()) {
-			return decodeBoolean();
-		}
+		
+		boolean isNotNull = decodeBoolean();
+		System.out.println("TCPIPSplitBinaryEncoder.decodeNullableBoolean: " + isNotNull);
 
-		return null;
+		Boolean rv = null;
+
+		// decode one element, or add null if presence flag indicates no element
+		if (isNotNull) {
+			rv = decodeBoolean();
+		}
+		
+		System.out.println("TCPIPSplitBinaryEncoder.decodeNullableBoolean: " + rv);
+
+		return rv;
 	}
 
 	@Override
 	public String decodeString() throws MALException {
+		
+		System.out.println("TCPIPSplitBinaryEncoder.decodeString is called");
 
 		return sourceBuffer.getString();
 	}
@@ -104,13 +123,18 @@ public class TCPIPSplitBinaryDecoder extends esa.mo.mal.encoder.binary.BinaryDec
 		
 		// decode presence flag
 		boolean isNotNull = decodeBoolean();
+		System.out.println("TCPIPSplitBinaryEncoder.decodeNullableString: " + isNotNull);
 			
+		String rv = null;
+		
 		// decode one element, or add null if presence flag indicates no element
 		if (isNotNull) {
-			return decodeString();
+			rv = decodeString();
 		}
+		
+		System.out.println("TCPIPSplitBinaryEncoder.decodeNullableString: " + rv);
 	
-		return null;
+		return rv;
 	}
 	
 	@Override
@@ -128,21 +152,89 @@ public class TCPIPSplitBinaryDecoder extends esa.mo.mal.encoder.binary.BinaryDec
 	}
 	
 	@Override
+	public Identifier decodeNullableIdentifier() throws MALException {
+		
+		// decode presence flag
+		boolean isNotNull = decodeBoolean();
+		System.out.println("TCPIPSplitBinaryEncoder.decodeNullableIdentifier: " + isNotNull);
+		
+		Identifier rv = null;
+			
+		// decode one element, or add null if presence flag indicates no element
+		if (isNotNull) {
+			rv = decodeIdentifier();
+		}
+		
+		System.out.println("TCPIPSplitBinaryEncoder.decodeNullableIdentifier: " + rv);
+		
+		return rv;
+	}
+	
+	@Override
+	public URI decodeNullableURI() throws MALException {
+
+		// decode presence flag
+		boolean isNotNull = decodeBoolean();
+		System.out.println("TCPIPSplitBinaryEncoder.decodeNullableURI: " + isNotNull);
+			
+		// decode one element, or add null if presence flag indicates no element
+		if (isNotNull) {
+			return decodeURI();
+		}
+	
+		return null;
+	}
+
+	@Override
+	public ULong decodeNullableULong() throws MALException {
+
+		// decode presence flag
+		boolean isNotNull = decodeBoolean();
+		System.out.println("TCPIPSplitBinaryEncoder.decodeNullableULong: " + isNotNull);
+		
+		ULong rv = null;
+			
+		// decode one element, or add null if presence flag indicates no element
+		if (isNotNull) {
+			rv = decodeULong();
+		}
+		
+		System.out.println("TCPIPSplitBinaryDecoder.decodeNullableULong: " + rv);
+	
+		return rv;
+	}
+	
+	@Override
 	public Time decodeTime() throws MALException {
-		return new Time(((SplitBufferHolder)sourceBuffer).getFixedUnsignedLong());
+		return new Time(((TCPIPSplitBufferHolder)sourceBuffer).getFixedUnsignedLong());
 	}
 
 	@Override
 	public FineTime decodeFineTime() throws MALException {
-		return new FineTime(((SplitBufferHolder)sourceBuffer).getFixedUnsignedLong());
+		return new FineTime(((TCPIPSplitBufferHolder)sourceBuffer).getFixedUnsignedLong());
+	}
+	
+	@Override
+	public Byte decodeOctet() throws MALException {
+		return sourceBuffer.get8();
+	}
+	
+	@Override
+	public UOctet decodeUOctet() throws MALException {
+		int val = ((TCPIPSplitBufferHolder)sourceBuffer).getUnsignedByte();
+		System.out.println("TCPIPSplitBinaryDecoder.decodeUOctet: " + String.format("%02X ", val) + " " + val);
+		return new UOctet((short) val);
 	}
 
 	/**
-	 * Extends BufferHolder to handle split binary encoding.s
+	 * Extends BufferHolder to handle split binary encoding.
 	 */
-	protected static class SplitBufferHolder extends BinaryBufferHolder {
+	protected static class TCPIPSplitBufferHolder extends BinaryBufferHolder {
 		private boolean bitStoreLoaded = false;
 		private BitGet bitStore = null;
+
+		private static final BigInteger B_0X7F = new BigInteger("127");
+		private static final BigInteger B_0X80 = new BigInteger("128");
 
 		/**
 		 * Constructor.
@@ -157,7 +249,7 @@ public class TCPIPSplitBinaryDecoder extends esa.mo.mal.encoder.binary.BinaryDec
 		 *            Length of readable data held in the array, which may be
 		 *            larger.
 		 */
-		public SplitBufferHolder(final java.io.InputStream is,
+		public TCPIPSplitBufferHolder(final java.io.InputStream is,
 				final byte[] buf, final int offset, final int length) {
 			super(is, buf, offset, length);
 
@@ -200,6 +292,27 @@ public class TCPIPSplitBinaryDecoder extends esa.mo.mal.encoder.binary.BinaryDec
 			}
 			return null;
 		}
+		
+		public int getUnsignedByte() throws MALException {
+			
+			System.out.println("TCPIPSplitBinaryDecoder.getUnsignedByte()");
+			
+			if (!bitStoreLoaded) {
+				loadBitStore();
+			}
+
+			checkBuffer(1);
+			
+			System.out.print("Buffer: ");
+			System.out.println(String.format("%02X ", buf[offset]));
+			
+			int retVal = buf[offset++];
+			if (retVal == -1) {
+				retVal = 255;
+			}
+
+			return retVal;
+		}
 
 		@Override
 		public byte[] getBytes() throws MALException {
@@ -225,7 +338,26 @@ public class TCPIPSplitBinaryDecoder extends esa.mo.mal.encoder.binary.BinaryDec
 	    @Override
 	    public BigInteger getBigInteger() throws MALException
 	    {
-	      return new BigInteger(directGetBytes(getUnsignedInt()));
+	    	if (!bitStoreLoaded) {
+				loadBitStore();
+			}
+	    	
+	    	System.out.println("TCPIPSplitBinaryDecoder.getBigInteger");
+	    	
+			int i = 0;
+			int j = 0;
+			int b;
+			BigInteger resultValue = BigInteger.ZERO;
+			while (((b = get8()) & 0x80) != 0) {
+				resultValue = resultValue.or((new BigInteger(b + "").and(B_0X7F)).shiftLeft(i));
+				i+=7;
+				j++;
+			}
+			resultValue = resultValue.or(new BigInteger(b + "").shiftLeft(i));
+			
+			System.out.println("In decimal: " + resultValue.toString(16));
+			
+			return resultValue;
 	    }
 		
 		/**
@@ -252,11 +384,36 @@ public class TCPIPSplitBinaryDecoder extends esa.mo.mal.encoder.binary.BinaryDec
 		/**
 		 * Decode an unsigned int using a split-binary approach
 		 */
-		public int getUnsignedVarint4() throws MALException {
+		@Override
+		public int getUnsignedInt() throws MALException {
+			
+			if (!bitStoreLoaded) {
+				loadBitStore();
+			}
 			
 			int value = 0;
 			int i = 0;
 			int b;
+			while (((b = get8()) & 0x80) != 0) {
+				value |= (b & 0x7F) << i;
+				i += 7;
+			}
+			return value | (b << i);
+		}
+		
+		/**
+		 * Decode an unsigned long using a split-binary approach
+		 */
+		@Override
+		public long getUnsignedLong() throws MALException {
+			
+			if (!bitStoreLoaded) {
+				loadBitStore();
+			}
+			
+			long value = 0;
+			int i = 0;
+			long b;
 			while (((b = get8()) & 0x80) != 0) {
 				value |= (b & 0x7F) << i;
 				i += 7;
@@ -310,13 +467,14 @@ public class TCPIPSplitBinaryDecoder extends esa.mo.mal.encoder.binary.BinaryDec
 		public boolean pop() {
 			boolean rv = (byteIndex < bitBytesInUse)
 					&& ((bitBytes[byteIndex + bitBytesOffset] & (1 << bitIndex)) != 0);
+			System.out.println("BitGet [byteIndex=" + byteIndex + ", bitIndex=" + bitIndex + ", rv=" + rv + "]");
 
 			if (7 == bitIndex) {
 				bitIndex = 0;
 				++byteIndex;
 			} else {
 				++bitIndex;
-			}
+			}			
 
 			return rv;
 		}

@@ -11,6 +11,8 @@ import org.ccsds.moims.mo.mal.structures.UShort;
 import esa.mo.mal.encoder.binary.BinaryElementInputStream;
 import esa.mo.mal.encoder.gen.GENDecoder;
 import esa.mo.mal.transport.tcpip.TCPIPMessageHeader;
+import static esa.mo.mal.transport.tcpip.TCPIPTransport.RLOGGER;
+
 
 /**
  * Manage the decoding of an incoming TCPIP Message. Separate decoders are used for 

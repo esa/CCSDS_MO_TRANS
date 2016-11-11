@@ -12,6 +12,8 @@ import org.ccsds.moims.mo.mal.MALException;
 import org.ccsds.moims.mo.mal.encoding.MALEncodingContext;
 import org.ccsds.moims.mo.mal.structures.UOctet;
 import org.ccsds.moims.mo.mal.structures.URI;
+import static esa.mo.mal.transport.tcpip.TCPIPTransport.RLOGGER;
+
 
 /**
  * Encode a TCPIP Message

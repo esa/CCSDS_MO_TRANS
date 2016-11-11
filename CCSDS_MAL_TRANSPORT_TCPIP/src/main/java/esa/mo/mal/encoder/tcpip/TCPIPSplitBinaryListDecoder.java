@@ -4,6 +4,8 @@ import java.util.List;
 
 import org.ccsds.moims.mo.mal.MALException;
 import org.ccsds.moims.mo.mal.MALListDecoder;
+import static esa.mo.mal.transport.tcpip.TCPIPTransport.RLOGGER; 
+
 
 /**
  * Decode a list of elements
@@ -23,6 +25,7 @@ public class TCPIPSplitBinaryListDecoder extends TCPIPSplitBinaryDecoder impleme
 		
 		// decode number of elements in list
 	    size = srcBuffer.getUnsignedInt();
+	    System.out.println("TCPIPSplitBinaryListDecoder.size: " + size);
 	}
 
 	/**

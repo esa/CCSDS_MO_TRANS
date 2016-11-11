@@ -9,6 +9,8 @@ import org.ccsds.moims.mo.mal.encoding.MALElementInputStream;
 import org.ccsds.moims.mo.mal.encoding.MALElementOutputStream;
 
 import esa.mo.mal.encoder.binary.split.SplitBinaryStreamFactory;
+import static esa.mo.mal.transport.tcpip.TCPIPTransport.RLOGGER; 
+
 
 /**
  * A factory implementation for the generation of input and output stream classes,

@@ -20,7 +20,6 @@
  */
 package esa.mo.mal.transport.tcpip;
 
-import esa.mo.mal.encoder.binary.split.SplitBinaryStreamFactory;
 import esa.mo.mal.encoder.tcpip.TCPIPMessageDecoderFactory;
 import esa.mo.mal.encoder.tcpip.TCPIPSplitBinaryStreamFactory;
 import esa.mo.mal.transport.gen.GENEndpoint;
@@ -39,11 +38,14 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
 
 import org.ccsds.moims.mo.mal.MALException;
 import org.ccsds.moims.mo.mal.MALHelper;
@@ -99,7 +101,7 @@ public class TCPIPTransport extends GENTransport {
 	/**
 	 * Logger
 	 */
-	public static final java.util.logging.Logger RLOGGER = Logger.getLogger("org.ccsds.moims.mo.mal.transport.tcpip");
+	public static java.util.logging.Logger RLOGGER = Logger.getLogger("org.ccsds.moims.mo.mal.transport.tcpip");
 
 	/**
 	 * Port delimiter
@@ -155,7 +157,7 @@ public class TCPIPTransport extends GENTransport {
 			final java.util.Map properties) throws MALException {
 		super(protocol, serviceDelim, supportsRouting, false, factory, properties);
 
-		System.out.println("TCPIPTransport (constructor)");
+		RLOGGER.info("TCPIPTransport (constructor)");
 
 		// decode configuration
 		if (properties != null) {
@@ -183,6 +185,7 @@ public class TCPIPTransport extends GENTransport {
 			if (properties.containsKey("org.ccsds.moims.mo.mal.transport.tcpip.debug")) {
 				Object level = properties.get("org.ccsds.moims.mo.mal.transport.tcpip.debug");
 				
+				
 				if (level != null) {
 					try {
 						Level parsedLevel = Level.parse(level.toString());
@@ -194,6 +197,7 @@ public class TCPIPTransport extends GENTransport {
 					}
 				}
 			}
+						  
 		} else {
 			// default values
 			this.serverPort = 0; // 0 means this is a client
@@ -209,7 +213,7 @@ public class TCPIPTransport extends GENTransport {
 	@Override
 	public void init() throws MALException {
 		super.init();
-		System.out.println("TCPIPTransport.init()");
+		RLOGGER.info("TCPIPTransport.init()");
 
 		if (serverHost != null) {
 			// this is also a server (i.e. provides some services)
@@ -245,7 +249,7 @@ public class TCPIPTransport extends GENTransport {
 			final Blob authenticationId, final QoSLevel[] expectedQos,
 			final UInteger priorityLevelNumber, final Map defaultQoSProperties)
 			throws MALException {
-		System.out.println("TCPIPTransport.createBroker()");
+		RLOGGER.info("TCPIPTransport.createBroker()");
 		// not support by TCPIP transport
 		return null;
 	}
@@ -255,7 +259,7 @@ public class TCPIPTransport extends GENTransport {
 			final Blob authenticationId, final QoSLevel[] qosLevels,
 			final UInteger priorities, final Map properties)
 			throws MALException {
-		System.out.println("TCPIPTransport.createBroker() 2");
+		RLOGGER.info("TCPIPTransport.createBroker() 2");
 		// not support by TCPIP transport
 		return null;
 	}
@@ -356,7 +360,7 @@ public class TCPIPTransport extends GENTransport {
 	@Override
 	protected GENEndpoint internalCreateEndpoint(final String localName,
 			final String routingName, final Map properties) throws MALException {
-		System.out.println("TCPIPTransport.internalCreateEndpoint() with uri: " + uriBase);
+		RLOGGER.info("TCPIPTransport.internalCreateEndpoint() with uri: " + uriBase);
 		
 		return new TCPIPEndpoint(this, localName, routingName, uriBase + routingName, wrapBodyParts);
 	}
@@ -399,7 +403,7 @@ public class TCPIPTransport extends GENTransport {
 	 * MAL TCPIP Transport Binding specification. The body is decoded using a split binary decoder.
 	 */
 	public GENMessage createMessage(final TCPIPPacketInfoHolder packetInfo) throws MALException {
-		System.out.println("TCPIPTransport.createMessage() for decoding");
+		RLOGGER.info("TCPIPTransport.createMessage() for decoding");
 
 		String serviceDelimStr = Character.toString(serviceDelim);
 		String from = packetInfo.getUriFrom().getValue();
@@ -426,27 +430,27 @@ public class TCPIPTransport extends GENTransport {
 		System.arraycopy(packetData, decodedHeaderBytes, bodyPacketData, 0, bodySize);
 
 		// debug information
-		System.out.println("TCPIPTransport.createMessage() Header results:");
-		System.out.println(msg.getHeader().toString());
-		System.out.println("TCPIPTransport.createMessage() TRYING TO DECODE BODY");
-		System.out.println("---------------------------------------");
-		System.out.println("TCPIPTransport.createMessage() Total msg in bytes:");
+		RLOGGER.info("TCPIPTransport.createMessage() Header results:");
+		RLOGGER.info(msg.getHeader().toString());
+		RLOGGER.info("TCPIPTransport.createMessage() TRYING TO DECODE BODY");
+		RLOGGER.info("---------------------------------------");
+		RLOGGER.info("TCPIPTransport.createMessage() Total msg in bytes:");
 		for (byte b2 : packetData) {
 			System.out.print(Integer.toString(b2 & 0xFF, 10) + " ");
 		}
-		System.out.println("\nDecoded header bytes: " + decodedHeaderBytes);
-		System.out.println("Body: sz=" + bodyPacketData.length + " contents=");
+		RLOGGER.info("\nDecoded header bytes: " + decodedHeaderBytes);
+		RLOGGER.info("Body: sz=" + bodyPacketData.length + " contents=");
 		for (byte b2 : bodyPacketData) {
 			System.out.print(Integer.toString(b2 & 0xFF, 10) + " ");
 		}
-		System.out.println("\n---------------------------------------");
+		RLOGGER.info("\n---------------------------------------");
 		
 		// decode the body
 		TCPIPMessage messageWithBody = new TCPIPMessage(wrapBodyParts, (TCPIPMessageHeader)msg.getHeader(), qosProperties,
 				bodyPacketData, new TCPIPSplitBinaryStreamFactory());
 		
-		System.out.println("DECODED BODY: " + messageWithBody.bodytoString());
-		System.out.println();
+		RLOGGER.info("DECODED BODY: " + messageWithBody.bodytoString());
+		RLOGGER.info("\n");
 		
 		return messageWithBody;
 	}
@@ -465,7 +469,7 @@ public class TCPIPTransport extends GENTransport {
 	protected GENMessageSender createMessageSender(GENMessage msg,
 			String remoteRootURI) throws MALException,
 			MALTransmitErrorException {
-		System.out.println("TCPIPTransport.createMessageSender()");
+		RLOGGER.info("TCPIPTransport.createMessageSender()");
 		try {			
 
 			URI from = msg.getHeader().getURIFrom();
@@ -523,7 +527,7 @@ public class TCPIPTransport extends GENTransport {
    */
   protected TCPIPTransportDataTransceiver createDataTransceiver(Socket socket) throws IOException
   {
-		System.out.println("TCPIPTransport.createDataTransceiver()");
+		RLOGGER.info("TCPIPTransport.createDataTransceiver()");
 		return new TCPIPTransportDataTransceiver(socket, serverPort);
   }
 

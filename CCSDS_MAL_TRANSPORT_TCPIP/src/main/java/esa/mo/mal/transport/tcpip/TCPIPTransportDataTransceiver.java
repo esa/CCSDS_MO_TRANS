@@ -69,13 +69,17 @@ public class TCPIPTransportDataTransceiver implements esa.mo.mal.transport.gen.u
 	 */
 	@Override
 	public void sendEncodedMessage(GENOutgoingMessageHolder packetData) throws IOException {
-		
-		System.out.println("TCPIPTransportDataTransciever.sendEncodedMessage()");
-		System.out.println("Writing to socket:");
-		System.out.println("---------------------------------------");
-		System.out.println("packetData length: " + packetData.getEncodedMessage().length);
-		System.out.write(packetData.getEncodedMessage());
-		System.out.println("---------------------------------------");
+
+		StringBuilder sb = new StringBuilder();
+		sb.append("\nTCPIPTransportDataTransciever.sendEncodedMessage()");
+		sb.append("\nWriting to socket:");
+		sb.append("\n---------------------------------------");
+		sb.append("\npacketData length: " + packetData.getEncodedMessage().length + "\n");
+		for (byte b2 : packetData.getEncodedMessage()) {
+			sb.append(Integer.toString(b2 & 0xFF, 10) + " ");
+		}
+		sb.append("\n---------------------------------------");
+		RLOGGER.log(Level.FINEST, sb.toString());
 		
 		socketWriteIf.write(packetData.getEncodedMessage());
 		socketWriteIf.flush();
@@ -117,9 +121,9 @@ public class TCPIPTransportDataTransceiver implements esa.mo.mal.transport.gen.u
 				return null;
 			}
 		} catch (NullPointerException headerReadNullPointer) {
-			TCPIPTransport.RLOGGER.warning("NullpointerException occured while reading header! " + headerReadNullPointer.getMessage());
+			RLOGGER.warning("NullpointerException occured while reading header! " + headerReadNullPointer.getMessage());
 		} catch (IndexOutOfBoundsException headerReadOutOfBounds) {
-			TCPIPTransport.RLOGGER.warning("IndexOutOfBoundsException occured while reading header! " + headerReadOutOfBounds.getMessage());			
+			RLOGGER.warning("IndexOutOfBoundsException occured while reading header! " + headerReadOutOfBounds.getMessage());			
 		} catch (SocketException socketExc) {
 //			TCPIPTransport.RLOGGER.warning("SocketException occured while reading header! " + socketExc.getMessage());			
 			return null;
@@ -133,9 +137,9 @@ public class TCPIPTransportDataTransceiver implements esa.mo.mal.transport.gen.u
 	    try {
 	    	socketReadIf.readFully(bodyData);
 	    } catch (EOFException bodyReadEof) {
-	    	TCPIPTransport.RLOGGER.warning("EOF reached for input stream! " + bodyReadEof.getMessage());
+	    	RLOGGER.warning("EOF reached for input stream! " + bodyReadEof.getMessage());
 	    } catch (IOException bodyReadIo) {
-	    	TCPIPTransport.RLOGGER.warning("Socket connection closed while reading!");
+	    	RLOGGER.warning("Socket connection closed while reading!");
 	    }
 	
 		// merge header and body
@@ -143,21 +147,23 @@ public class TCPIPTransportDataTransceiver implements esa.mo.mal.transport.gen.u
 	    System.arraycopy(rawHeader, 0, totalPacketData, 0, headerSize);
 	    System.arraycopy(bodyData, 0, totalPacketData, headerSize, bodyLength);
 	    
-		System.out.println("TCPIPTransportDataTransciever.readEncodedMessage()");
-		System.out.println("Reading from socket:");
-		System.out.println("---------------------------------------");
-		System.out.println("totalPacketData headerLength: " + rawHeader.length + ", BodyLength: " + bodyLength + ", length: " + totalPacketData.length);
+	    StringBuilder sb = new StringBuilder();
+	    sb.append("\nTCPIPTransportDataTransciever.readEncodedMessage()");
+	    sb.append("\nReading from socket:");
+	    sb.append("\n---------------------------------------");
+	    sb.append("\ntotalPacketData headerLength: " + rawHeader.length + ", BodyLength: " + bodyLength + ", length: " + totalPacketData.length + "\n");
 		for (byte b2 : totalPacketData) {
-			System.out.print(Integer.toString(b2 & 0xFF, 10) + " ");
+			sb.append(Integer.toString(b2 & 0xFF, 10) + " ");
 		}
-		System.out.println("\n---------------------------------------");
+	    sb.append("\n---------------------------------------");
+		RLOGGER.log(Level.FINEST, sb.toString());
 		
 		// if this is also a provider, update the localport to equal the port of the server socket.
 		if (serverPort > 0) {
 			localPort = serverPort;
 		}
-		System.out.println("Local addr: " + localHost + ":" + localPort);
-		System.out.println("Remote addr: " + remoteHost + ":" + remotePort);
+		RLOGGER.log(Level.FINEST, "Local addr: " + localHost + ":" + localPort);
+		RLOGGER.log(Level.FINEST, "Remote addr: " + remoteHost + ":" + remotePort);
 		
 		URI from = new URI("maltcp://" + remoteHost + ":" + remotePort);
 		URI to = new URI("maltcp://" + localHost + ":" + localPort);

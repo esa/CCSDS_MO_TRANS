@@ -21,6 +21,7 @@
 package esa.mo.mal.encoder.tcpip;
 
 import java.math.BigInteger;
+import java.util.logging.Level;
 
 import org.ccsds.moims.mo.mal.MALException;
 import org.ccsds.moims.mo.mal.structures.Blob;
@@ -31,7 +32,7 @@ import org.ccsds.moims.mo.mal.structures.ULong;
 import org.ccsds.moims.mo.mal.structures.UOctet;
 import org.ccsds.moims.mo.mal.structures.URI;
 
-import static esa.mo.mal.transport.tcpip.TCPIPTransport.RLOGGER; 
+import static esa.mo.mal.transport.tcpip.TCPIPTransport.RLOGGER;
 
 
 /**
@@ -88,7 +89,7 @@ public class TCPIPSplitBinaryDecoder extends esa.mo.mal.encoder.binary.BinaryDec
 
 	@Override
 	public Boolean decodeBoolean() throws MALException {
-		System.out.println("TCPIPSplitBinaryEncoder.decodeBoolean is called");
+		RLOGGER.log(Level.FINEST, "TCPIPSplitBinaryEncoder.decodeBoolean is called");
 		return sourceBuffer.getBool();
 	}
 
@@ -96,7 +97,7 @@ public class TCPIPSplitBinaryDecoder extends esa.mo.mal.encoder.binary.BinaryDec
 	public Boolean decodeNullableBoolean() throws MALException {
 		
 		boolean isNotNull = decodeBoolean();
-		System.out.println("TCPIPSplitBinaryEncoder.decodeNullableBoolean: " + isNotNull);
+		RLOGGER.log(Level.FINEST, "TCPIPSplitBinaryEncoder.decodeNullableBoolean: " + isNotNull);
 
 		Boolean rv = null;
 
@@ -105,7 +106,7 @@ public class TCPIPSplitBinaryDecoder extends esa.mo.mal.encoder.binary.BinaryDec
 			rv = decodeBoolean();
 		}
 		
-		System.out.println("TCPIPSplitBinaryEncoder.decodeNullableBoolean: " + rv);
+		RLOGGER.log(Level.FINEST, "TCPIPSplitBinaryEncoder.decodeNullableBoolean: " + rv);
 
 		return rv;
 	}
@@ -113,7 +114,7 @@ public class TCPIPSplitBinaryDecoder extends esa.mo.mal.encoder.binary.BinaryDec
 	@Override
 	public String decodeString() throws MALException {
 		
-		System.out.println("TCPIPSplitBinaryEncoder.decodeString is called");
+		RLOGGER.log(Level.FINEST, "TCPIPSplitBinaryEncoder.decodeString is called");
 
 		return sourceBuffer.getString();
 	}
@@ -123,7 +124,7 @@ public class TCPIPSplitBinaryDecoder extends esa.mo.mal.encoder.binary.BinaryDec
 		
 		// decode presence flag
 		boolean isNotNull = decodeBoolean();
-		System.out.println("TCPIPSplitBinaryEncoder.decodeNullableString: " + isNotNull);
+		RLOGGER.log(Level.FINEST, "TCPIPSplitBinaryEncoder.decodeNullableString: " + isNotNull);
 			
 		String rv = null;
 		
@@ -132,7 +133,7 @@ public class TCPIPSplitBinaryDecoder extends esa.mo.mal.encoder.binary.BinaryDec
 			rv = decodeString();
 		}
 		
-		System.out.println("TCPIPSplitBinaryEncoder.decodeNullableString: " + rv);
+		RLOGGER.log(Level.FINEST, "TCPIPSplitBinaryEncoder.decodeNullableString: " + rv);
 	
 		return rv;
 	}
@@ -156,7 +157,7 @@ public class TCPIPSplitBinaryDecoder extends esa.mo.mal.encoder.binary.BinaryDec
 		
 		// decode presence flag
 		boolean isNotNull = decodeBoolean();
-		System.out.println("TCPIPSplitBinaryEncoder.decodeNullableIdentifier: " + isNotNull);
+		RLOGGER.log(Level.FINEST, "TCPIPSplitBinaryEncoder.decodeNullableIdentifier: " + isNotNull);
 		
 		Identifier rv = null;
 			
@@ -165,7 +166,7 @@ public class TCPIPSplitBinaryDecoder extends esa.mo.mal.encoder.binary.BinaryDec
 			rv = decodeIdentifier();
 		}
 		
-		System.out.println("TCPIPSplitBinaryEncoder.decodeNullableIdentifier: " + rv);
+		RLOGGER.log(Level.FINEST, "TCPIPSplitBinaryEncoder.decodeNullableIdentifier: " + rv);
 		
 		return rv;
 	}
@@ -175,7 +176,7 @@ public class TCPIPSplitBinaryDecoder extends esa.mo.mal.encoder.binary.BinaryDec
 
 		// decode presence flag
 		boolean isNotNull = decodeBoolean();
-		System.out.println("TCPIPSplitBinaryEncoder.decodeNullableURI: " + isNotNull);
+		RLOGGER.log(Level.FINEST, "TCPIPSplitBinaryEncoder.decodeNullableURI: " + isNotNull);
 			
 		// decode one element, or add null if presence flag indicates no element
 		if (isNotNull) {
@@ -190,7 +191,7 @@ public class TCPIPSplitBinaryDecoder extends esa.mo.mal.encoder.binary.BinaryDec
 
 		// decode presence flag
 		boolean isNotNull = decodeBoolean();
-		System.out.println("TCPIPSplitBinaryEncoder.decodeNullableULong: " + isNotNull);
+		RLOGGER.log(Level.FINEST, "TCPIPSplitBinaryEncoder.decodeNullableULong: " + isNotNull);
 		
 		ULong rv = null;
 			
@@ -199,7 +200,7 @@ public class TCPIPSplitBinaryDecoder extends esa.mo.mal.encoder.binary.BinaryDec
 			rv = decodeULong();
 		}
 		
-		System.out.println("TCPIPSplitBinaryDecoder.decodeNullableULong: " + rv);
+		RLOGGER.log(Level.FINEST, "TCPIPSplitBinaryDecoder.decodeNullableULong: " + rv);
 	
 		return rv;
 	}
@@ -222,7 +223,7 @@ public class TCPIPSplitBinaryDecoder extends esa.mo.mal.encoder.binary.BinaryDec
 	@Override
 	public UOctet decodeUOctet() throws MALException {
 		int val = ((TCPIPSplitBufferHolder)sourceBuffer).getUnsignedByte();
-		System.out.println("TCPIPSplitBinaryDecoder.decodeUOctet: " + String.format("%02X ", val) + " " + val);
+		RLOGGER.log(Level.FINEST, "TCPIPSplitBinaryDecoder.decodeUOctet: " + String.format("%02X ", val) + " " + val);
 		return new UOctet((short) val);
 	}
 
@@ -295,7 +296,7 @@ public class TCPIPSplitBinaryDecoder extends esa.mo.mal.encoder.binary.BinaryDec
 		
 		public int getUnsignedByte() throws MALException {
 			
-			System.out.println("TCPIPSplitBinaryDecoder.getUnsignedByte()");
+			RLOGGER.log(Level.FINEST, "TCPIPSplitBinaryDecoder.getUnsignedByte()");
 			
 			if (!bitStoreLoaded) {
 				loadBitStore();
@@ -303,8 +304,7 @@ public class TCPIPSplitBinaryDecoder extends esa.mo.mal.encoder.binary.BinaryDec
 
 			checkBuffer(1);
 			
-			System.out.print("Buffer: ");
-			System.out.println(String.format("%02X ", buf[offset]));
+			RLOGGER.log(Level.FINEST, "Buffer: " + String.format("%02X ", buf[offset]));
 			
 			int retVal = buf[offset++];
 			if (retVal == -1) {
@@ -342,7 +342,7 @@ public class TCPIPSplitBinaryDecoder extends esa.mo.mal.encoder.binary.BinaryDec
 				loadBitStore();
 			}
 	    	
-	    	System.out.println("TCPIPSplitBinaryDecoder.getBigInteger");
+	    	RLOGGER.log(Level.FINEST, "TCPIPSplitBinaryDecoder.getBigInteger");
 	    	
 			int i = 0;
 			int j = 0;
@@ -355,7 +355,7 @@ public class TCPIPSplitBinaryDecoder extends esa.mo.mal.encoder.binary.BinaryDec
 			}
 			resultValue = resultValue.or(new BigInteger(b + "").shiftLeft(i));
 			
-			System.out.println("In decimal: " + resultValue.toString(16));
+			RLOGGER.log(Level.FINEST, "In decimal: " + resultValue.toString(16));
 			
 			return resultValue;
 	    }
@@ -467,7 +467,7 @@ public class TCPIPSplitBinaryDecoder extends esa.mo.mal.encoder.binary.BinaryDec
 		public boolean pop() {
 			boolean rv = (byteIndex < bitBytesInUse)
 					&& ((bitBytes[byteIndex + bitBytesOffset] & (1 << bitIndex)) != 0);
-			System.out.println("BitGet [byteIndex=" + byteIndex + ", bitIndex=" + bitIndex + ", rv=" + rv + "]");
+			RLOGGER.log(Level.FINEST, "BitGet [byteIndex=" + byteIndex + ", bitIndex=" + bitIndex + ", rv=" + rv + "]");
 
 			if (7 == bitIndex) {
 				bitIndex = 0;

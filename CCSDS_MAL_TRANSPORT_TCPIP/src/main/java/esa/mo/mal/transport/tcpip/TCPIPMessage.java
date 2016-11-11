@@ -6,6 +6,7 @@ import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Map;
+import java.util.logging.Level;
 
 import org.ccsds.moims.mo.mal.MALException;
 import org.ccsds.moims.mo.mal.MALInteractionException;
@@ -31,13 +32,11 @@ public class TCPIPMessage extends GENMessage {
 			GENMessageHeader header, Map qosProperties, byte[] packet,
 			MALElementStreamFactory encFactory) throws MALException {
 		super(wrapBodyParts, true, header, qosProperties, packet, encFactory);
-		System.out.println("TCPIPMessage (constructor 1)");		
 	}
 	
 	public TCPIPMessage(boolean wrapBodyParts, GENMessageHeader header, Map qosProperties, MALOperation operation,
 	          MALElementStreamFactory encFactory, Object... body) throws MALInteractionException {
 		super(wrapBodyParts, header, qosProperties, operation, body);
-		System.out.println("TCPIPMessage (constructor 2)");		
 	}
 	
 	/**
@@ -61,9 +60,9 @@ public class TCPIPMessage extends GENMessage {
 			final OutputStream lowLevelOutputStream)
 			throws MALException {
 		
-		System.out.println("TCPIPMessage.encodeMessage()");
-		System.out.println("TCPIPMessageHeader: " + this.getHeader().toString());
-		System.out.println("TCPIPMessageBody: " + this.bodytoString());
+		RLOGGER.log(Level.FINEST, "TCPIPMessage.encodeMessage()");
+		RLOGGER.log(Level.FINEST, "TCPIPMessageHeader: " + this.getHeader().toString());
+		RLOGGER.log(Level.FINEST, "TCPIPMessageBody: " + this.bodytoString());
 
 		// encode header and body using TCPIPEncoder class
 		ByteArrayOutputStream hdrBaos = new ByteArrayOutputStream();
@@ -90,15 +89,16 @@ public class TCPIPMessage extends GENMessage {
 		
 		System.arraycopy(bodySizeBuf, 0, hdrBuf, 19, 4);
 		
-		System.out.println("Header: sz=" + hdrBuf.length + " contents=");
+		StringBuilder sb = new StringBuilder();		
+		sb.append("\nHeader: sz=" + hdrBuf.length + " contents=\n");
 		for (byte b2 : hdrBuf) {
-			System.out.print(Integer.toString(b2 & 0xFF, 10) + " ");
+			sb.append(Integer.toString(b2 & 0xFF, 10) + " ");
 		}
-		System.out.println("\nBody: sz=" + bodyBuf.length + " contents=");
+		sb.append("\nBody: sz=" + bodyBuf.length + " contents=\n");
 		for (byte b2 : bodyBuf) {
-			System.out.print(Integer.toString(b2 & 0xFF, 10) + " ");
+			sb.append(Integer.toString(b2 & 0xFF, 10) + " ");
 		}
-		System.out.println();
+		RLOGGER.log(Level.FINEST, sb.toString());
 
 		try {
 			lowLevelOutputStream.write(hdrBuf);
@@ -121,18 +121,19 @@ public class TCPIPMessage extends GENMessage {
 	public String bodytoString() {
 		
 		if (this.body != null) {
-			String output = "";
-			output += this.body.getClass().getCanonicalName();
+			StringBuilder output = new StringBuilder();
+			output.append(this.body.getClass().getCanonicalName());
 			for (int i=0; i < this.body.getElementCount(); i++) {
 				try {
 					if (this.body.getBodyElement(i, null) != null) {
-						output += " | " + this.body.getBodyElement(i, null).toString();
+						output.append(" | ");
+						output.append(this.body.getBodyElement(i, null).toString());
 					}
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
 			}
-			return output;
+			return output.toString();
 		}
 		return " --no body--";
 	}

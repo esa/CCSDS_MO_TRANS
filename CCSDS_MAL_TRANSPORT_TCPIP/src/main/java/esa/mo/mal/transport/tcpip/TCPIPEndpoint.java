@@ -1,6 +1,7 @@
 package esa.mo.mal.transport.tcpip;
 
 import java.util.Map;
+import java.util.logging.Level;
 
 import esa.mo.mal.transport.gen.GENEndpoint;
 import esa.mo.mal.transport.gen.GENMessageHeader;
@@ -12,6 +13,7 @@ import org.ccsds.moims.mo.mal.MALOperation;
 import org.ccsds.moims.mo.mal.structures.*;
 import org.ccsds.moims.mo.mal.transport.MALEncodedBody;
 import org.ccsds.moims.mo.mal.transport.MALMessage;
+import static esa.mo.mal.transport.tcpip.TCPIPTransport.RLOGGER;
 
 /**
  * TCPIP Transport binding MAL endpoint implementation. Creates messages and
@@ -39,7 +41,7 @@ public class TCPIPEndpoint extends GENEndpoint {
 			final UShort operation, final UOctet serviceVersion,
 			final Boolean isErrorMessage, final Map qosProperties,
 			final Object... body) throws MALException {
-		System.out.println("TCPIPEndpoint.createMessage() 1 uriFrom: " + getURI() + " uriTo: " + uriTo);
+		RLOGGER.log(Level.FINEST, "TCPIPEndpoint.createMessage() 1 uriFrom: " + getURI() + " uriTo: " + uriTo);
 
 		GENMessageHeader hdr = createMessageHeader(getURI(), authenticationId,
 				uriTo, timestamp, qosLevel, priority, domain, networkZone,
@@ -67,7 +69,7 @@ public class TCPIPEndpoint extends GENEndpoint {
 			final UShort operation, final UOctet serviceVersion,
 			final Boolean isErrorMessage, final Map qosProperties,
 			final MALEncodedBody body) throws MALException {
-		System.out.println("TCPIPEndpoint.createMessage() 2 uriFrom: " + getURI() + " uriTo: " + uriTo);
+		RLOGGER.log(Level.FINEST, "TCPIPEndpoint.createMessage() 2 uriFrom: " + getURI() + " uriTo: " + uriTo);
 				return null;
 
 	}
@@ -89,7 +91,7 @@ public class TCPIPEndpoint extends GENEndpoint {
 	          final Map qosProperties,
 	          final MALEncodedBody body) throws MALException
 	  {
-		System.out.println("TCPIPEndpoint.createMessage() 3 uriFrom: " + getURI() + " uriTo: " + uriTo);
+		RLOGGER.log(Level.FINEST, "TCPIPEndpoint.createMessage() 3 uriFrom: " + getURI() + " uriTo: " + uriTo);
 		return null;
 		
 	  }
@@ -110,7 +112,7 @@ public class TCPIPEndpoint extends GENEndpoint {
 				interactionStage, transactionId, op.getService().getArea().getNumber(), 
 				op.getService().getNumber(), op.getNumber(), op.getService().getArea().getVersion(),
 				isErrorMessage, qosProperties);
-		System.out.println("TCPIPEndpoint.createMessage() 4 uriFrom: " + getURI() + " uriTo: " + uriTo);
+		RLOGGER.log(Level.FINEST, "TCPIPEndpoint.createMessage() 4 uriFrom: " + getURI() + " uriTo: " + uriTo);
 		try {
 			return new TCPIPMessage(false, hdr, qosProperties, op, transport.getStreamFactory(), body);
 		} catch (MALInteractionException e) {

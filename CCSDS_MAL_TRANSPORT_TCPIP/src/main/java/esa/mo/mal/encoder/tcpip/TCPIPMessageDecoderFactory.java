@@ -1,5 +1,7 @@
 package esa.mo.mal.encoder.tcpip;
 
+import java.util.logging.Level;
+
 import org.ccsds.moims.mo.mal.MALException;
 
 import esa.mo.mal.transport.gen.GENMessage;
@@ -39,7 +41,7 @@ public class TCPIPMessageDecoderFactory implements GENIncomingMessageDecoderFact
 		public GENIncomingMessageHolder decodeAndCreateMessage()
 				throws MALException {
 			
-			System.out.println("TCPIPMessageDecoder.decodeAndCreateMessage()");
+			RLOGGER.log(Level.FINEST, "TCPIPMessageDecoder.decodeAndCreateMessage()");
 
 			GENTransport.PacketToString smsg = transport.new PacketToString(null);
 			GENMessage msg = transport.createMessage(packetInfo);

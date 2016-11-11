@@ -20,6 +20,7 @@
  */
 package esa.mo.mal.transport.tcpip;
 
+import static esa.mo.mal.transport.tcpip.TCPIPTransport.RLOGGER;
 import esa.mo.mal.encoder.tcpip.TCPIPMessageDecoderFactory;
 import esa.mo.mal.encoder.tcpip.TCPIPSplitBinaryStreamFactory;
 import esa.mo.mal.transport.gen.GENEndpoint;
@@ -42,6 +43,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.ConsoleHandler;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -188,8 +190,12 @@ public class TCPIPTransport extends GENTransport {
 				
 				if (level != null) {
 					try {
+						ConsoleHandler handler = new ConsoleHandler();
 						Level parsedLevel = Level.parse(level.toString());
 						RLOGGER.setLevel(parsedLevel);
+						handler.setLevel(parsedLevel);
+						RLOGGER.info("Setting logger to level " + RLOGGER.getLevel());
+						RLOGGER.addHandler(handler);
 					} catch(IllegalArgumentException ex) {
 						RLOGGER.log(Level.WARNING, "The debug level supplied by the parameter"
 								+ "org.ccsds.moims.mo.mal.transport.tcpip.debug does not exist!"
@@ -403,7 +409,7 @@ public class TCPIPTransport extends GENTransport {
 	 * MAL TCPIP Transport Binding specification. The body is decoded using a split binary decoder.
 	 */
 	public GENMessage createMessage(final TCPIPPacketInfoHolder packetInfo) throws MALException {
-		RLOGGER.info("TCPIPTransport.createMessage() for decoding");
+		RLOGGER.finest("TCPIPTransport.createMessage() for decoding");
 
 		String serviceDelimStr = Character.toString(serviceDelim);
 		String from = packetInfo.getUriFrom().getValue();
@@ -430,27 +436,30 @@ public class TCPIPTransport extends GENTransport {
 		System.arraycopy(packetData, decodedHeaderBytes, bodyPacketData, 0, bodySize);
 
 		// debug information
-		RLOGGER.info("TCPIPTransport.createMessage() Header results:");
-		RLOGGER.info(msg.getHeader().toString());
-		RLOGGER.info("TCPIPTransport.createMessage() TRYING TO DECODE BODY");
-		RLOGGER.info("---------------------------------------");
-		RLOGGER.info("TCPIPTransport.createMessage() Total msg in bytes:");
+		StringBuilder sb = new StringBuilder();
+		sb.append("\nTCPIPTransport.createMessage() Header results:\n");
+		sb.append(msg.getHeader().toString());
+		sb.append("\nTCPIPTransport.createMessage() TRYING TO DECODE BODY");
+		sb.append("\n---------------------------------------");
+		sb.append("\nTCPIPTransport.createMessage() Total msg in bytes:\n");
 		for (byte b2 : packetData) {
-			System.out.print(Integer.toString(b2 & 0xFF, 10) + " ");
+			sb.append(Integer.toString(b2 & 0xFF, 10) + " ");
 		}
-		RLOGGER.info("\nDecoded header bytes: " + decodedHeaderBytes);
-		RLOGGER.info("Body: sz=" + bodyPacketData.length + " contents=");
-		for (byte b2 : bodyPacketData) {
-			System.out.print(Integer.toString(b2 & 0xFF, 10) + " ");
+		sb.append("\nDecoded header bytes: " + decodedHeaderBytes);
+		sb.append("\nBody: sz=" + bodyPacketData.length + " contents=\n");
+		sb = new StringBuilder();
+		for (byte b2 : packetData) {
+			sb.append(Integer.toString(b2 & 0xFF, 10) + " ");
 		}
-		RLOGGER.info("\n---------------------------------------");
+		sb.append("\n---------------------------------------");
+		RLOGGER.log(Level.FINEST, sb.toString());
 		
 		// decode the body
 		TCPIPMessage messageWithBody = new TCPIPMessage(wrapBodyParts, (TCPIPMessageHeader)msg.getHeader(), qosProperties,
 				bodyPacketData, new TCPIPSplitBinaryStreamFactory());
 		
-		RLOGGER.info("DECODED BODY: " + messageWithBody.bodytoString());
-		RLOGGER.info("\n");
+		RLOGGER.log(Level.FINEST,"DECODED BODY: " + messageWithBody.bodytoString());
+		RLOGGER.log(Level.FINEST,"\n");
 		
 		return messageWithBody;
 	}

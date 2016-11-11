@@ -2,6 +2,7 @@ package esa.mo.mal.encoder.tcpip;
 
 import java.io.InputStream;
 import java.util.List;
+import java.util.logging.Level;
 
 import org.ccsds.moims.mo.mal.MALException;
 import org.ccsds.moims.mo.mal.structures.Blob;
@@ -9,7 +10,6 @@ import org.ccsds.moims.mo.mal.structures.Identifier;
 import org.ccsds.moims.mo.mal.structures.UInteger;
 
 import esa.mo.mal.encoder.binary.fixed.FixedBinaryDecoder;
-
 import static esa.mo.mal.transport.tcpip.TCPIPTransport.RLOGGER;
 
 /**
@@ -57,7 +57,7 @@ public class TCPIPFixedBinaryDecoder extends FixedBinaryDecoder {
 		// decode presence flag
 		boolean isNotNull = decodeBoolean();
 		
-		RLOGGER.info("Decoding identifier. Is null: " + !isNotNull);
+		RLOGGER.finest("Decoding identifier. Is null: " + !isNotNull);
 		
 		// decode one element, or add null if presence flag indicates no element
 		if (isNotNull) {
@@ -106,7 +106,7 @@ public class TCPIPFixedBinaryDecoder extends FixedBinaryDecoder {
 		public String getString() throws MALException {
 			
 			final long len = getUnsignedInt();
-			System.out.print("Decode string: length " + len);
+			String logString = "Decode string: length " + len;
 
 			if (len > Integer.MAX_VALUE) {
 				throw new MALException("Value is too big to decode! Please provide a string with a length lower than INT_MAX");
@@ -117,9 +117,10 @@ public class TCPIPFixedBinaryDecoder extends FixedBinaryDecoder {
 
 				final String s = new String(buf, offset, (int) len, UTF8_CHARSET);
 				offset += len;
-				RLOGGER.info(" val " + s);
+				logString += " val " + s;
 				return s;
 			}
+			RLOGGER.log(Level.FINEST, logString);
 			
 			return null;
 		}

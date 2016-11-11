@@ -1,5 +1,7 @@
 package esa.mo.mal.encoder.tcpip;
 
+import java.util.logging.Level;
+
 import org.ccsds.moims.mo.mal.MALException;
 import org.ccsds.moims.mo.mal.encoding.MALEncodingContext;
 import org.ccsds.moims.mo.mal.structures.IdentifierList;
@@ -26,12 +28,12 @@ public class TCPIPFixedBinaryElementInputStream extends BinaryElementInputStream
 	
 	public TCPIPFixedBinaryElementInputStream(final java.io.InputStream is) {
 		super(new TCPIPFixedBinaryDecoder(is));
-		System.out.println("TCPIPHeaderElementInputStream constructor 1");
+		RLOGGER.log(Level.FINEST, "TCPIPHeaderElementInputStream constructor 1");
 	}
 	
 	protected TCPIPFixedBinaryElementInputStream(final byte[] src, final int offset) {
 		super(new TCPIPFixedBinaryDecoder(src, offset));
-		System.out.println("TCPIPHeaderElementInputStream constructor 2");
+		RLOGGER.log(Level.FINEST, "TCPIPHeaderElementInputStream constructor 2");
 	}
 	
 	/**
@@ -40,7 +42,7 @@ public class TCPIPFixedBinaryElementInputStream extends BinaryElementInputStream
 	@Override
 	public Object readElement(final Object element, final MALEncodingContext ctx)
 			throws IllegalArgumentException, MALException {
-		System.out.println("TCPIPHeaderElementInputStream.readElement()");
+		RLOGGER.log(Level.FINEST, "TCPIPHeaderElementInputStream.readElement()");
 
 		if (element == ctx.getHeader()) {
 			// header is decoded using custom tcpip decoder
@@ -86,7 +88,7 @@ public class TCPIPFixedBinaryElementInputStream extends BinaryElementInputStream
 		header.setSession(SessionType.fromOrdinal(parts & 0xF));
 		Long transactionId = ((TCPIPFixedBinaryDecoder)dec).decodeMALLong();
 		header.setTransactionId(transactionId);
-		System.out.println("QOS DECODING: qos=" + header.getQoSlevel().getOrdinal() + " parts=" + parts);
+		RLOGGER.log(Level.FINEST, "QOS DECODING: qos=" + header.getQoSlevel().getOrdinal() + " parts=" + parts);
 		
 		short flags = dec.decodeUOctet().getValue(); // flags
 		boolean sourceIdFlag = (((flags & 0x80) >> 7) == 0x1);
@@ -142,12 +144,12 @@ public class TCPIPFixedBinaryElementInputStream extends BinaryElementInputStream
 		header.decodedHeaderBytes = ((TCPIPFixedBinaryDecoder)dec).getBufferOffset();
 
 		// debug information
-		System.out.println("Decoded header:");
-		System.out.println("---------------------------------------");
-		System.out.println(element.toString());
-		System.out.println("Decoded header bytes:");
-		System.out.println(header.decodedHeaderBytes);
-		System.out.println("---------------------------------------");		
+		RLOGGER.log(Level.FINEST, "Decoded header:");
+		RLOGGER.log(Level.FINEST, "---------------------------------------");
+		RLOGGER.log(Level.FINEST, element.toString());
+		RLOGGER.log(Level.FINEST, "Decoded header bytes:");
+		RLOGGER.log(Level.FINEST, header.decodedHeaderBytes + "");
+		RLOGGER.log(Level.FINEST, "---------------------------------------");		
 
 		return header;
 	}

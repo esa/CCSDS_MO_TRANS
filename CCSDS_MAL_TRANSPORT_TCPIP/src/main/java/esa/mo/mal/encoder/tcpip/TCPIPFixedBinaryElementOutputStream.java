@@ -1,6 +1,7 @@
 package esa.mo.mal.encoder.tcpip;
 
 import java.io.OutputStream;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import esa.mo.mal.encoder.gen.GENElementOutputStream;
@@ -12,6 +13,7 @@ import org.ccsds.moims.mo.mal.MALException;
 import org.ccsds.moims.mo.mal.encoding.MALEncodingContext;
 import org.ccsds.moims.mo.mal.structures.UOctet;
 import org.ccsds.moims.mo.mal.structures.URI;
+
 import static esa.mo.mal.transport.tcpip.TCPIPTransport.RLOGGER;
 
 
@@ -37,7 +39,7 @@ public class TCPIPFixedBinaryElementOutputStream extends GENElementOutputStream 
 	 */
 	@Override
 	protected GENEncoder createEncoder(OutputStream os) {
-		System.out.println("TCPIPHeaderElementOutputStream.createEncoder()");
+		RLOGGER.log(Level.FINEST, "TCPIPHeaderElementOutputStream.createEncoder()");
 		return new TCPIPFixedBinaryEncoder(os);
 	}
 
@@ -49,7 +51,7 @@ public class TCPIPFixedBinaryElementOutputStream extends GENElementOutputStream 
 	@Override
 	public void writeElement(final Object element, final MALEncodingContext ctx)
 			throws MALException {
-		System.out.println("TCPIPHeaderElementOutputStream.writeElement(Object, MALEncodingContext)");	
+		RLOGGER.log(Level.FINEST, "TCPIPHeaderElementOutputStream.writeElement(Object, MALEncodingContext)");	
 		
 		if (enc == null) {
 			enc = createEncoder(this.dos);
@@ -75,12 +77,12 @@ public class TCPIPFixedBinaryElementOutputStream extends GENElementOutputStream 
 		
 		TCPIPMessageHeader header = (TCPIPMessageHeader)element;
 		
-		System.out.println("TCPIPMessageHeader.encode()");
+		RLOGGER.log(Level.FINEST, "TCPIPMessageHeader.encode()");
 
-	    System.out.println("Header to encode:");
-		System.out.println("---------------------------------------");
-		System.out.println(header);
-		System.out.println("---------------------------------------");
+	    RLOGGER.log(Level.FINEST, "Header to encode:");
+		RLOGGER.log(Level.FINEST, "---------------------------------------");
+		RLOGGER.log(Level.FINEST, header.toString());
+		RLOGGER.log(Level.FINEST, "---------------------------------------");
 
 		// version number & sdu type
 		byte versionAndSDU = (byte) (header.versionNumber << 5 | header.getSDUType());
@@ -96,7 +98,7 @@ public class TCPIPFixedBinaryElementOutputStream extends GENElementOutputStream 
 				| (header.getQoSlevel().getOrdinal() << 4) 
 				| header.getSession().getOrdinal());
 		
-		System.out.println("QOS ENCODING: qos=" + header.getQoSlevel().getOrdinal() + " parts=" + parts);
+		RLOGGER.log(Level.FINEST, "QOS ENCODING: qos=" + header.getQoSlevel().getOrdinal() + " parts=" + parts);
 
 		enc.encodeUOctet(new UOctet(parts));
 		((TCPIPFixedBinaryEncoder)enc).encodeMALLong(header.getTransactionId());

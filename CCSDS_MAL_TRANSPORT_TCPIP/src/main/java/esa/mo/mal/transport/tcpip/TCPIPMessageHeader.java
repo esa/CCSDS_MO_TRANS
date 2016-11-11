@@ -110,15 +110,12 @@ public class TCPIPMessageHeader extends GENMessageHeader {
 
 	@Override
 	public Element decode(final MALDecoder decoder) throws MALException {
-		System.out.println("TCPIPMessageHeader.decode()");
 		
 		return this;
 	}
 
 	@Override
-	public void encode(final MALEncoder encoder) throws MALException {
-		System.out.println("TCPIPMessageHeader.encode()");
-	}
+	public void encode(final MALEncoder encoder) throws MALException {}
 	
 	public short getSDUType() {
 

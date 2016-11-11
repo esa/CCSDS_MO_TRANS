@@ -23,6 +23,7 @@ package esa.mo.mal.encoder.tcpip;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigInteger;
+import java.util.logging.Level;
 
 import org.ccsds.moims.mo.mal.MALException;
 import org.ccsds.moims.mo.mal.structures.Blob;
@@ -33,7 +34,7 @@ import org.ccsds.moims.mo.mal.structures.ULong;
 import org.ccsds.moims.mo.mal.structures.UOctet;
 import org.ccsds.moims.mo.mal.structures.URI;
 
-import static esa.mo.mal.transport.tcpip.TCPIPTransport.RLOGGER; 
+import static esa.mo.mal.transport.tcpip.TCPIPTransport.RLOGGER;
 
 
 /**
@@ -62,7 +63,7 @@ public class TCPIPSplitBinaryEncoder extends esa.mo.mal.encoder.binary.BinaryEnc
 			final java.util.List value) throws MALException {
 		++openCount;
 		
-		System.out.println("TCPIPSplitBinaryEncoder.createListEncoder with size=" + value + " lists open=" + openCount);
+		RLOGGER.log(Level.FINEST, "TCPIPSplitBinaryEncoder.createListEncoder with size=" + value + " lists open=" + openCount);
 
 		return super.createListEncoder(value);
 	}
@@ -91,7 +92,7 @@ public class TCPIPSplitBinaryEncoder extends esa.mo.mal.encoder.binary.BinaryEnc
 	@Override
 	public void encodeNullableString(String value) throws MALException {
 
-		System.out.println("TCPIPSplitBinaryencoder.encodeNullableString val=" + value);
+		RLOGGER.log(Level.FINEST, "TCPIPSplitBinaryencoder.encodeNullableString val=" + value);
 		try {
 			if (value != null) {
 				// encode presence flag
@@ -160,7 +161,7 @@ public class TCPIPSplitBinaryEncoder extends esa.mo.mal.encoder.binary.BinaryEnc
 	@Override
 	public void encodeNullableBoolean(final Boolean value) throws MALException {
 		
-		System.out.println("TCPIPSplitBinaryencoder.encodeNullableBoolean val=" + value);
+		RLOGGER.log(Level.FINEST, "TCPIPSplitBinaryencoder.encodeNullableBoolean val=" + value);
 		
 		try {
 			if (null != value) {
@@ -177,7 +178,7 @@ public class TCPIPSplitBinaryEncoder extends esa.mo.mal.encoder.binary.BinaryEnc
 	@Override
 	public void encodeNullableIdentifier(final Identifier value) throws MALException {
 		
-		System.out.println("TCPIPSplitBinaryEncoder.encodeNullableIdentifier val=" + value);
+		RLOGGER.log(Level.FINEST, "TCPIPSplitBinaryEncoder.encodeNullableIdentifier val=" + value);
 		
 		try {
 			if (null != value) {
@@ -193,7 +194,7 @@ public class TCPIPSplitBinaryEncoder extends esa.mo.mal.encoder.binary.BinaryEnc
 	
 	@Override
 	public void encodeNullableULong(final ULong value) throws MALException {
-		System.out.println("TCPIPSplitBinaryEncoder.encodeNullableULong val=" + value);
+		RLOGGER.log(Level.FINEST, "TCPIPSplitBinaryEncoder.encodeNullableULong val=" + value);
 		try {
 			if (null != value) {
 				outputStream.addNotNull();
@@ -208,7 +209,7 @@ public class TCPIPSplitBinaryEncoder extends esa.mo.mal.encoder.binary.BinaryEnc
 
 	@Override
 	public void encodeNullableURI(final URI value) throws MALException {
-		System.out.println("TCPIPSplitBinaryEncoder.encodeNullableURI val=" + value);
+		RLOGGER.log(Level.FINEST, "TCPIPSplitBinaryEncoder.encodeNullableURI val=" + value);
 		try {
 			if (null != value) {
 				outputStream.addNotNull();
@@ -338,11 +339,11 @@ public class TCPIPSplitBinaryEncoder extends esa.mo.mal.encoder.binary.BinaryEnc
 		@Override
 		public void addBytes(final byte[] value) throws IOException {
 			
-			System.out.println("TCPIPStreamHolder.addBytes val=" + value);
+			RLOGGER.log(Level.FINEST, "TCPIPStreamHolder.addBytes val=" + value);
 			
 			if (null == value) {
 				streamAddUnsignedInt(baos, 0);
-				System.out.println("TCPIPStreamHolder.addBytes: null value supplied!!");
+				RLOGGER.log(Level.FINEST, "TCPIPStreamHolder.addBytes: null value supplied!!");
 				throw new IOException("TCPIPStreamHolder.addBytes: null value supplied!!");
 				
 			} else {
@@ -374,7 +375,7 @@ public class TCPIPSplitBinaryEncoder extends esa.mo.mal.encoder.binary.BinaryEnc
 	    @Override
 	    public void addBigInteger(BigInteger value) throws IOException {	    	
 	    	byte[] byteVal = value.toByteArray();
-	    	System.out.println("Encoding BigInt with value=" + value.toString(16));
+	    	RLOGGER.log(Level.FINEST, "Encoding BigInt with value=" + value.toString(16));
 	        
 	        while (value.and(B_0X7F.not()).compareTo(BigInteger.ZERO) == 1) {
 	        	byte byteToWrite = (value.and(B_0X7F)).or(B_0X80).byteValue();
@@ -388,7 +389,6 @@ public class TCPIPSplitBinaryEncoder extends esa.mo.mal.encoder.binary.BinaryEnc
 	        for (int i = 0; i<baos.toByteArray().length; i++) {
 	            System.out.print(String.format("%02X ", encArr[i]));
 	    	}
-	        System.out.println();
 	    }
 		
 		public void addFixedUnsignedLong(long value) throws IOException {
@@ -398,7 +398,7 @@ public class TCPIPSplitBinaryEncoder extends esa.mo.mal.encoder.binary.BinaryEnc
 		private void setBit(int bitIndex) {
 			int byteIndex = bitIndex / 8;
 			
-			System.out.println("-> SetBit: bitIndex=" + bitIndex + ", byteIndex=" + byteIndex);
+			RLOGGER.log(Level.FINEST, "-> SetBit: bitIndex=" + bitIndex + ", byteIndex=" + byteIndex);
 
 			int bytesRequired = byteIndex + 1;
 			if (bitBytesInUse < bytesRequired) {
@@ -414,8 +414,8 @@ public class TCPIPSplitBinaryEncoder extends esa.mo.mal.encoder.binary.BinaryEnc
 			bitIndex %= 8;
 			bitBytes[byteIndex] |= (1 << bitIndex);
 
-			System.out.println("<- SetBit: bitIndex=" + bitIndex + ", byteIndex=" + byteIndex);
-			System.out.println("<- SetBit: bitBytes=" + bitBytes[byteIndex]);
+			RLOGGER.log(Level.FINEST, "<- SetBit: bitIndex=" + bitIndex + ", byteIndex=" + byteIndex);
+			RLOGGER.log(Level.FINEST, "<- SetBit: bitBytes=" + bitBytes[byteIndex]);
 		}
 	}
 }

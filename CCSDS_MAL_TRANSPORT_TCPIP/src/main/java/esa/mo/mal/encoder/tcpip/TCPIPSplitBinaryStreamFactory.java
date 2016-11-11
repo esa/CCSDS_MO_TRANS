@@ -3,6 +3,7 @@ package esa.mo.mal.encoder.tcpip;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Map;
+import java.util.logging.Level;
 
 import org.ccsds.moims.mo.mal.MALException;
 import org.ccsds.moims.mo.mal.encoding.MALElementInputStream;
@@ -24,20 +25,20 @@ public class TCPIPSplitBinaryStreamFactory extends SplitBinaryStreamFactory {
 	@Override
 	public MALElementInputStream createInputStream(InputStream is)
 			throws IllegalArgumentException, MALException {
-		System.out.println("TCPIPSplitBinaryStreamFactory.createInputStream(InputStream)");
+		RLOGGER.log(Level.FINEST, "TCPIPSplitBinaryStreamFactory.createInputStream(InputStream)");
 		return new TCPIPSplitBinaryElementInputStream(is);
 	}
 
 	@Override
 	public MALElementInputStream createInputStream(byte[] bytes, int offset) {
-		System.out.println("TCPIPSplitBinaryStreamFactory.createInputStream(byte[], int)");
+		RLOGGER.log(Level.FINEST, "TCPIPSplitBinaryStreamFactory.createInputStream(byte[], int)");
 		return new TCPIPSplitBinaryElementInputStream(bytes, offset);
 	}
 
 	@Override
 	public MALElementOutputStream createOutputStream(OutputStream os)
 			throws IllegalArgumentException, MALException {
-		System.out.println("TCPIPSplitBinaryStreamFactory.createOutputStream(OutputStream)");
+		RLOGGER.log(Level.FINEST, "TCPIPSplitBinaryStreamFactory.createOutputStream(OutputStream)");
 		return new TCPIPSplitBinaryElementOutputStream(os);
 	}
 

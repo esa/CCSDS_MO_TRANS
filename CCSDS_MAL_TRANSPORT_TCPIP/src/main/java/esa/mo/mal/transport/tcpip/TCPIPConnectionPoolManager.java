@@ -5,6 +5,7 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Level;
 
 import static esa.mo.mal.transport.tcpip.TCPIPTransport.RLOGGER;
 
@@ -42,7 +43,7 @@ public enum TCPIPConnectionPoolManager {
 		
 		int hash = getSocketHash(socket.getLocalPort());
 		
-		System.out.println("ConnectionPool: put -> hash: " + hash);
+		RLOGGER.log(Level.FINEST, "ConnectionPool: put -> hash: " + hash);
 		
 		connections.put(hash, socket);
 	}
@@ -71,7 +72,7 @@ public enum TCPIPConnectionPoolManager {
 		
 		Socket s = null;
 		int hash = getSocketHash(localPort);
-		System.out.println("ConnectionPool: get -> hash: " + hash);
+		RLOGGER.log(Level.FINEST, "ConnectionPool: get -> hash: " + hash);
 		
 		s = connections.get(hash);
 		if (s == null) {

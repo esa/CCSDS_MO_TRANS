@@ -192,6 +192,21 @@ public class TCPIPSplitBinaryEncoder extends esa.mo.mal.encoder.binary.BinaryEnc
 		}
 	}
 	
+//	@Override
+//	public void encodeNullableLong(final Long value) throws MALException {
+//		RLOGGER.log(Level.FINEST, "TCPIPSplitBinaryEncoder.encodeNullableLong val=" + value);
+//		try {
+//			if (null != value) {
+//				outputStream.addNotNull();
+//				encodeLong(value);
+//			} else {
+//				outputStream.addIsNull();
+//			}
+//		} catch (IOException ex) {
+//			throw new MALException(ENCODING_EXCEPTION_STR, ex);
+//		}
+//	}
+	
 	@Override
 	public void encodeNullableULong(final ULong value) throws MALException {
 		RLOGGER.log(Level.FINEST, "TCPIPSplitBinaryEncoder.encodeNullableULong val=" + value);
@@ -384,11 +399,6 @@ public class TCPIPSplitBinaryEncoder extends esa.mo.mal.encoder.binary.BinaryEnc
 			}
 	        BigInteger encoded = value.and(B_0X7F);
 	        baos.write(encoded.byteValue());
-	        byte[] encArr = baos.toByteArray();
-	        System.out.print("Encoded: ");
-	        for (int i = 0; i<baos.toByteArray().length; i++) {
-	            System.out.print(String.format("%02X ", encArr[i]));
-	    	}
 	    }
 		
 		public void addFixedUnsignedLong(long value) throws IOException {

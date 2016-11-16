@@ -312,6 +312,7 @@ public class TCPIPSplitBinaryDecoder extends esa.mo.mal.encoder.binary.BinaryDec
 			}
 
 			return retVal;
+//			 return buf[offset++] & 0xFF;
 		}
 
 		@Override
@@ -404,22 +405,22 @@ public class TCPIPSplitBinaryDecoder extends esa.mo.mal.encoder.binary.BinaryDec
 		/**
 		 * Decode an unsigned long using a split-binary approach
 		 */
-		@Override
-		public long getUnsignedLong() throws MALException {
-			
-			if (!bitStoreLoaded) {
-				loadBitStore();
-			}
-			
-			long value = 0;
-			int i = 0;
-			long b;
-			while (((b = get8()) & 0x80) != 0) {
-				value |= (b & 0x7F) << i;
-				i += 7;
-			}
-			return value | (b << i);
-		}
+//		@Override
+//		public long getUnsignedLong() throws MALException {
+//			
+//			if (!bitStoreLoaded) {
+//				loadBitStore();
+//			}
+//			
+//			long value = 0;
+//			int i = 0;
+//			long b;
+//			while (((b = get8()) & 0x80) != 0) {
+//				value |= (b & 0x7F) << i;
+//				i += 7;
+//			}
+//			return value | (b << i);
+//		}
 		
 		public long getFixedUnsignedLong() throws MALException {
 			

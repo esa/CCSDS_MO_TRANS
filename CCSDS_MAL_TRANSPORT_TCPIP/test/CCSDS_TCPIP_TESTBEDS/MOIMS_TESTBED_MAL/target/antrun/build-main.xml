@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="UTF-8" ?>
-<project name="maven-antrun-" default="main"  >
-<target name="main">
-  <chmod file="/VEGA/Buildarea/ARVALIS/Software/Unix/Workspace/rvangijlswijk/mal-binding/CCSDS_TCPIP_TESTBEDS/MOIMS_TESTBED_MAL/executeProcess.sh" perm="ugo+rx"/>
-</target>
-</project>

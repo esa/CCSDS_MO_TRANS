@@ -727,7 +727,14 @@ public abstract class GENEncoder implements MALListEncoder
   @Override
   public void encodeElement(final Element value) throws MALException
   {
-    value.encode(this);
+    if (null != value)
+    {
+      value.encode(this);
+    }
+    else
+    {
+      throw new MALException("The encoding failed because a null value was inserted in a non-nullable field.");
+    }
   }
 
   @Override

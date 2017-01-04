@@ -25,7 +25,7 @@
   
   <artifactId>TRANSPORT_TCPIP</artifactId>
   <packaging>jar</packaging>
-  <version>1.0.2</version>
+  <version>1.0.3</version>
 
   <name>ESA MAL TCP/IP Java transport</name>
   <description>A Java TCP/IP transport for CCSDS MAL</description>
@@ -67,6 +67,11 @@
       <name>Petros Pissias</name>
       <email>petros.pissias@esa.int</email>
     </developer>
+    <developer>
+      <id>rvangijlswijk</id>
+      <name>Rian van Gijlswijk</name>
+      <email>rian.vangijlswijk@telespazio-vega.de</email>
+    </developer>
   </developers>
  
   <dependencies>
@@ -74,6 +79,19 @@
       <groupId>int.esa.ccsds.mo</groupId>
       <artifactId>TRANSPORT_GEN</artifactId>
     </dependency>
+    <dependency>
+    	<groupId>int.esa.ccsds.mo</groupId>
+    	<artifactId>ENCODING_BINARY_FIXED</artifactId>
+    </dependency>
+    <dependency>
+    	<groupId>int.esa.ccsds.mo</groupId>
+    	<artifactId>ENCODING_BINARY_SPLIT</artifactId>
+    </dependency>
+    <dependency>
+	    <groupId>junit</groupId>
+	    <artifactId>junit</artifactId>
+	    <version>4.12</version>
+	</dependency>	    
   </dependencies>
  
   <build>
